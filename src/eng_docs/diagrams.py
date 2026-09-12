@@ -59,17 +59,6 @@ def _center(item):
     return r["x"] + r["w"] / 2, r["y"] + r["h"] / 2
 
 
-def _boundary_point_toward(item, tx, ty):
-    sx, sy = _center(item)
-    dx, dy = tx - sx, ty - sy
-    if dx == 0 and dy == 0:
-        return sx, sy
-    scale_x = item["layout"]["w"] / 2 / abs(dx) if dx else float("inf")
-    scale_y = item["layout"]["h"] / 2 / abs(dy) if dy else float("inf")
-    scale = min(scale_x, scale_y)
-    return sx + dx * scale, sy + dy * scale
-
-
 def _simplify_polyline(points):
     cleaned = []
     for point in points:
@@ -88,6 +77,25 @@ def _simplify_polyline(points):
                 continue
         simplified.append(point)
     return simplified
+
+
+def _box_to_point(item, point):
+    """Return an orthogonal path from a box boundary to an external point."""
+    sx, sy = _center(item)
+    px, py = point
+    dx, dy = px - sx, py - sy
+    r = item["layout"]
+
+    if abs(dx) >= abs(dy):
+        boundary_x = r["x"] + r["w"] if dx >= 0 else r["x"]
+        boundary = (boundary_x, sy)
+        elbow = (px, sy)
+    else:
+        boundary_y = r["y"] + r["h"] if dy >= 0 else r["y"]
+        boundary = (sx, boundary_y)
+        elbow = (sx, py)
+
+    return _simplify_polyline([boundary, elbow, point])
 
 
 def _auto_orthogonal_points(source, target):
@@ -120,9 +128,9 @@ def _edge_points(source, target, edge):
     if not route:
         return _auto_orthogonal_points(source, target)
 
-    x1, y1 = _boundary_point_toward(source, *route[0])
-    x2, y2 = _boundary_point_toward(target, *route[-1])
-    return _simplify_polyline([(x1, y1), *route, (x2, y2)])
+    source_connection = _box_to_point(source, route[0])
+    target_connection = list(reversed(_box_to_point(target, route[-1])))
+    return _simplify_polyline(source_connection[:-1] + route + target_connection[1:])
 
 
 def _label_point(points):
