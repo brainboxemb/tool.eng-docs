@@ -41,6 +41,8 @@ The built-in schema and theme are used unless `--schema` or `--theme` is supplie
 
 `pyproject.toml` owns the package version. When a non-development version is merged to `main`, the release workflow creates the matching GitHub tag/release and attaches the built Python package artifacts. Consumers should pin the released tag rather than depend on a feature branch.
 
+The first real consumer is `brainboxemb/2026-010-01.meta.event-timing-software`. After `v0.1.0` exists, that repository should install the pinned release in its documentation environment and invoke `eng-docs diagrams` instead of carrying a duplicate generic renderer implementation.
+
 ## Generated conformance documentation
 
 CI renders the domain-neutral conformance fixtures so diagram quality can be reviewed directly in GitHub instead of only through test assertions or downloaded artifacts.
