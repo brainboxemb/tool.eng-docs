@@ -25,8 +25,12 @@ def main(argv=None):
         package_root = files("eng_docs")
         schema = Path(args.schema) if args.schema else Path(str(package_root.joinpath("schemas/diagram.schema.json")))
         theme = Path(args.theme) if args.theme else Path(str(package_root.joinpath("themes/default.yaml")))
+        source = Path(args.source)
+        if not source.is_dir():
+            print(f"diagram source directory does not exist: {source}", file=sys.stderr)
+            return 2
         try:
-            generate(Path(args.source), schema, theme, Path(args.out))
+            generate(source, schema, theme, Path(args.out))
         except (ValueError, OSError) as exc:
             print(str(exc), file=sys.stderr)
             return 2
