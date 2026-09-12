@@ -59,16 +59,81 @@ def _center(item):
     return r["x"] + r["w"] / 2, r["y"] + r["h"] / 2
 
 
-def _boundary_point(source, target):
-    sx, sy = _center(source)
-    tx, ty = _center(target)
+def _boundary_point_toward(item, tx, ty):
+    sx, sy = _center(item)
     dx, dy = tx - sx, ty - sy
     if dx == 0 and dy == 0:
         return sx, sy
-    scale_x = source["layout"]["w"] / 2 / abs(dx) if dx else float("inf")
-    scale_y = source["layout"]["h"] / 2 / abs(dy) if dy else float("inf")
+    scale_x = item["layout"]["w"] / 2 / abs(dx) if dx else float("inf")
+    scale_y = item["layout"]["h"] / 2 / abs(dy) if dy else float("inf")
     scale = min(scale_x, scale_y)
     return sx + dx * scale, sy + dy * scale
+
+
+def _simplify_polyline(points):
+    cleaned = []
+    for point in points:
+        if cleaned and point == cleaned[-1]:
+            continue
+        cleaned.append(point)
+
+    simplified = []
+    for point in cleaned:
+        if len(simplified) >= 2:
+            ax, ay = simplified[-2]
+            bx, by = simplified[-1]
+            cx, cy = point
+            if (ax == bx == cx) or (ay == by == cy):
+                simplified[-1] = point
+                continue
+        simplified.append(point)
+    return simplified
+
+
+def _auto_orthogonal_points(source, target):
+    sx, sy = _center(source)
+    tx, ty = _center(target)
+    dx, dy = tx - sx, ty - sy
+
+    if abs(dx) >= abs(dy):
+        source_edge_x = source["layout"]["x"] + source["layout"]["w"] if dx >= 0 else source["layout"]["x"]
+        target_edge_x = target["layout"]["x"] if dx >= 0 else target["layout"]["x"] + target["layout"]["w"]
+        start = (source_edge_x, sy)
+        end = (target_edge_x, ty)
+        if sy == ty:
+            return [start, end]
+        mid_x = (source_edge_x + target_edge_x) / 2
+        return _simplify_polyline([start, (mid_x, sy), (mid_x, ty), end])
+
+    source_edge_y = source["layout"]["y"] + source["layout"]["h"] if dy >= 0 else source["layout"]["y"]
+    target_edge_y = target["layout"]["y"] if dy >= 0 else target["layout"]["y"] + target["layout"]["h"]
+    start = (sx, source_edge_y)
+    end = (tx, target_edge_y)
+    if sx == tx:
+        return [start, end]
+    mid_y = (source_edge_y + target_edge_y) / 2
+    return _simplify_polyline([start, (sx, mid_y), (tx, mid_y), end])
+
+
+def _edge_points(source, target, edge):
+    route = [(p["x"], p["y"]) for p in edge.get("route", [])]
+    if not route:
+        return _auto_orthogonal_points(source, target)
+
+    x1, y1 = _boundary_point_toward(source, *route[0])
+    x2, y2 = _boundary_point_toward(target, *route[-1])
+    return _simplify_polyline([(x1, y1), *route, (x2, y2)])
+
+
+def _label_point(points):
+    segments = []
+    for first, second in zip(points, points[1:]):
+        length = abs(second[0] - first[0]) + abs(second[1] - first[1])
+        segments.append((length, first, second))
+    if not segments:
+        return points[0]
+    _, first, second = max(segments, key=lambda item: item[0])
+    return (first[0] + second[0]) / 2, (first[1] + second[1]) / 2
 
 
 def _svg_text(parts, text, x, y, size, family, weight="normal", anchor="middle"):
@@ -112,16 +177,14 @@ def render_svg(data, theme, out: Path):
     for edge in data["edges"]:
         source = nodes[edge["from"]]
         target = nodes[edge["to"]]
-        x1, y1 = _boundary_point(source, target)
-        x2, y2 = _boundary_point(target, source)
-        points = [(x1, y1)] + [(p["x"], p["y"]) for p in edge.get("route", [])] + [(x2, y2)]
+        points = _edge_points(source, target, edge)
         dash = ' stroke-dasharray="7 5"' if edge.get("dashed") else ""
         pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
         parts.append(
             f'<polyline points="{pts}" fill="none" stroke="{theme["canvas"]["edge"]}" stroke-width="2"{dash} marker-end="url(#arrow)"/>'
         )
         if edge.get("label"):
-            mx, my = points[len(points) // 2]
+            mx, my = _label_point(points)
             label = edge["label"]
             width = max(80, min(190, 8 * len(label)))
             parts.append(
