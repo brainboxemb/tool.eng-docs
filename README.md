@@ -37,6 +37,10 @@ eng-docs diagrams --source docs/_diagrams --out bld/docs/architecture
 
 The built-in schema and theme are used unless `--schema` or `--theme` is supplied.
 
+## Release model
+
+`pyproject.toml` owns the package version. When a non-development version is merged to `main`, the release workflow creates the matching GitHub tag/release and attaches the built Python package artifacts. Consumers should pin the released tag rather than depend on a feature branch.
+
 ## Generated conformance documentation
 
 CI renders the domain-neutral conformance fixtures so diagram quality can be reviewed directly in GitHub instead of only through test assertions or downloaded artifacts.
