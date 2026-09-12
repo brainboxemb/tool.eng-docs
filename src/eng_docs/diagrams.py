@@ -79,57 +79,96 @@ def _simplify_polyline(points):
     return simplified
 
 
-def _box_to_point(item, point):
-    """Return an orthogonal path from a box boundary to an external point."""
-    sx, sy = _center(item)
-    px, py = point
-    dx, dy = px - sx, py - sy
+def _anchor_point(item, anchor):
     r = item["layout"]
+    side = anchor["side"]
+    position = anchor.get("position", 0.5)
+    if side == "top":
+        return r["x"] + r["w"] * position, r["y"]
+    if side == "right":
+        return r["x"] + r["w"], r["y"] + r["h"] * position
+    if side == "bottom":
+        return r["x"] + r["w"] * position, r["y"] + r["h"]
+    if side == "left":
+        return r["x"], r["y"] + r["h"] * position
+    raise ValueError(f"unknown anchor side: {side}")
 
+
+def _inferred_anchor(item, target_point):
+    sx, sy = _center(item)
+    tx, ty = target_point
+    dx, dy = tx - sx, ty - sy
     if abs(dx) >= abs(dy):
-        boundary_x = r["x"] + r["w"] if dx >= 0 else r["x"]
-        boundary = (boundary_x, sy)
-        elbow = (px, sy)
-    else:
-        boundary_y = r["y"] + r["h"] if dy >= 0 else r["y"]
-        boundary = (sx, boundary_y)
-        elbow = (sx, py)
+        return {"side": "right" if dx >= 0 else "left", "position": 0.5}
+    return {"side": "bottom" if dy >= 0 else "top", "position": 0.5}
 
-    return _simplify_polyline([boundary, elbow, point])
+
+def _anchor_to_point(item, anchor, point):
+    """Return an orthogonal path from one explicit box anchor to a point."""
+    start = _anchor_point(item, anchor)
+    px, py = point
+    sx, sy = start
+    if anchor["side"] in ("left", "right"):
+        return _simplify_polyline([start, (px, sy), point])
+    return _simplify_polyline([start, (sx, py), point])
+
+
+def _box_to_point(item, point):
+    """Return an orthogonal path from an inferred box boundary to a point."""
+    return _anchor_to_point(item, _inferred_anchor(item, point), point)
+
+
+def _connect_anchors(source, source_anchor, target, target_anchor):
+    start = _anchor_point(source, source_anchor)
+    end = _anchor_point(target, target_anchor)
+    sx, sy = start
+    tx, ty = end
+    source_horizontal = source_anchor["side"] in ("left", "right")
+    target_horizontal = target_anchor["side"] in ("left", "right")
+
+    if sx == tx or sy == ty:
+        return [start, end]
+    if source_horizontal and target_horizontal:
+        mid_x = (sx + tx) / 2
+        return _simplify_polyline([start, (mid_x, sy), (mid_x, ty), end])
+    if not source_horizontal and not target_horizontal:
+        mid_y = (sy + ty) / 2
+        return _simplify_polyline([start, (sx, mid_y), (tx, mid_y), end])
+    if source_horizontal:
+        return _simplify_polyline([start, (tx, sy), end])
+    return _simplify_polyline([start, (sx, ty), end])
 
 
 def _auto_orthogonal_points(source, target):
-    sx, sy = _center(source)
-    tx, ty = _center(target)
-    dx, dy = tx - sx, ty - sy
-
-    if abs(dx) >= abs(dy):
-        source_edge_x = source["layout"]["x"] + source["layout"]["w"] if dx >= 0 else source["layout"]["x"]
-        target_edge_x = target["layout"]["x"] if dx >= 0 else target["layout"]["x"] + target["layout"]["w"]
-        start = (source_edge_x, sy)
-        end = (target_edge_x, ty)
-        if sy == ty:
-            return [start, end]
-        mid_x = (source_edge_x + target_edge_x) / 2
-        return _simplify_polyline([start, (mid_x, sy), (mid_x, ty), end])
-
-    source_edge_y = source["layout"]["y"] + source["layout"]["h"] if dy >= 0 else source["layout"]["y"]
-    target_edge_y = target["layout"]["y"] if dy >= 0 else target["layout"]["y"] + target["layout"]["h"]
-    start = (sx, source_edge_y)
-    end = (tx, target_edge_y)
-    if sx == tx:
-        return [start, end]
-    mid_y = (source_edge_y + target_edge_y) / 2
-    return _simplify_polyline([start, (sx, mid_y), (tx, mid_y), end])
+    source_anchor = _inferred_anchor(source, _center(target))
+    target_anchor = _inferred_anchor(target, _center(source))
+    return _connect_anchors(source, source_anchor, target, target_anchor)
 
 
 def _edge_points(source, target, edge):
     route = [(p["x"], p["y"]) for p in edge.get("route", [])]
+    source_anchor = edge.get("from_anchor")
+    target_anchor = edge.get("to_anchor")
+
     if not route:
+        if source_anchor or target_anchor:
+            source_anchor = source_anchor or _inferred_anchor(source, _center(target))
+            target_anchor = target_anchor or _inferred_anchor(target, _center(source))
+            return _connect_anchors(source, source_anchor, target, target_anchor)
         return _auto_orthogonal_points(source, target)
 
-    source_connection = _box_to_point(source, route[0])
-    target_connection = list(reversed(_box_to_point(target, route[-1])))
+    source_connection = (
+        _anchor_to_point(source, source_anchor, route[0])
+        if source_anchor
+        else _box_to_point(source, route[0])
+    )
+    target_connection = list(
+        reversed(
+            _anchor_to_point(target, target_anchor, route[-1])
+            if target_anchor
+            else _box_to_point(target, route[-1])
+        )
+    )
     return _simplify_polyline(source_connection[:-1] + route + target_connection[1:])
 
 
@@ -227,6 +266,24 @@ def _drawio_node_style(theme, kind, group=False):
     return result
 
 
+def _drawio_anchor_style(anchor, prefix):
+    if not anchor:
+        return ""
+    side = anchor["side"]
+    position = anchor.get("position", 0.5)
+    if side == "top":
+        x, y = position, 0
+    elif side == "right":
+        x, y = 1, position
+    elif side == "bottom":
+        x, y = position, 1
+    elif side == "left":
+        x, y = 0, position
+    else:
+        raise ValueError(f"unknown anchor side: {side}")
+    return f"{prefix}X={x};{prefix}Y={y};{prefix}Dx=0;{prefix}Dy=0;{prefix}Perimeter=1;"
+
+
 def render_drawio(data, theme, out: Path):
     d = data["diagram"]
     mxfile = ET.Element("mxfile", host="app.diagrams.net", compressed="false")
@@ -258,6 +315,8 @@ def render_drawio(data, theme, out: Path):
 
     for i, edge in enumerate(data["edges"], 1):
         edge_style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;"
+        edge_style += _drawio_anchor_style(edge.get("from_anchor"), "exit")
+        edge_style += _drawio_anchor_style(edge.get("to_anchor"), "entry")
         if edge.get("dashed"):
             edge_style += "dashed=1;"
         cell = ET.SubElement(
