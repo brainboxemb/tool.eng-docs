@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     strategy:
@@ -20,3 +23,114 @@ jobs:
         run: python -m pip install -e ".[test]"
       - name: Test
         run: python -m pytest -q
+
+  publish-conformance-docs:
+    needs: test
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: python -m pip install -e ".[test]"
+
+      - name: Generate conformance diagrams
+        run: |
+          mkdir -p bld/docs/diagrams bld/docs/fixtures
+          eng-docs diagrams --source tests/fixtures --out bld/docs/diagrams
+          cp tests/fixtures/*.yaml bld/docs/fixtures/
+
+      - name: Build generated documentation index
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          cat > bld/docs/README.md <<EOF
+          # tool.eng-docs generated conformance documentation
+
+          Generated from source commit \`${SOURCE_SHA}\`.
+
+          These fixtures are intentionally domain-neutral. The SVG output is the quickest visual review; the draw.io files verify that the same diagrams remain natively editable.
+
+          ## Simple flow
+
+          [Source YAML](fixtures/simple-flow.yaml) · [Editable draw.io](diagrams/simple-flow.drawio)
+
+          ![Simple flow](diagrams/simple-flow.svg)
+
+          ## Layered architecture
+
+          [Source YAML](fixtures/layered-architecture.yaml) · [Editable draw.io](diagrams/layered-architecture.drawio)
+
+          ![Layered architecture](diagrams/layered-architecture.svg)
+
+          ## Routing stress
+
+          [Source YAML](fixtures/routing-stress.yaml) · [Editable draw.io](diagrams/routing-stress.drawio)
+
+          ![Routing stress](diagrams/routing-stress.svg)
+          EOF
+          printf '%s\n' "$SOURCE_SHA" > bld/docs/source-sha.txt
+
+      - name: Validate generated documentation
+        run: |
+          test -f bld/docs/README.md
+          test -f bld/docs/source-sha.txt
+          test -f bld/docs/diagrams/simple-flow.svg
+          test -f bld/docs/diagrams/simple-flow.drawio
+          test -f bld/docs/diagrams/layered-architecture.svg
+          test -f bld/docs/diagrams/layered-architecture.drawio
+          test -f bld/docs/diagrams/routing-stress.svg
+          test -f bld/docs/diagrams/routing-stress.drawio
+
+      - name: Upload generated documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: eng-docs-conformance
+          path: bld/docs
+          retention-days: 14
+
+      - name: Publish generated documentation branch
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            if [[ ! "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+              echo "ERROR: missing or invalid pull-request number" >&2
+              exit 1
+            fi
+            TARGET_BRANCH="dev/pr-${PR_NUMBER}/docs"
+          else
+            TARGET_BRANCH="prod/docs"
+          fi
+
+          publish_dir="$(mktemp -d)"
+          cp -a bld/docs/. "$publish_dir/"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global credential.helper store
+          printf "https://x-access-token:%s@github.com\n" "$GITHUB_TOKEN" > ~/.git-credentials
+
+          git switch --orphan generated-docs
+          git clean -fdx
+          cp -a "$publish_dir/." ./
+
+          git add .
+          git commit -m "Publish generated documentation for ${SOURCE_SHA}"
+          git push --force origin "HEAD:${TARGET_BRANCH}"
+
+          echo "Published generated documentation to ${TARGET_BRANCH}"
