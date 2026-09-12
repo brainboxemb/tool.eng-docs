@@ -2,21 +2,40 @@
 
 Reusable, project-independent tooling for declarative engineering documentation.
 
-The initial v0.1.0 scope is extracted from proven documentation tooling in `brainboxemb/2026-010-01.meta.event-timing-software` and focuses on generic mechanisms rather than project-specific engineering content.
+The first release, `v0.1.0`, is extracted from proven documentation tooling in `brainboxemb/2026-010-01.meta.event-timing-software` and focuses on reusable diagram generation rather than project-specific engineering content.
 
-## Initial scope
+## v0.1.0 scope
 
-- declarative YAML sources;
+- declarative YAML diagram sources;
 - JSON Schema validation;
 - reusable YAML visual themes;
-- native editable draw.io generation;
 - SVG generation;
-- planning/roadmap rendering;
-- printable PDF generation where applicable;
+- native editable draw.io generation;
+- automatic orthogonal edge routing;
+- explicit edge waypoints and side/position anchors;
 - domain-neutral conformance fixtures and tests;
-- Linux and Windows verification.
+- Linux and Windows verification;
+- `eng-docs diagrams` command-line interface.
 
-The repository must not contain event-timing-specific labels, topology, requirements or other consuming-project semantics.
+Planning/roadmap and printable PDF extraction is intentionally deferred to [issue #3](https://github.com/brainboxemb/tool.eng-docs/issues/3) so the reusable diagram renderer can be released and consumed first.
+
+The repository must not contain consuming-project-specific labels, topology, requirements or other domain semantics.
+
+## Installation
+
+The intended repository-consumer form is a pinned Git dependency. After the `v0.1.0` release:
+
+```text
+brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.1.0
+```
+
+A consuming repository can then run, for example:
+
+```text
+eng-docs diagrams --source docs/_diagrams --out bld/docs/architecture
+```
+
+The built-in schema and theme are used unless `--schema` or `--theme` is supplied.
 
 ## Generated conformance documentation
 
@@ -37,11 +56,11 @@ Each generated documentation branch contains:
 - native editable draw.io output;
 - `source-sha.txt` tying the generated result to its source commit.
 
-The active v0.1.0 draft PR therefore publishes its review output to `dev/pr-2/docs` once the workflow is green.
+The active v0.1.0 PR publishes its review output to `dev/pr-2/docs` once the workflow is green.
 
 ## Active work
 
-The first implementation increment is tracked by [issue #1](https://github.com/brainboxemb/tool.eng-docs/issues/1) and targets the first reusable release, `v0.1.0`.
+The first implementation increment is tracked by [issue #1](https://github.com/brainboxemb/tool.eng-docs/issues/1) and targets release `v0.1.0` followed by migration of the first real consumer.
 
 ## Extraction baseline
 
