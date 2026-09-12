@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brainboxemb-eng-docs"
+version = "0.1.0"
+description = "Reusable tooling for declarative engineering documentation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "PyYAML>=6,<7",
+  "jsonschema>=4.20,<5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+eng-docs = "eng_docs.cli:main"
+
+[tool.setuptools.package-data]
+eng_docs = ["schemas/*.json", "themes/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
