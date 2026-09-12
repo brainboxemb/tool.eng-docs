@@ -1,0 +1,22 @@
+font:
+  family: Arial, sans-serif
+  title_size: 26
+  group_title_size: 17
+  node_size: 14
+  note_size: 12
+canvas:
+  background: "#ffffff"
+  text: "#202124"
+  edge: "#5f6368"
+  edge_label_background: "#ffffff"
+kinds:
+  group-primary: {fill: "#eef4ff", stroke: "#6c8ebf"}
+  group-secondary: {fill: "#eef8ee", stroke: "#82b366"}
+  group-neutral: {fill: "#f5f5f5", stroke: "#777777"}
+  component: {fill: "#dae8fc", stroke: "#6c8ebf"}
+  service: {fill: "#fff2cc", stroke: "#d6b656"}
+  runtime: {fill: "#d5e8d4", stroke: "#82b366"}
+  integration: {fill: "#f8cecc", stroke: "#b85450"}
+  storage: {fill: "#f4cccc", stroke: "#b85450"}
+  platform: {fill: "#e1d5e7", stroke: "#9673a6"}
+  external: {fill: "#eeeeee", stroke: "#777777"}
