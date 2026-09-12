@@ -16,6 +16,7 @@ All notable changes to `tool.eng-docs` are recorded here.
 - explicit route waypoints, dashed edges and labels;
 - explicit edge anchors using side plus relative position;
 - domain-neutral simple-flow, layered-architecture and routing-stress fixtures;
+- CLI success/failure tests;
 - Linux and Windows test matrix;
 - generated conformance documentation on `dev/pr-<N>/docs` and `prod/docs`;
 - automatic GitHub tag/release creation from the package version on `main`;
