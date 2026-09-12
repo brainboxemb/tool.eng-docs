@@ -61,7 +61,7 @@ def test_layered_fixture_preserves_groups_and_semantic_labels(tmp_path):
     assert tree.findall(".//mxCell[@id='coordinator']")
 
 
-def test_routing_fixture_keeps_waypoints_dashed_edges_and_labels(tmp_path):
+def test_routing_fixture_keeps_waypoints_anchors_dashed_edges_and_labels(tmp_path):
     out = _render_fixture(tmp_path, "routing-stress.yaml")
     svg = out / "routing-stress.svg"
     drawio = out / "routing-stress.drawio"
@@ -74,7 +74,9 @@ def test_routing_fixture_keeps_waypoints_dashed_edges_and_labels(tmp_path):
     assert "routed request" in svg_text
     assert 'stroke-dasharray="7 5"' in svg_text
     assert "dashed=1" in drawio_text
-    assert len(tree.findall(".//Array[@as='points']/mxPoint")) >= 4
+    assert "exitX=1" in drawio_text
+    assert "entryX=0" in drawio_text
+    assert len(tree.findall(".//Array[@as='points']/mxPoint")) >= 8
 
 
 def test_missing_edge_reference_is_rejected():
@@ -115,6 +117,14 @@ def test_unknown_kind_is_rejected():
 def test_schema_invalid_source_is_rejected():
     data = load_yaml(FIXTURES / "simple-flow.yaml")
     del data["diagram"]["width"]
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "simple-flow.yaml")
+
+
+def test_invalid_anchor_position_is_rejected():
+    data = load_yaml(FIXTURES / "simple-flow.yaml")
+    data["edges"][0]["from_anchor"] = {"side": "right", "position": 1.5}
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     with pytest.raises(ValueError, match="invalid diagram source"):
         validate_source(data, schema, FIXTURES / "simple-flow.yaml")
