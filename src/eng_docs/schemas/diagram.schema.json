@@ -62,6 +62,15 @@
       "required": ["x", "y"],
       "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
     },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["side"],
+      "properties": {
+        "side": {"type": "string", "enum": ["top", "right", "bottom", "left"]},
+        "position": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.5}
+      }
+    },
     "edge": {
       "type": "object", "additionalProperties": false,
       "required": ["from", "to"],
@@ -70,6 +79,8 @@
         "label": {"type": "string"},
         "kind": {"type": "string", "default": "dependency"},
         "dashed": {"type": "boolean", "default": false},
+        "from_anchor": {"$ref": "#/$defs/anchor"},
+        "to_anchor": {"$ref": "#/$defs/anchor"},
         "route": {"type": "array", "items": {"$ref": "#/$defs/point"}}
       }
     }
