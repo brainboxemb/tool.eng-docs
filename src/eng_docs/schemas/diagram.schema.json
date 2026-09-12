@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "diagram.schema.json",
+  "title": "Declarative engineering diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["diagram", "groups", "nodes", "edges"],
+  "properties": {
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "width", "height"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "title": {"type": "string", "minLength": 1},
+        "width": {"type": "integer", "minimum": 320},
+        "height": {"type": "integer", "minimum": 240},
+        "description": {"type": "string"},
+        "note": {"type": "string"}
+      }
+    },
+    "groups": {"type": "array", "items": {"$ref": "#/$defs/box"}},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
+    "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}}
+  },
+  "$defs": {
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "w", "h"],
+      "properties": {
+        "x": {"type": "number"}, "y": {"type": "number"},
+        "w": {"type": "number", "exclusiveMinimum": 0},
+        "h": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "box": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "kind", "layout"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+        "label": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "layout": {"$ref": "#/$defs/rect"},
+        "note": {"type": "string"}
+      }
+    },
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "kind", "layout"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+        "label": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "group": {"type": "string"},
+        "layout": {"$ref": "#/$defs/rect"},
+        "note": {"type": "string"}
+      }
+    },
+    "point": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"type": "string"}, "to": {"type": "string"},
+        "label": {"type": "string"},
+        "kind": {"type": "string", "default": "dependency"},
+        "dashed": {"type": "boolean", "default": false},
+        "route": {"type": "array", "items": {"$ref": "#/$defs/point"}}
+      }
+    }
+  }
+}
