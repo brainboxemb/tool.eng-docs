@@ -9,7 +9,7 @@ import sys
 
 import yaml
 
-from .assembly import assemble
+from .assembly_output import assemble_output
 from .diagrams import generate
 from .manifests import build_manifest
 
@@ -85,7 +85,7 @@ def main(argv=None):
             config = Path(args.config)
             if not config.is_absolute():
                 config = root / config
-            assemble(root, config, Path(args.out))
+            assemble_output(root, config, Path(args.out))
             return 0
     except (ValueError, OSError, yaml.YAMLError) as exc:
         print(str(exc), file=sys.stderr)
