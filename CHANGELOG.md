@@ -2,6 +2,33 @@
 
 All notable changes to `tool.eng-docs` are recorded here.
 
+## 0.2.0.dev0 — unreleased
+
+### Added
+
+- `eng-docs manifest` for domain-neutral descriptions of already-produced build, design-document, verification and documentation assets;
+- `eng-docs assemble` for self-contained Markdown review/publication trees assembled from authoritative source Markdown plus producer manifests;
+- JSON Schemas for asset manifests and assembly configuration;
+- stable document IDs, optional derived document output paths, ordered indexes and combined books;
+- generated `assembly-info.yml` provenance with assembler version, source repository/revision, configuration digest and input-manifest provenance;
+- safe staged assembly that replaces an existing output tree only after successful generation;
+- executable user-facing assembly example and generated review evidence on `dev/pr-N/docs` / `prod/docs`;
+- published pytest output alongside generated conformance documentation.
+
+### Qualified
+
+- software-document consumer `2026-010-01.meta.event-timing-software` using its normal managed `tool.eng-docs` git dependency;
+- current SCAD reference consumer `template.scad-project` without replacing `scad-render`, OpenSCAD or `tool.scad-project` ownership;
+- cross-domain manifest genericity against the actual Java reference publication-tree shape without Java/Maven/Surefire-specific schema fields;
+- document renumbering through stable IDs so source filename changes do not require matching index/book identifier changes.
+
+### Architecture
+
+- assembly consumes already-produced outputs and does not schedule SCAD, Java, verification or diagram producers;
+- publication destination/branch selection remains an external repository/CI orchestration responsibility;
+- the two-consumer qualification did not justify a mandatory repository-wide `project.docs.yml`;
+- verification evidence-bundle semantics, broader Markdown syntax and producer orchestration remain deferred until a real consumer requires them.
+
 ## 0.1.1 — 2026-09-13
 
 ### Added
