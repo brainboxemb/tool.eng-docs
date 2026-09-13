@@ -34,9 +34,10 @@ PR #4 is developing the next capability as `0.2.0.dev0`. It adds:
 - `eng-docs manifest` to describe already-produced assets/evidence without taking ownership of their build;
 - `eng-docs assemble` to create self-contained Markdown review/publication trees from source Markdown plus manifests;
 - generic asset/evidence metadata for build, design-document, verification and docs lifecycles;
-- link localisation in generated copies while leaving authoritative source Markdown unchanged.
+- link localisation in generated copies while leaving authoritative source Markdown unchanged;
+- `assembly-info.yml` provenance with assembler version, source repository/revision, configuration digest and input-manifest provenance.
 
-This capability is **not part of released v0.1.1** yet. It must first qualify against the software-document consumer, a current SCAD consumer and a cross-domain Java evidence-tree check.
+This capability is **not part of released v0.1.1** yet. Its bounded qualification has now passed against the software-document consumer and the current SCAD reference consumer, with an additional genericity guard matching the Java reference publication tree. The implementation/release decision remains in PR #4 until that development work is merged or released.
 
 See [docs/document-assembly.md](docs/document-assembly.md) and the executable `examples/assembly/` example. The assembler consumes producer output; it does not run OpenSCAD, Maven, verification or diagram generation itself.
 
@@ -257,8 +258,7 @@ Consumers should pin a release rather than a feature branch.
 
 ## Generated conformance documentation
 
-CI renders domain-neutral conformance fixtures so diagram quality can be reviewed
-visually rather than only through assertions.
+CI publishes domain-neutral review evidence so behavior can be inspected without relying only on assertions or long Actions logs.
 
 Generated output follows the documentation publication convention:
 
@@ -267,8 +267,14 @@ pull request  -> dev/pr-<PR-number>/docs
 main          -> prod/docs
 ```
 
-Published conformance output includes rendered SVG fixtures, fixture YAML,
-editable draw.io output and `source-sha.txt` provenance.
+Published conformance output includes:
+
+- rendered SVG fixtures and editable draw.io output;
+- fixture YAML;
+- the executable assembly example as a self-contained generated document tree;
+- the assembly input/configuration, producer manifest and `assembly-info.yml` provenance;
+- human-readable pytest output;
+- `source-sha.txt` provenance for the owner repository snapshot.
 
 ## Development / ownership boundary
 
