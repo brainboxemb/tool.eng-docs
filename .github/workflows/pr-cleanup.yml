@@ -1,0 +1,23 @@
+name: Cleanup PR documentation preview
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number whose generated docs preview should be removed
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  # Generated preview branches are repository lifecycle state, not an
+  # engineering-document concern. Keep deletion policy in tool.git-project.
+  cleanup:
+    uses: brainboxemb/tool.git-project/.github/workflows/reusable-pr-preview-cleanup.yml@v0.2.2
+    with:
+      preview_suffixes: docs
+      pr_number: ${{ inputs.pr_number || github.event.pull_request.number }}
