@@ -56,30 +56,44 @@ def test_manifest_include_filters_outputs(tmp_path):
     assert [item["path"] for item in data["assets"]] == ["overview.svg"]
 
 
-def test_manifest_remains_domain_neutral_for_java_build_evidence(tmp_path):
-    source = tmp_path / "bld"
-    evidence = source / "evidence" / "tests"
-    evidence.mkdir(parents=True)
-    (source / "event-timing.jar").write_bytes(b"jar-placeholder")
-    (source / "provenance.txt").write_text("source=0123456789abcdef\n", encoding="utf-8")
-    (evidence / "README.md").write_text("# Test evidence\n", encoding="utf-8")
-    (evidence / "TEST-example.xml").write_text("<testsuite tests='1'/>\n", encoding="utf-8")
+def test_manifest_remains_domain_neutral_for_java_build_publication(tmp_path):
+    # Mirror the current template.java-project publication tree produced by
+    # tool.java-project: artifacts, provenance, raw/readable Surefire evidence,
+    # a root index and the exact source revision marker. The generic manifest
+    # must describe this without Java/Maven/Surefire-specific schema fields.
+    source = tmp_path / "java-build-publication"
+    artifacts = source / "artifacts"
+    tests = source / "evidence" / "tests" / "target" / "surefire-reports"
+    artifacts.mkdir(parents=True)
+    tests.mkdir(parents=True)
+
+    (source / "README.md").write_text("# Java build output\n", encoding="utf-8")
+    (source / "source-sha.txt").write_text("0123456789abcdef\n", encoding="utf-8")
+    (artifacts / "template-java-project-0.1.0-SNAPSHOT.jar").write_bytes(b"jar-placeholder")
+    (source / "evidence" / "toolchain-build-provenance.txt").write_text(
+        "source=0123456789abcdef\n",
+        encoding="utf-8",
+    )
+    (source / "evidence" / "tests" / "README.md").write_text("# Unit test report\n", encoding="utf-8")
+    (tests / "TEST-example.xml").write_text("<testsuite tests='1'/>\n", encoding="utf-8")
 
     data = build_manifest(
         source,
         source / "assets.yml",
         producer="tool.java-project",
-        producer_version="test-sha",
+        producer_version="3dd4b176956513948c601ec9cf95f09f6f21712a",
         source_revision="0123456789abcdef",
         lifecycle="build",
         relationship="reference-existing",
     )
 
     assert {item["path"] for item in data["assets"]} == {
-        "event-timing.jar",
-        "provenance.txt",
+        "README.md",
+        "source-sha.txt",
+        "artifacts/template-java-project-0.1.0-SNAPSHOT.jar",
+        "evidence/toolchain-build-provenance.txt",
         "evidence/tests/README.md",
-        "evidence/tests/TEST-example.xml",
+        "evidence/tests/target/surefire-reports/TEST-example.xml",
     }
     assert all(
         set(item) == {"id", "kind", "lifecycle", "relationship", "path"}
