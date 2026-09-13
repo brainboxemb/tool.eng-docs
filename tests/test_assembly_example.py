@@ -1,6 +1,8 @@
 from pathlib import Path
 import shutil
 
+import yaml
+
 from eng_docs.cli import main
 
 
@@ -29,6 +31,8 @@ def test_user_facing_assembly_example(tmp_path):
         "--root", str(project),
         "--config", "assembly.yml",
         "--out", str(project / "bld" / "docs"),
+        "--source-repository", "brainboxemb/example-project",
+        "--source-revision", "fedcba9876543210",
     ])
     assert result == 0
 
@@ -39,3 +43,7 @@ def test_user_facing_assembly_example(tmp_path):
     assert "../assets/architecture/system.svg" in generated
     assert (project / "bld" / "docs" / "assets" / "architecture" / "system.svg").is_file()
     assert (project / "bld" / "docs" / "documents" / "README.md").is_file()
+
+    info = yaml.safe_load((project / "bld" / "docs" / "assembly-info.yml").read_text(encoding="utf-8"))
+    assert info["source"]["repository"] == "brainboxemb/example-project"
+    assert info["source"]["revision"] == "fedcba9876543210"
