@@ -53,6 +53,8 @@ def main(argv=None):
     assembly.add_argument("--root", default=".", help="project root for source/config paths")
     assembly.add_argument("--config", required=True, help="assembly YAML configuration")
     assembly.add_argument("--out", required=True, help="assembled output root")
+    assembly.add_argument("--source-repository", required=True, help="source repository identity for assembly provenance")
+    assembly.add_argument("--source-revision", required=True, help="exact source revision materialized by this assembly run")
 
     args = parser.parse_args(argv)
     try:
@@ -85,7 +87,13 @@ def main(argv=None):
             config = Path(args.config)
             if not config.is_absolute():
                 config = root / config
-            assemble_output(root, config, Path(args.out))
+            assemble_output(
+                root,
+                config,
+                Path(args.out),
+                source_repository=args.source_repository,
+                source_revision=args.source_revision,
+            )
             return 0
     except (ValueError, OSError, yaml.YAMLError) as exc:
         print(str(exc), file=sys.stderr)
