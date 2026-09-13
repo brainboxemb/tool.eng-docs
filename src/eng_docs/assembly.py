@@ -257,7 +257,6 @@ def _load_assets(project_root: Path, out_root: Path, entries: list[dict]) -> lis
             raise ValueError(f"asset manifest does not exist: {manifest_path}")
         data = load_manifest(manifest_path)
         prefix = _relative_path(entry["publish_prefix"], "publish_prefix")
-
         manifest_output.mkdir(parents=True, exist_ok=True)
         shutil.copy2(manifest_path, manifest_output / f"{number:02d}-{manifest_path.name}")
 
@@ -334,12 +333,19 @@ def assemble(project_root: Path, config_path: Path, out_root: Path) -> dict:
 
     assets = _load_assets(project_root, out_root, data.get("asset_manifests", []))
     documents: dict[str, BuiltDocument] = {}
+    document_outputs: set[Path] = set()
 
     for spec in data["documents"]:
         if spec["id"] in documents:
             raise ValueError(f"duplicate document id: {spec['id']}")
         source_rel = _relative_path(spec["source"], f"document source for {spec['id']}")
-        output_rel = _relative_path(spec["output"], f"document output for {spec['id']}")
+        if "output" in spec:
+            output_rel = _relative_path(spec["output"], f"document output for {spec['id']}")
+        else:
+            output_rel = Path("documents") / source_rel.name
+        if output_rel in document_outputs:
+            raise ValueError(f"duplicate document output path: {output_rel.as_posix()}")
+        document_outputs.add(output_rel)
         source = (project_root / source_rel).resolve()
         if not source.is_file():
             raise ValueError(f"document source does not exist: {source}")

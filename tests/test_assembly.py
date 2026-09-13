@@ -49,8 +49,8 @@ def _fixture(tmp_path: Path):
             }
         ],
         "documents": [
-            {"id": "architecture", "source": "docs/a.md", "output": "documents/a.md"},
-            {"id": "details", "source": "docs/b.md", "output": "documents/b.md"},
+            {"id": "architecture", "source": "docs/a.md"},
+            {"id": "details", "source": "docs/b.md"},
         ],
         "indexes": [
             {
@@ -121,6 +121,33 @@ def test_assemble_builds_index_and_book(tmp_path):
     assert "### Architecture" not in book
     assert "**Source document:** [a.md](a.md)" in book
     assert "![System](../assets/architecture/system.svg)" in book
+
+
+def test_assemble_allows_explicit_document_output_override(tmp_path):
+    root, config_path, _ = _fixture(tmp_path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    data["documents"][1]["output"] = "custom/details.md"
+    config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+    assemble(root, config_path, root / "bld" / "docs")
+
+    assert (root / "bld" / "docs" / "custom" / "details.md").is_file()
+    index = (root / "bld" / "docs" / "documents" / "README.md").read_text(encoding="utf-8")
+    assert "[Details](../custom/details.md)" in index
+
+
+def test_assemble_rejects_duplicate_document_output_path(tmp_path):
+    root, config_path, _ = _fixture(tmp_path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    data["documents"][1]["output"] = "documents/a.md"
+    config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+    try:
+        assemble(root, config_path, root / "bld" / "docs")
+    except ValueError as exc:
+        assert "duplicate document output path: documents/a.md" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
 
 
 def test_assemble_rejects_parent_output_path(tmp_path):

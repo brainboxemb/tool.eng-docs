@@ -7,7 +7,6 @@ asset_manifests:
 documents:
   - id: overview
     source: docs/overview.md
-    output: documents/overview.md
 
 indexes:
   - output: documents/README.md

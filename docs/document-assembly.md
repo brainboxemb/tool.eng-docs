@@ -76,7 +76,6 @@ asset_manifests:
 documents:
   - id: architecture
     source: docs/architecture.md
-    output: documents/architecture.md
 
 indexes:
   - output: documents/README.md
@@ -93,6 +92,19 @@ books:
     documents:
       - architecture
 ```
+
+By default a document is published as `documents/<source filename>`. In this example `docs/architecture.md` therefore becomes `documents/architecture.md`.
+
+Use an explicit `output` only when the published location really differs from that default:
+
+```yaml
+documents:
+  - id: architecture
+    source: docs/architecture.md
+    output: reference/architecture.md
+```
+
+The stable document `id` is what indexes and books reference. The numbered source filename may therefore change during a repository renumbering without forcing matching changes through every index and book declaration; normally only the document's `source` path changes. The assembler never renames or mutates authoritative source files itself.
 
 Then assemble:
 
