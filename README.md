@@ -2,7 +2,7 @@
 
 Reusable, project-independent tooling for engineering documentation.
 
-The released `v0.1.0` capability is the declarative diagram renderer: author a
+The released `v0.1.1` capability is the declarative diagram renderer: author a
 small YAML model and generate both an SVG for documentation and a native editable
 draw.io file.
 
@@ -11,7 +11,7 @@ not consuming-project engineering semantics.
 
 ## Current capabilities
 
-`v0.1.0` provides:
+`v0.1.1` provides:
 
 - declarative YAML diagram sources;
 - JSON Schema validation plus semantic reference validation;
@@ -22,7 +22,8 @@ not consuming-project engineering semantics.
 - explicit edge anchors and waypoint routes;
 - domain-neutral conformance examples/tests;
 - Linux and Windows verification;
-- the `eng-docs diagrams` CLI.
+- the `eng-docs diagrams` CLI;
+- human-facing diagram authoring documentation and tested examples.
 
 Planning/roadmap and printable PDF work is tracked separately in issue #3.
 Common document assembly is being designed separately in issue #4 and must not
@@ -30,12 +31,12 @@ replace the existing producer-specific diagram model.
 
 ## Install
 
-The current released version is `v0.1.0`.
+The current released version is `v0.1.1`.
 
 A repository can pin it directly from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.1.0"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.1.1"
 ```
 
 The package installs the `eng-docs` command.
@@ -231,7 +232,7 @@ Python package artifacts.
 Current release:
 
 ```text
-v0.1.0
+v0.1.1
 ```
 
 Consumers should pin a release rather than a feature branch.
