@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assembly.schema.json",
+  "title": "Engineering documentation assembly configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "documents"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "asset_manifests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "publish_prefix"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "publish_prefix": {"type": "string"}
+        }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source", "output"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "output": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "indexes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["output", "title", "sections"],
+        "properties": {
+          "output": {"type": "string", "minLength": 1},
+          "title": {"type": "string", "minLength": 1},
+          "intro": {"type": "string"},
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "items"],
+              "properties": {
+                "title": {"type": "string", "minLength": 1},
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["document"],
+                        "properties": {"document": {"type": "string", "minLength": 1}}
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["label", "target"],
+                        "properties": {
+                          "label": {"type": "string", "minLength": 1},
+                          "target": {"type": "string", "minLength": 1}
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "books": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["output", "title", "documents"],
+        "properties": {
+          "output": {"type": "string", "minLength": 1},
+          "title": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "documents": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    }
+  }
+}
