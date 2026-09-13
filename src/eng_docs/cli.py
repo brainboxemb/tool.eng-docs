@@ -7,7 +7,11 @@ from pathlib import Path
 import argparse
 import sys
 
+import yaml
+
+from .assembly_output import assemble_output
 from .diagrams import generate
+from .manifests import build_manifest
 
 
 def main(argv=None):
@@ -20,21 +24,80 @@ def main(argv=None):
     diagrams.add_argument("--schema", help="diagram JSON Schema; built-in default is used when omitted")
     diagrams.add_argument("--theme", help="theme YAML; built-in default is used when omitted")
 
+    manifest = sub.add_parser("manifest", help="describe already-produced assets")
+    manifest.add_argument("--source", required=True, help="directory containing produced assets")
+    manifest.add_argument("--out", required=True, help="manifest YAML path")
+    manifest.add_argument("--producer", required=True, help="producer identity")
+    manifest.add_argument("--producer-version", help="producer version; defaults to tool.eng-docs version")
+    manifest.add_argument("--source-revision", required=True, help="exact source revision/provenance")
+    manifest.add_argument(
+        "--lifecycle",
+        required=True,
+        choices=["build", "design-doc", "verification", "docs"],
+        help="owning asset lifecycle",
+    )
+    manifest.add_argument(
+        "--relationship",
+        required=True,
+        choices=["generate-inline", "producer-source", "reference-existing", "reference-evidence"],
+        help="document-to-asset relationship",
+    )
+    manifest.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        help="optional relative glob to include; may be repeated",
+    )
+
+    assembly = sub.add_parser("assemble", help="assemble Markdown and produced assets")
+    assembly.add_argument("--root", default=".", help="project root for source/config paths")
+    assembly.add_argument("--config", required=True, help="assembly YAML configuration")
+    assembly.add_argument("--out", required=True, help="assembled output root")
+    assembly.add_argument("--source-repository", required=True, help="source repository identity for assembly provenance")
+    assembly.add_argument("--source-revision", required=True, help="exact source revision materialized by this assembly run")
+
     args = parser.parse_args(argv)
-    if args.command == "diagrams":
-        package_root = files("eng_docs")
-        schema = Path(args.schema) if args.schema else Path(str(package_root.joinpath("schemas/diagram.schema.json")))
-        theme = Path(args.theme) if args.theme else Path(str(package_root.joinpath("themes/default.yaml")))
-        source = Path(args.source)
-        if not source.is_dir():
-            print(f"diagram source directory does not exist: {source}", file=sys.stderr)
-            return 2
-        try:
+    try:
+        if args.command == "diagrams":
+            package_root = files("eng_docs")
+            schema = Path(args.schema) if args.schema else Path(str(package_root.joinpath("schemas/diagram.schema.json")))
+            theme = Path(args.theme) if args.theme else Path(str(package_root.joinpath("themes/default.yaml")))
+            source = Path(args.source)
+            if not source.is_dir():
+                print(f"diagram source directory does not exist: {source}", file=sys.stderr)
+                return 2
             generate(source, schema, theme, Path(args.out))
-        except (ValueError, OSError) as exc:
-            print(str(exc), file=sys.stderr)
-            return 2
-        return 0
+            return 0
+
+        if args.command == "manifest":
+            build_manifest(
+                Path(args.source),
+                Path(args.out),
+                producer=args.producer,
+                producer_version=args.producer_version,
+                source_revision=args.source_revision,
+                lifecycle=args.lifecycle,
+                relationship=args.relationship,
+                include=args.include,
+            )
+            return 0
+
+        if args.command == "assemble":
+            root = Path(args.root)
+            config = Path(args.config)
+            if not config.is_absolute():
+                config = root / config
+            assemble_output(
+                root,
+                config,
+                Path(args.out),
+                source_repository=args.source_repository,
+                source_revision=args.source_revision,
+            )
+            return 0
+    except (ValueError, OSError, yaml.YAMLError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
     return 2
 

@@ -2,16 +2,14 @@
 
 Reusable, project-independent tooling for engineering documentation.
 
-The released `v0.1.1` capability is the declarative diagram renderer: author a
-small YAML model and generate both an SVG for documentation and a native editable
-draw.io file.
-
-The repository intentionally owns reusable tooling and schema/layout behavior,
-not consuming-project engineering semantics.
+`tool.eng-docs` owns reusable documentation mechanisms and schemas, not the
+engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.1.1` provides:
+`v0.2.0` provides two bounded capabilities.
+
+### Declarative diagrams
 
 - declarative YAML diagram sources;
 - JSON Schema validation plus semantic reference validation;
@@ -25,23 +23,42 @@ not consuming-project engineering semantics.
 - the `eng-docs diagrams` CLI;
 - human-facing diagram authoring documentation and tested examples.
 
+### Document assembly
+
+- `eng-docs manifest` describes already-produced assets/evidence without taking
+  ownership of their build;
+- `eng-docs assemble` creates self-contained Markdown review/publication trees
+  from authoritative source Markdown plus producer manifests;
+- generic asset/evidence metadata covers build, design-document, verification and
+  docs lifecycles;
+- normal Markdown/image links are localized only in the generated copy, so source
+  Markdown remains directly useful on GitHub;
+- stable document IDs support ordered indexes and combined books without coupling
+  document identity to a filename;
+- `assembly-info.yml` retains assembler version, source repository/revision,
+  configuration digest and input-manifest provenance;
+- output is staged safely before replacing the requested assembly tree.
+
+The assembly boundary was qualified against both the event-timing software-doc
+consumer and the current SCAD reference consumer. It consumes producer output;
+it does **not** run OpenSCAD, Maven, verification or diagram producers itself.
+
+See [docs/document-assembly.md](docs/document-assembly.md) and the executable
+`examples/assembly/` example.
+
 Planning/roadmap and printable PDF work is tracked separately in issue #3.
-Common document assembly is being designed separately in issue #4 and must not
-replace the existing producer-specific diagram model.
 
 ## Install
 
-The current released version is `v0.1.1`.
-
-A repository can pin it directly from GitHub:
+Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.1.1"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.2.0"
 ```
 
 The package installs the `eng-docs` command.
 
-## Five-minute quick start
+## Five-minute diagram quick start
 
 Create a directory for diagram sources, for example:
 
@@ -89,14 +106,13 @@ bld/docs/architecture/service-flow.svg
 bld/docs/architecture/service-flow.drawio
 ```
 
-The SVG is intended for embedding in Markdown/HTML. The `.drawio` file is a
-native editable diagrams.net/draw.io document.
-
-Output filenames are based on `diagram.id`, not on the YAML filename.
+The SVG is intended for Markdown/HTML. The `.drawio` file is a native editable
+diagrams.net/draw.io document. Output filenames are based on `diagram.id`, not on
+the YAML filename.
 
 ## Diagram source model
 
-The complete current authoring contract is documented in
+The complete authoring contract is documented in
 [docs/diagram-authoring.md](docs/diagram-authoring.md).
 
 That guide covers:
@@ -113,13 +129,13 @@ That guide covers:
 - common authoring mistakes;
 - recommended project integration.
 
-The machine-readable schema remains:
+The machine-readable diagram schema is:
 
 ```text
 src/eng_docs/schemas/diagram.schema.json
 ```
 
-The built-in theme remains:
+The built-in theme is:
 
 ```text
 src/eng_docs/themes/default.yaml
@@ -127,7 +143,7 @@ src/eng_docs/themes/default.yaml
 
 ## User-facing examples
 
-Start with:
+Diagram examples:
 
 ```text
 examples/minimal-flow.yaml
@@ -137,15 +153,19 @@ examples/routed-flow.yaml
 The first demonstrates the minimal model and automatic routing. The second shows
 visual grouping, explicit edge anchors, a dashed edge and manual waypoints.
 
-The examples are rendered by automated tests so documentation examples remain in
-sync with the released implementation.
+Document-assembly example:
 
-Files under `tests/fixtures/` are conformance/stress fixtures and are not the
-recommended user starting point.
+```text
+examples/assembly/
+```
+
+The examples are exercised by automated tests so documentation and behavior stay
+aligned. Files under `tests/fixtures/` are conformance/stress fixtures rather than
+the recommended user starting point.
 
 ## CLI reference
 
-Current command:
+Diagram generation:
 
 ```text
 eng-docs diagrams \
@@ -155,17 +175,20 @@ eng-docs diagrams \
   [--theme <theme.yaml>]
 ```
 
-`--source` must be a directory. The command reads every direct child matching
-`*.yaml`; it does not currently recurse into subdirectories.
+Asset manifest generation and assembly are documented in
+[docs/document-assembly.md](docs/document-assembly.md). The executable example
+shows the normal flow:
 
-The built-in schema and theme are used when `--schema` / `--theme` are omitted.
-Invalid source returns a non-zero exit code with schema/reference validation
-errors on stderr.
+```text
+producer output -> eng-docs manifest -> eng-docs assemble -> self-contained docs tree
+```
+
+`--source` for `diagrams` must be a directory. The command reads every direct
+child matching `*.yaml`; it does not currently recurse into subdirectories.
 
 ## Typical repository layout
 
-A consuming repository can keep narrative Markdown and diagram producer source
-separate:
+A consuming repository can keep narrative Markdown and producer source separate:
 
 ```text
 docs/
@@ -213,53 +236,82 @@ the full behavior and custom-theme expectations.
 
 ## Validation
 
-Validation has two layers:
+Diagram validation has two layers:
 
 1. JSON Schema validation of structure/types/ranges;
 2. semantic validation of unique IDs, group references, edge node references and
    theme kinds.
 
-This catches errors such as missing required arrays, duplicate IDs, unknown
-kinds, missing groups/nodes, bad anchors and malformed waypoints before output is
-published.
+Document assembly validates asset manifests and assembly configuration against
+packaged JSON Schemas and also checks path safety, source immutability and
+resolvable declared assets.
 
 ## Release model
 
-`pyproject.toml` owns the package version. A non-development version merged to
-`main` is released through the release workflow with the matching GitHub tag and
-Python package artifacts.
+This is a tooling repository, so root `VERSION`, the Python package version in
+`pyproject.toml` and runtime `eng_docs.__version__` form one checked release
+contract.
 
-Current release:
+A release is not created merely because a version change reaches `main`.
+Production order is:
 
 ```text
-v0.1.1
+merge qualified implementation
+  -> Test green on exact main commit
+  -> guarded release request
+  -> immutable vX.Y.Z tag
+  -> Test again on the exact tag
+  -> build wheel/sdist
+  -> GitHub Release
+```
+
+Generic release/tag gating is delegated to released `tool.git-project`; Python
+package construction remains owned here.
+
+Current release target:
+
+```text
+v0.2.0
 ```
 
 Consumers should pin a release rather than a feature branch.
 
 ## Generated conformance documentation
 
-CI renders domain-neutral conformance fixtures so diagram quality can be reviewed
-visually rather than only through assertions.
+CI publishes domain-neutral review evidence so behavior can be inspected without
+relying only on assertions or long Actions logs.
 
-Generated output follows the documentation publication convention:
+Generated output follows the shared lifecycle convention:
 
 ```text
 pull request  -> dev/pr-<PR-number>/docs
 main          -> prod/docs
+release tag   -> rel/vX.Y.Z/docs
 ```
 
-Published conformance output includes rendered SVG fixtures, fixture YAML,
-editable draw.io output and `source-sha.txt` provenance.
+Published conformance output includes:
+
+- rendered SVG fixtures and editable draw.io output;
+- fixture YAML;
+- the executable assembly example as a self-contained generated document tree;
+- assembly input/configuration, producer manifest and `assembly-info.yml`
+  provenance;
+- human-readable pytest output;
+- `source-sha.txt` provenance for the owner repository snapshot.
+
+Publication and PR-preview cleanup use released `tool.git-project` lifecycle
+primitives; `tool.eng-docs` only prepares the documentation tree.
 
 ## Development / ownership boundary
 
 The first reusable mechanisms were extracted from
-`brainboxemb/2026-010-01.meta.event-timing-software`, but this repository must
-remain project-independent.
+`brainboxemb/2026-010-01.meta.event-timing-software`, but this repository remains
+project-independent.
 
-`tool.eng-docs` owns reusable schemas, validation, rendering/layout, themes, CLI
-behavior, examples and conformance tests. Consuming repositories own their actual
-architecture labels, topology, requirements and diagram sources.
+`tool.eng-docs` owns reusable schemas, validation, rendering/layout, themes,
+generic document assembly, CLI behavior, examples and conformance tests.
+Consuming repositories own their actual architecture labels, topology,
+requirements, diagram sources and producer-specific build/verification
+semantics.
 
 See [AGENTS.md](AGENTS.md) for repository working rules.

@@ -4,51 +4,120 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
+# Owner verification is read-only. Generated-output publication receives write
+# permission only in the dedicated reusable publication job below.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install
         run: python -m pip install -e ".[test]"
-      - name: Test
+
+      - name: Verify release-version contract
+        run: >-
+          python -c "from pathlib import Path; import tomllib, eng_docs;
+          v=Path('VERSION').read_text(encoding='utf-8').strip();
+          p=tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'];
+          assert v == p == eng_docs.__version__, (v, p, eng_docs.__version__)"
+
+      - name: Test and capture Linux evidence
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p owner-test-evidence
+          python -m pytest -q | tee owner-test-evidence/pytest.txt
+
+      - name: Test on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: python -m pytest -q
 
-  publish-conformance-docs:
+      - name: Upload Linux owner-test evidence
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: eng-docs-owner-test-evidence
+          path: owner-test-evidence/pytest.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  prepare-conformance-docs:
     needs: test
-    runs-on: ubuntu-latest
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - name: Checkout exact source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install
         run: python -m pip install -e ".[test]"
+
+      - name: Restore owner-test evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: eng-docs-owner-test-evidence
+          path: bld/docs/evidence
 
       - name: Generate conformance diagrams
         run: |
           mkdir -p bld/docs/diagrams bld/docs/fixtures
           eng-docs diagrams --source tests/fixtures --out bld/docs/diagrams
           cp tests/fixtures/*.yaml bld/docs/fixtures/
+
+      - name: Generate document-assembly conformance example
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          example_root="$(mktemp -d)"
+          cp -a examples/assembly/. "$example_root/"
+          tool_version="$(python -c 'import eng_docs; print(eng_docs.__version__)')"
+
+          eng-docs manifest \
+            --source "$example_root/produced" \
+            --out "$example_root/produced/assets.yml" \
+            --producer tool.eng-docs.example-diagrams \
+            --producer-version "$tool_version" \
+            --source-revision "$SOURCE_SHA" \
+            --lifecycle docs \
+            --relationship producer-source \
+            --include '*.svg'
+
+          eng-docs assemble \
+            --root "$example_root" \
+            --config assembly.yml \
+            --out bld/docs/assembly \
+            --source-repository brainboxemb/tool.eng-docs \
+            --source-revision "$SOURCE_SHA"
+
+          mkdir -p bld/docs/assembly/_input
+          cp examples/assembly/assembly.yml bld/docs/assembly/_input/assembly.yml
+          cp examples/assembly/docs/overview.md bld/docs/assembly/_input/overview.md
+          cp "$example_root/produced/assets.yml" bld/docs/assembly/_input/assets.yml
 
       - name: Build generated documentation index
         env:
@@ -59,21 +128,42 @@ jobs:
 
           Generated from source commit \`${SOURCE_SHA}\`.
 
-          These fixtures are intentionally domain-neutral. The SVG output is the quickest visual review; the draw.io files verify that the same diagrams remain natively editable.
+          This branch is review evidence for both reusable capabilities: declarative diagram generation and document assembly around already-produced assets. The generated files are intentionally inspectable without opening an Actions log.
 
-          ## Simple flow
+          ## Owner test evidence
+
+          - [pytest output](evidence/pytest.txt)
+          - [source revision](source-sha.txt)
+
+          ## Document assembly example
+
+          The example keeps ordinary source Markdown readable, inventories an already-produced SVG through a manifest, and assembles a self-contained publication copy.
+
+          - [assembled document index](assembly/documents/README.md)
+          - [assembled document](assembly/documents/overview.md)
+          - [assembly provenance](assembly/assembly-info.yml)
+          - [localized asset](assembly/assets/architecture/system.svg)
+          - [assembly configuration](assembly/_input/assembly.yml)
+          - [source Markdown before assembly](assembly/_input/overview.md)
+          - [producer asset manifest](assembly/_input/assets.yml)
+
+          ## Diagram conformance
+
+          The SVG output is the quickest visual review; the draw.io files verify that the same diagrams remain natively editable.
+
+          ### Simple flow
 
           [Source YAML](fixtures/simple-flow.yaml) · [Editable draw.io](diagrams/simple-flow.drawio)
 
           ![Simple flow](diagrams/simple-flow.svg)
 
-          ## Layered architecture
+          ### Layered architecture
 
           [Source YAML](fixtures/layered-architecture.yaml) · [Editable draw.io](diagrams/layered-architecture.drawio)
 
           ![Layered architecture](diagrams/layered-architecture.svg)
 
-          ## Routing stress
+          ### Routing stress
 
           [Source YAML](fixtures/routing-stress.yaml) · [Editable draw.io](diagrams/routing-stress.drawio)
 
@@ -83,8 +173,20 @@ jobs:
 
       - name: Validate generated documentation
         run: |
+          set -euo pipefail
           test -f bld/docs/README.md
           test -f bld/docs/source-sha.txt
+          test -s bld/docs/evidence/pytest.txt
+          test -f bld/docs/assembly/documents/README.md
+          test -f bld/docs/assembly/documents/overview.md
+          test -f bld/docs/assembly/assembly-info.yml
+          test -f bld/docs/assembly/assets/architecture/system.svg
+          test -f bld/docs/assembly/_input/assembly.yml
+          test -f bld/docs/assembly/_input/overview.md
+          test -f bld/docs/assembly/_input/assets.yml
+          grep -Fq 'repository: brainboxemb/tool.eng-docs' bld/docs/assembly/assembly-info.yml
+          grep -Fq '../assets/architecture/system.svg' bld/docs/assembly/documents/overview.md
+          grep -Fq '../../../raw/prod/docs/assets/architecture/system.svg' bld/docs/assembly/_input/overview.md
           test -f bld/docs/diagrams/simple-flow.svg
           test -f bld/docs/diagrams/simple-flow.drawio
           test -f bld/docs/diagrams/layered-architecture.svg
@@ -92,45 +194,21 @@ jobs:
           test -f bld/docs/diagrams/routing-stress.svg
           test -f bld/docs/diagrams/routing-stress.drawio
 
-      - name: Upload generated documentation
-        uses: actions/upload-artifact@v4
+      - name: Upload prepared conformance documentation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: eng-docs-conformance
           path: bld/docs
+          if-no-files-found: error
           retention-days: 14
 
-      - name: Publish generated documentation branch
-        env:
-          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-            if [[ ! "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
-              echo "ERROR: missing or invalid pull-request number" >&2
-              exit 1
-            fi
-            TARGET_BRANCH="dev/pr-${PR_NUMBER}/docs"
-          else
-            TARGET_BRANCH="prod/docs"
-          fi
-
-          publish_dir="$(mktemp -d)"
-          cp -a bld/docs/. "$publish_dir/"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global credential.helper store
-          printf "https://x-access-token:%s@github.com\n" "$GITHUB_TOKEN" > ~/.git-credentials
-
-          git switch --orphan generated-docs
-          git clean -fdx
-          cp -a "$publish_dir/." ./
-
-          git add .
-          git commit -m "Publish generated documentation for ${SOURCE_SHA}"
-          git push --force origin "HEAD:${TARGET_BRANCH}"
-
-          echo "Published generated documentation to ${TARGET_BRANCH}"
+  # Publication is a repository lifecycle side effect. tool.git-project owns the
+  # target branch convention, stale-run protection and force-push mechanics.
+  publish-conformance-docs:
+    needs: prepare-conformance-docs
+    permissions:
+      contents: write
+    uses: brainboxemb/tool.git-project/.github/workflows/reusable-generated-output-publish.yml@v0.2.2
+    with:
+      artifact_name: eng-docs-conformance
+      branch_suffix: docs
