@@ -26,8 +26,19 @@ not consuming-project engineering semantics.
 - human-facing diagram authoring documentation and tested examples.
 
 Planning/roadmap and printable PDF work is tracked separately in issue #3.
-Common document assembly is being designed separately in issue #4 and must not
-replace the existing producer-specific diagram model.
+
+## Development capability — document assembly
+
+PR #4 is developing the next capability as `0.2.0.dev0`. It adds:
+
+- `eng-docs manifest` to describe already-produced assets/evidence without taking ownership of their build;
+- `eng-docs assemble` to create self-contained Markdown review/publication trees from source Markdown plus manifests;
+- generic asset/evidence metadata for build, design-document, verification and docs lifecycles;
+- link localisation in generated copies while leaving authoritative source Markdown unchanged.
+
+This capability is **not part of released v0.1.1** yet. It must first qualify against the software-document consumer, a current SCAD consumer and a cross-domain Java evidence-tree check.
+
+See [docs/document-assembly.md](docs/document-assembly.md) and the executable `examples/assembly/` example. The assembler consumes producer output; it does not run OpenSCAD, Maven, verification or diagram generation itself.
 
 ## Install
 
@@ -127,7 +138,7 @@ src/eng_docs/themes/default.yaml
 
 ## User-facing examples
 
-Start with:
+Released diagram examples:
 
 ```text
 examples/minimal-flow.yaml
@@ -137,15 +148,20 @@ examples/routed-flow.yaml
 The first demonstrates the minimal model and automatic routing. The second shows
 visual grouping, explicit edge anchors, a dashed edge and manual waypoints.
 
-The examples are rendered by automated tests so documentation examples remain in
-sync with the released implementation.
+The development assembly example is:
+
+```text
+examples/assembly/
+```
+
+It demonstrates the `manifest -> assemble` flow and is also executed by automated tests.
 
 Files under `tests/fixtures/` are conformance/stress fixtures and are not the
 recommended user starting point.
 
 ## CLI reference
 
-Current command:
+Released command:
 
 ```text
 eng-docs diagrams \
@@ -155,7 +171,9 @@ eng-docs diagrams \
   [--theme <theme.yaml>]
 ```
 
-`--source` must be a directory. The command reads every direct child matching
+Development commands on PR #4 are documented in `docs/document-assembly.md`.
+
+`--source` for `diagrams` must be a directory. The command reads every direct child matching
 `*.yaml`; it does not currently recurse into subdirectories.
 
 The built-in schema and theme are used when `--schema` / `--theme` are omitted.
@@ -213,15 +231,13 @@ the full behavior and custom-theme expectations.
 
 ## Validation
 
-Validation has two layers:
+Diagram validation has two layers:
 
 1. JSON Schema validation of structure/types/ranges;
 2. semantic validation of unique IDs, group references, edge node references and
    theme kinds.
 
-This catches errors such as missing required arrays, duplicate IDs, unknown
-kinds, missing groups/nodes, bad anchors and malformed waypoints before output is
-published.
+The development assembly capability also validates asset manifests and assembly configuration against packaged JSON Schemas.
 
 ## Release model
 
@@ -234,6 +250,8 @@ Current release:
 ```text
 v0.1.1
 ```
+
+The assembly feature branch deliberately uses `0.2.0.dev0`; development versions are not released by the release workflow.
 
 Consumers should pin a release rather than a feature branch.
 
@@ -258,8 +276,6 @@ The first reusable mechanisms were extracted from
 `brainboxemb/2026-010-01.meta.event-timing-software`, but this repository must
 remain project-independent.
 
-`tool.eng-docs` owns reusable schemas, validation, rendering/layout, themes, CLI
-behavior, examples and conformance tests. Consuming repositories own their actual
-architecture labels, topology, requirements and diagram sources.
+`tool.eng-docs` owns reusable schemas, validation, rendering/layout, themes, generic document assembly, CLI behavior, examples and conformance tests. Consuming repositories own their actual architecture labels, topology, requirements, diagram sources and producer-specific build/verification semantics.
 
 See [AGENTS.md](AGENTS.md) for repository working rules.
