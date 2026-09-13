@@ -1,0 +1,18 @@
+schema_version: 1
+
+asset_manifests:
+  - path: produced/assets.yml
+    publish_prefix: assets/architecture
+
+documents:
+  - id: overview
+    source: docs/overview.md
+    output: documents/overview.md
+
+indexes:
+  - output: documents/README.md
+    title: Generated documents
+    sections:
+      - title: Example
+        items:
+          - document: overview
