@@ -7,6 +7,10 @@ from eng_docs.assembly_output import assemble_output
 from eng_docs.manifests import build_manifest
 
 
+SOURCE_REPOSITORY = "brainboxemb/example-project"
+SOURCE_REVISION = "fedcba9876543210"
+
+
 def _config(root: Path, *, source: str = "docs/overview.md") -> Path:
     config = {
         "schema_version": 1,
@@ -57,13 +61,30 @@ def test_assembly_can_consume_assets_below_final_output_root(tmp_path):
     config = _config(root)
     out = root / "bld" / "docs"
 
-    result = assemble_output(root, config, out)
+    result = assemble_output(
+        root,
+        config,
+        out,
+        source_repository=SOURCE_REPOSITORY,
+        source_revision=SOURCE_REVISION,
+    )
 
     assert result["assets"] == 1
     assert (out / "assets" / "architecture" / "system.svg").read_text(encoding="utf-8") == "<svg>existing producer output</svg>\n"
     generated = (out / "documents" / "overview.md").read_text(encoding="utf-8")
     assert "../assets/architecture/system.svg" in generated
     assert not (out / "architecture").exists()
+
+    info = yaml.safe_load((out / "assembly-info.yml").read_text(encoding="utf-8"))
+    assert info["assembler"]["name"] == "tool.eng-docs"
+    assert info["source"] == {
+        "repository": SOURCE_REPOSITORY,
+        "revision": SOURCE_REVISION,
+    }
+    assert info["configuration"]["path"] == "assembly.yml"
+    assert len(info["configuration"]["sha256"]) == 64
+    assert info["input_manifests"][0]["path"] == "bld/docs/architecture/assets.yml"
+    assert info["input_manifests"][0]["producer"]["name"] == "example.architecture"
 
 
 def test_failed_assembly_preserves_existing_output(tmp_path):
@@ -77,7 +98,13 @@ def test_failed_assembly_preserves_existing_output(tmp_path):
     config = _config(root, source="docs/missing.md")
 
     with pytest.raises(ValueError, match="document source does not exist"):
-        assemble_output(root, config, out)
+        assemble_output(
+            root,
+            config,
+            out,
+            source_repository=SOURCE_REPOSITORY,
+            source_revision=SOURCE_REVISION,
+        )
 
     assert sentinel.read_text(encoding="utf-8") == "old output survives\n"
     assert (out / "architecture" / "system.svg").is_file()
