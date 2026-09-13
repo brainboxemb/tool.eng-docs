@@ -136,6 +136,29 @@ def test_assemble_allows_explicit_document_output_override(tmp_path):
     assert "[Details](../custom/details.md)" in index
 
 
+def test_assemble_source_renumbering_keeps_stable_document_references(tmp_path):
+    root, config_path, _ = _fixture(tmp_path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+    original = root / "docs" / "a.md"
+    renumbered = root / "docs" / "20-architecture.md"
+    original.rename(renumbered)
+    data["documents"][0]["source"] = "docs/20-architecture.md"
+    config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+    assemble(root, config_path, root / "bld" / "docs")
+
+    assert data["indexes"][0]["sections"][0]["items"][0] == {"document": "architecture"}
+    assert data["books"][0]["documents"][0] == "architecture"
+    assert (root / "bld" / "docs" / "documents" / "20-architecture.md").is_file()
+
+    index = (root / "bld" / "docs" / "documents" / "README.md").read_text(encoding="utf-8")
+    assert "[Architecture](20-architecture.md)" in index
+
+    book = (root / "bld" / "docs" / "documents" / "book.md").read_text(encoding="utf-8")
+    assert "**Source document:** [20-architecture.md](20-architecture.md)" in book
+
+
 def test_assemble_rejects_duplicate_document_output_path(tmp_path):
     root, config_path, _ = _fixture(tmp_path)
     data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
