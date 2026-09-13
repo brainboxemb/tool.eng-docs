@@ -76,7 +76,9 @@ jobs:
           eng-docs assemble \
             --root "$example_root" \
             --config assembly.yml \
-            --out bld/docs/assembly
+            --out bld/docs/assembly \
+            --source-repository brainboxemb/tool.eng-docs \
+            --source-revision "$SOURCE_SHA"
 
           mkdir -p bld/docs/assembly/_input
           cp examples/assembly/assembly.yml bld/docs/assembly/_input/assembly.yml
@@ -105,6 +107,7 @@ jobs:
 
           - [assembled document index](assembly/documents/README.md)
           - [assembled document](assembly/documents/overview.md)
+          - [assembly provenance](assembly/assembly-info.yml)
           - [localized asset](assembly/assets/architecture/system.svg)
           - [assembly configuration](assembly/_input/assembly.yml)
           - [source Markdown before assembly](assembly/_input/overview.md)
@@ -141,10 +144,12 @@ jobs:
           test -s bld/docs/evidence/pytest.txt
           test -f bld/docs/assembly/documents/README.md
           test -f bld/docs/assembly/documents/overview.md
+          test -f bld/docs/assembly/assembly-info.yml
           test -f bld/docs/assembly/assets/architecture/system.svg
           test -f bld/docs/assembly/_input/assembly.yml
           test -f bld/docs/assembly/_input/overview.md
           test -f bld/docs/assembly/_input/assets.yml
+          grep -Fq 'repository: brainboxemb/tool.eng-docs' bld/docs/assembly/assembly-info.yml
           grep -Fq '../assets/architecture/system.svg' bld/docs/assembly/documents/overview.md
           grep -Fq '../../../raw/prod/docs/assets/architecture/system.svg' bld/docs/assembly/_input/overview.md
           test -f bld/docs/diagrams/simple-flow.svg
