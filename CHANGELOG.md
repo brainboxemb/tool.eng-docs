@@ -2,7 +2,7 @@
 
 All notable changes to `tool.eng-docs` are recorded here.
 
-## 0.2.0.dev0 — unreleased
+## 0.2.0 — 2026-09-13
 
 ### Added
 
@@ -26,6 +26,7 @@ All notable changes to `tool.eng-docs` are recorded here.
 
 - assembly consumes already-produced outputs and does not schedule SCAD, Java, verification or diagram producers;
 - publication destination/branch selection remains an external repository/CI orchestration responsibility;
+- generated conformance publication and PR-preview cleanup use released `tool.git-project` lifecycle primitives;
 - the two-consumer qualification did not justify a mandatory repository-wide `project.docs.yml`;
 - verification evidence-bundle semantics, broader Markdown syntax and producer orchestration remain deferred until a real consumer requires them.
 
