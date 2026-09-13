@@ -1,73 +1,264 @@
 # tool.eng-docs
 
-Reusable, project-independent tooling for declarative engineering documentation.
+Reusable, project-independent tooling for engineering documentation.
 
-The first release, `v0.1.0`, is extracted from proven documentation tooling in `brainboxemb/2026-010-01.meta.event-timing-software` and focuses on reusable diagram generation rather than project-specific engineering content.
+The released `v0.1.0` capability is the declarative diagram renderer: author a
+small YAML model and generate both an SVG for documentation and a native editable
+draw.io file.
 
-## v0.1.0 scope
+The repository intentionally owns reusable tooling and schema/layout behavior,
+not consuming-project engineering semantics.
+
+## Current capabilities
+
+`v0.1.0` provides:
 
 - declarative YAML diagram sources;
-- JSON Schema validation;
-- reusable YAML visual themes;
+- JSON Schema validation plus semantic reference validation;
+- reusable YAML themes;
 - SVG generation;
 - native editable draw.io generation;
 - automatic orthogonal edge routing;
-- explicit edge waypoints and side/position anchors;
-- domain-neutral conformance fixtures and tests;
+- explicit edge anchors and waypoint routes;
+- domain-neutral conformance examples/tests;
 - Linux and Windows verification;
-- `eng-docs diagrams` command-line interface.
+- the `eng-docs diagrams` CLI.
 
-Planning/roadmap and printable PDF extraction is intentionally deferred to [issue #3](https://github.com/brainboxemb/tool.eng-docs/issues/3) so the reusable diagram renderer can be released and consumed first.
+Planning/roadmap and printable PDF work is tracked separately in issue #3.
+Common document assembly is being designed separately in issue #4 and must not
+replace the existing producer-specific diagram model.
 
-The repository must not contain consuming-project-specific labels, topology, requirements or other domain semantics.
+## Install
 
-## Installation
+The current released version is `v0.1.0`.
 
-The intended repository-consumer form is a pinned Git dependency. After the `v0.1.0` release:
+A repository can pin it directly from GitHub:
 
 ```text
-brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.1.0
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.1.0"
 ```
 
-A consuming repository can then run, for example:
+The package installs the `eng-docs` command.
+
+## Five-minute quick start
+
+Create a directory for diagram sources, for example:
+
+```text
+docs/_diagrams/
+```
+
+Add `docs/_diagrams/service-flow.yaml`:
+
+```yaml
+diagram:
+  id: service-flow
+  title: Service flow
+  width: 760
+  height: 360
+
+groups: []
+
+nodes:
+  - id: client
+    label: Client
+    kind: component
+    layout: {x: 80, y: 150, w: 180, h: 60}
+  - id: service
+    label: Service
+    kind: service
+    layout: {x: 500, y: 150, w: 180, h: 60}
+
+edges:
+  - from: client
+    to: service
+    label: request
+```
+
+Render all `.yaml` files in that directory:
 
 ```text
 eng-docs diagrams --source docs/_diagrams --out bld/docs/architecture
 ```
 
-The built-in schema and theme are used unless `--schema` or `--theme` is supplied.
+Generated files:
+
+```text
+bld/docs/architecture/service-flow.svg
+bld/docs/architecture/service-flow.drawio
+```
+
+The SVG is intended for embedding in Markdown/HTML. The `.drawio` file is a
+native editable diagrams.net/draw.io document.
+
+Output filenames are based on `diagram.id`, not on the YAML filename.
+
+## Diagram source model
+
+The complete current authoring contract is documented in
+[docs/diagram-authoring.md](docs/diagram-authoring.md).
+
+That guide covers:
+
+- canvas and coordinate system;
+- groups and nodes;
+- built-in theme `kind` values;
+- directed edges and labels;
+- automatic orthogonal routing;
+- explicit `from_anchor` / `to_anchor` placement;
+- explicit route waypoints;
+- custom themes and schemas;
+- validation/error behavior;
+- common authoring mistakes;
+- recommended project integration.
+
+The machine-readable schema remains:
+
+```text
+src/eng_docs/schemas/diagram.schema.json
+```
+
+The built-in theme remains:
+
+```text
+src/eng_docs/themes/default.yaml
+```
+
+## User-facing examples
+
+Start with:
+
+```text
+examples/minimal-flow.yaml
+examples/routed-flow.yaml
+```
+
+The first demonstrates the minimal model and automatic routing. The second shows
+visual grouping, explicit edge anchors, a dashed edge and manual waypoints.
+
+The examples are rendered by automated tests so documentation examples remain in
+sync with the released implementation.
+
+Files under `tests/fixtures/` are conformance/stress fixtures and are not the
+recommended user starting point.
+
+## CLI reference
+
+Current command:
+
+```text
+eng-docs diagrams \
+  --source <diagram-yaml-directory> \
+  --out <output-directory> \
+  [--schema <diagram-schema.json>] \
+  [--theme <theme.yaml>]
+```
+
+`--source` must be a directory. The command reads every direct child matching
+`*.yaml`; it does not currently recurse into subdirectories.
+
+The built-in schema and theme are used when `--schema` / `--theme` are omitted.
+Invalid source returns a non-zero exit code with schema/reference validation
+errors on stderr.
+
+## Typical repository layout
+
+A consuming repository can keep narrative Markdown and diagram producer source
+separate:
+
+```text
+docs/
+  architecture.md
+  _diagrams/
+    system-context.yaml
+    runtime-view.yaml
+bld/
+  docs/
+    architecture/
+      system-context.svg
+      system-context.drawio
+      runtime-view.svg
+      runtime-view.drawio
+```
+
+This separation is intentional:
+
+```text
+Markdown             narrative/document structure
+diagram YAML          reproducible diagram semantics + layout
+SVG                   generated reader-facing image
+draw.io               generated editable representation
+```
+
+## Themes
+
+The default theme contains reusable kinds including:
+
+```text
+group-primary
+group-secondary
+group-neutral
+component
+service
+runtime
+integration
+storage
+platform
+external
+```
+
+A group/node `kind` must exist in the active theme. See the authoring guide for
+the full behavior and custom-theme expectations.
+
+## Validation
+
+Validation has two layers:
+
+1. JSON Schema validation of structure/types/ranges;
+2. semantic validation of unique IDs, group references, edge node references and
+   theme kinds.
+
+This catches errors such as missing required arrays, duplicate IDs, unknown
+kinds, missing groups/nodes, bad anchors and malformed waypoints before output is
+published.
 
 ## Release model
 
-`pyproject.toml` owns the package version. When a non-development version is merged to `main`, the release workflow creates the matching GitHub tag/release and attaches the built Python package artifacts. Consumers should pin the released tag rather than depend on a feature branch.
+`pyproject.toml` owns the package version. A non-development version merged to
+`main` is released through the release workflow with the matching GitHub tag and
+Python package artifacts.
 
-The first real consumer is `brainboxemb/2026-010-01.meta.event-timing-software`. After `v0.1.0` exists, that repository should install the pinned release in its documentation environment and invoke `eng-docs diagrams` instead of carrying a duplicate generic renderer implementation.
+Current release:
+
+```text
+v0.1.0
+```
+
+Consumers should pin a release rather than a feature branch.
 
 ## Generated conformance documentation
 
-CI renders the domain-neutral conformance fixtures so diagram quality can be reviewed directly in GitHub instead of only through test assertions or downloaded artifacts.
+CI renders domain-neutral conformance fixtures so diagram quality can be reviewed
+visually rather than only through assertions.
 
-Generated output is published using the same convention as consuming documentation projects:
+Generated output follows the documentation publication convention:
 
 ```text
 pull request  -> dev/pr-<PR-number>/docs
 main          -> prod/docs
 ```
 
-Each generated documentation branch contains:
+Published conformance output includes rendered SVG fixtures, fixture YAML,
+editable draw.io output and `source-sha.txt` provenance.
 
-- a README with the rendered SVG fixtures embedded for visual inspection;
-- the fixture YAML sources;
-- SVG output;
-- native editable draw.io output;
-- `source-sha.txt` tying the generated result to its source commit.
+## Development / ownership boundary
 
-The active v0.1.0 PR publishes its review output to `dev/pr-2/docs` once the workflow is green.
+The first reusable mechanisms were extracted from
+`brainboxemb/2026-010-01.meta.event-timing-software`, but this repository must
+remain project-independent.
 
-## Active work
+`tool.eng-docs` owns reusable schemas, validation, rendering/layout, themes, CLI
+behavior, examples and conformance tests. Consuming repositories own their actual
+architecture labels, topology, requirements and diagram sources.
 
-The first implementation increment is tracked by [issue #1](https://github.com/brainboxemb/tool.eng-docs/issues/1) and targets release `v0.1.0` followed by migration of the first real consumer.
-
-## Extraction baseline
-
-The reusable mechanisms were proven in `brainboxemb/2026-010-01.meta.event-timing-software`, especially issue #6 and PR #9. That project remains the owner of its project-specific YAML sources; this repository owns only reusable schemas, rendering/layout mechanisms, themes, CLI behaviour and conformance tests.
+See [AGENTS.md](AGENTS.md) for repository working rules.
