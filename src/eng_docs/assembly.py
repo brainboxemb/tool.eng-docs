@@ -84,15 +84,23 @@ def _asset_lookup(assets: list[Asset], target: str) -> Asset | None:
     path = unquote(parsed.path).replace("\\", "/").rstrip("/")
     if not path:
         return None
-    matches = []
+
+    matches: list[tuple[int, Asset]] = []
     for asset in assets:
         published = asset.published_path.as_posix().lstrip("/")
         if path == published or path.endswith("/" + published):
-            matches.append(asset)
-    if len(matches) > 1:
-        ids = ", ".join(asset.id for asset in matches)
+            specificity = len(PurePosixPath(published).parts)
+            matches.append((specificity, asset))
+
+    if not matches:
+        return None
+
+    best_specificity = max(specificity for specificity, _ in matches)
+    best = [asset for specificity, asset in matches if specificity == best_specificity]
+    if len(best) > 1:
+        ids = ", ".join(asset.id for asset in best)
         raise ValueError(f"asset link is ambiguous for {target!r}: {ids}")
-    return matches[0] if matches else None
+    return best[0]
 
 
 def _rewrite_target(target: str, *, document_output: Path, out_root: Path, assets: list[Asset]) -> str:
