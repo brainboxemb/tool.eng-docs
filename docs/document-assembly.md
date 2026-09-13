@@ -142,12 +142,88 @@ The current prototype handles ordinary inline Markdown links/images. Reference-s
 
 These are assembly operations, not document-authoring semantics. The consuming repository still decides which documents belong in which index/book and in what order.
 
-## Qualification boundary
+## Qualification result
 
-This capability is not considered release-ready merely because the generic tests pass. Before a feature release it must prove the same core contract against:
+The Step-2.5 qualification has now exercised the same core contract against the two required real consumers plus the cross-domain Java guard.
 
-1. the software engineering document set in `2026-010-01.meta.event-timing-software`;
-2. a current SCAD reference consumer without replacing its existing SCAD render authoring;
-3. a cross-domain manifest check using the Java reference consumer evidence tree, without adding Java/Maven/Surefire fields to the generic schema.
+### Consumer A — software engineering documents
 
-Only after those checks should `project.docs.yml`, native producer manifests, verification evidence bundles or broader Markdown syntax be considered.
+`brainboxemb/2026-010-01.meta.event-timing-software` PR #36 uses the exact development tool revision from this PR through the repository's normal `project.yml` / gitlink dependency mechanism.
+
+The latest qualification run on consumer head `9101da1ff77a6d97bfe42bf19f0ee7c58945d2d7` passed as workflow run `34760915037` and proved:
+
+- existing diagram and planning producers remain independently owned;
+- `eng-docs manifest` + `eng-docs assemble` replace generic project-local copy/link/index/book glue;
+- authoritative source Markdown remains directly readable;
+- generated output remains self-contained and publication-compatible;
+- redundant per-document output filenames are unnecessary when the published filename follows the source filename;
+- stable document IDs keep indexes/books independent of source-document numbering changes.
+
+### Consumer B — current SCAD reference consumer
+
+`brainboxemb/template.scad-project` PR #17 qualifies the same contract without replacing `scad-render`, OpenSCAD or `tool.scad-project` ownership.
+
+The corrected qualification head `49d7807f5195e49c16612527bba3dc9b9fc7a196` passed Build #184, Verify #169 and Qualify document assembly #8. The qualification deliberately uses the normal repository dependency boundary: `tool.eng-docs` is declared in `project.yml`, pinned as `tools/tool.eng-docs`, and materialized by `bootstrap.sh` / `tool.git-project`. The workflow activates the already-managed local checkout rather than fetching the tool through a direct `git+https` pip URL.
+
+The proof shows:
+
+- document-local SCAD render authoring remains unchanged;
+- already-generated design images and normal build PNGs are described through manifests and consumed without duplicate rendering;
+- source-local Markdown can participate without moving;
+- the assembler has no SCAD implementation dependency.
+
+### Cross-domain Java manifest guard
+
+The owner test suite also mirrors the actual generated publication layout from `template.java-project` / `tool.java-project`:
+
+```text
+README.md
+source-sha.txt
+artifacts/<runnable jar>
+evidence/toolchain-build-provenance.txt
+evidence/tests/README.md
+evidence/tests/.../TEST-*.xml
+```
+
+The same generic manifest fields describe that tree. No Java, Maven or Surefire-specific schema fields are required.
+
+## Configuration conclusion
+
+The first two consumers do not justify a mandatory repository-wide `project.docs.yml`.
+
+The smallest proven assembly configuration is the existing assembly input itself:
+
+```text
+asset manifest inputs + publish prefixes
+documents: stable ID + source + optional exceptional output
+optional ordered indexes
+optional ordered books
+```
+
+The assembly output root remains an invocation/orchestration concern (`--out`). Publication namespace selection such as `dev/pr-N/docs` versus `prod/docs` remains outside the assembler and belongs to the repository/CI orchestration layer.
+
+This is intentionally smaller than the original provisional configuration list: the real consumers did not require a separate generic publication-context field in the assembly schema. Ordinary source links plus manifest publication paths were sufficient for localisation.
+
+## Ownership conclusion
+
+The qualification supports keeping common assembly in `tool.eng-docs` rather than creating another repository:
+
+- the implementation remains domain-neutral;
+- dependencies stay small (`PyYAML`, `jsonschema` and the standard library for assembly mechanics);
+- both full consumers use the same schemas/CLI contract;
+- no SCAD, Java, Maven or verification implementation is imported;
+- the capability fits the existing `eng-docs` subcommand/package structure.
+
+A separate assembly repository should only be reconsidered if a materially independent dependency/release lifecycle or broader non-engineering scope appears later.
+
+## Deferred work
+
+Qualification does **not** authorize broadening the first slice. Keep deferred:
+
+- mandatory `project.docs.yml` or other repository-global docs profile;
+- native producer manifests where a project-local manifest adapter is already sufficient;
+- verification evidence-bundle semantics beyond the current manifest relationship vocabulary;
+- broader Markdown syntax such as reference-style link rewriting unless a real consumer requires it;
+- producer scheduling inside `eng-docs assemble`;
+- replacement of current SCAD `scad-render` authoring;
+- moving source documents into one common folder layout.
