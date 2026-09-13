@@ -109,10 +109,24 @@ The stable document `id` is what indexes and books reference. The numbered sourc
 Then assemble:
 
 ```bash
-eng-docs assemble --root . --config assembly.yml --out bld/docs
+eng-docs assemble \
+  --root . \
+  --config assembly.yml \
+  --out bld/docs \
+  --source-repository "$GITHUB_REPOSITORY" \
+  --source-revision "$GITHUB_SHA"
 ```
 
 The source Markdown remains authoritative and is not modified.
+
+Every CLI assembly writes `assembly-info.yml` at the assembled output root. It records:
+
+- `tool.eng-docs` as assembler plus its exact package version;
+- the source repository and exact source revision supplied by the caller;
+- the assembly configuration path plus SHA-256 digest;
+- every input asset manifest, its SHA-256 digest and its producer provenance.
+
+The final publication namespace (`dev/pr-N/docs`, `prod/docs`, a release namespace, or another destination) is deliberately **not** stored as assembler policy. The repository/CI publication step owns that side effect and can record its own destination context. This keeps assembly cacheable and separate from publication.
 
 ## Link localisation
 
@@ -200,9 +214,9 @@ optional ordered indexes
 optional ordered books
 ```
 
-The assembly output root remains an invocation/orchestration concern (`--out`). Publication namespace selection such as `dev/pr-N/docs` versus `prod/docs` remains outside the assembler and belongs to the repository/CI orchestration layer.
+The assembly output root plus source repository/revision are invocation/orchestration concerns (`--out`, `--source-repository`, `--source-revision`). Publication namespace selection such as `dev/pr-N/docs` versus `prod/docs` remains outside the assembler and belongs to the repository/CI orchestration layer.
 
-This is intentionally smaller than the original provisional configuration list: the real consumers did not require a separate generic publication-context field in the assembly schema. Ordinary source links plus manifest publication paths were sufficient for localisation.
+This is intentionally smaller than the original provisional configuration list: the real consumers did not require a separate generic publication-context field in the assembly schema. Ordinary source links plus manifest publication paths were sufficient for localisation, while `assembly-info.yml` supplies generic materialization provenance.
 
 ## Ownership conclusion
 
