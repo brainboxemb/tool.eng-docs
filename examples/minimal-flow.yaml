@@ -1,0 +1,23 @@
+diagram:
+  id: minimal-flow
+  title: Minimal service flow
+  width: 760
+  height: 360
+  description: Small user-facing example for eng-docs diagrams.
+
+groups: []
+
+nodes:
+  - id: client
+    label: Client
+    kind: component
+    layout: {x: 80, y: 150, w: 180, h: 60}
+  - id: service
+    label: Service
+    kind: service
+    layout: {x: 500, y: 150, w: 180, h: 60}
+
+edges:
+  - from: client
+    to: service
+    label: request

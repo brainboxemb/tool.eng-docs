@@ -1,0 +1,52 @@
+diagram:
+  id: routed-flow
+  title: Routed service flow
+  width: 900
+  height: 500
+  note: Explicit anchors and waypoints keep two flows visually separated.
+
+groups:
+  - id: application
+    label: Application
+    kind: group-primary
+    layout: {x: 60, y: 80, w: 780, h: 330}
+
+nodes:
+  - id: api
+    group: application
+    label: API
+    kind: component
+    layout: {x: 120, y: 150, w: 170, h: 60}
+  - id: worker
+    group: application
+    label: Worker
+    kind: runtime
+    layout: {x: 590, y: 140, w: 180, h: 60}
+  - id: store
+    group: application
+    label: Storage
+    kind: storage
+    layout: {x: 590, y: 300, w: 180, h: 60}
+
+edges:
+  - from: api
+    to: worker
+    label: synchronous
+    from_anchor: {side: right, position: 0.35}
+    to_anchor: {side: left, position: 0.50}
+    route:
+      - {x: 360, y: 171}
+      - {x: 360, y: 110}
+      - {x: 540, y: 110}
+      - {x: 540, y: 170}
+  - from: api
+    to: store
+    label: asynchronous
+    dashed: true
+    from_anchor: {side: right, position: 0.72}
+    to_anchor: {side: left, position: 0.50}
+    route:
+      - {x: 340, y: 193}
+      - {x: 340, y: 380}
+      - {x: 540, y: 380}
+      - {x: 540, y: 330}

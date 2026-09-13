@@ -33,6 +33,21 @@ The `pr-<N>` portion is the issue/work number and need not equal the eventual Gi
 
 Do not perform normal feature work directly on `main`.
 
+## User-facing documentation
+
+A reusable capability is not complete merely because the schema/CLI/tests exist.
+
+For every new or materially changed public capability:
+
+- document the user workflow in the README or a linked page under `docs/`;
+- document the current source/configuration contract rather than making users reverse-engineer schemas/tests;
+- provide at least one small domain-neutral example under `examples/`;
+- keep user-facing examples executable/renderable in automated tests so they cannot silently drift from the implementation;
+- distinguish user examples from conformance/stress fixtures under `tests/fixtures/`;
+- update user documentation in the same PR when public CLI/source behavior changes.
+
+Machine-readable schemas remain authoritative for validation, but they are not a substitute for usable human documentation.
+
 ## v0.1.0 scope
 
 Issue #1 owns the first-release scope. Keep it small and proven:
@@ -60,4 +75,6 @@ Do not add a separate repository-initialisation layer or consume `tool.git-proje
 
 Renderer changes should verify source validation, parseable SVG and draw.io XML, native/editable draw.io structure, expected semantic content, deterministic repeated rendering, PDF generation where applicable, and useful non-zero CLI failures for invalid input.
 
-Run the suite on Linux and Windows before v0.1.0 is released.
+User-facing examples should also be rendered by CI as part of the normal test suite.
+
+Run the suite on Linux and Windows before a reusable release is considered complete.
