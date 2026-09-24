@@ -3,6 +3,7 @@ font:
   title_size: 26
   group_title_size: 17
   node_size: 14
+  node_subtitle_size: 11
   note_size: 12
 canvas:
   background: "#ffffff"
