@@ -2,6 +2,13 @@
 
 All notable changes to `tool.eng-docs` are recorded here.
 
+## Unreleased
+
+### Added
+
+- optional diagram node `subtitle` text rendered beneath the primary label at a smaller size in SVG and draw.io output;
+- backwards-compatible `node_subtitle_size` theme support, with a derived fallback for existing custom themes.
+
 ## 0.2.0 — 2026-09-13
 
 ### Added
