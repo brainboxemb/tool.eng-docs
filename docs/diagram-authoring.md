@@ -301,6 +301,7 @@ Optional fields:
 
 ```text
 group
+subtitle
 note
 ```
 
@@ -317,6 +318,27 @@ Node IDs:
 
 Human-readable rendered text. Newlines are supported and are rendered as
 multi-line text in SVG/draw.io.
+
+### Node `subtitle`
+
+Use `subtitle` for a short secondary explanation that should have less visual
+weight than the primary node name:
+
+```yaml
+- id: timing
+  label: StageTiming
+  subtitle: running times + ranking
+  kind: service
+  layout: {x: 500, y: 300, w: 220, h: 70}
+```
+
+The SVG and draw.io renderers display the subtitle beneath the label at a smaller
+font size. Keep `label` for the semantic component name and `subtitle` for a
+brief clarification. Existing multi-line `label` values remain supported.
+
+Custom themes may define `font.node_subtitle_size`. When omitted, the renderer
+derives a smaller size from `font.node_size`, so existing custom themes remain
+compatible.
 
 ### Node `kind`
 
