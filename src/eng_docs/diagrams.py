@@ -195,6 +195,49 @@ def _svg_text(parts, text, x, y, size, family, weight="normal", anchor="middle")
         )
 
 
+def _svg_node_text(parts, node, theme, family):
+    r = node["layout"]
+    label = str(node["label"])
+    subtitle = node.get("subtitle")
+    x = r["x"] + r["w"] / 2
+    center_y = r["y"] + r["h"] / 2
+    node_size = theme["font"]["node_size"]
+
+    if not subtitle:
+        _svg_text(parts, label, x, center_y, node_size, family)
+        return
+
+    subtitle_size = theme["font"].get("node_subtitle_size", max(9, node_size - 3))
+    label_lines = label.splitlines() or [""]
+    subtitle_lines = str(subtitle).splitlines() or [""]
+    label_height = len(label_lines) * node_size * 1.28
+    subtitle_height = len(subtitle_lines) * subtitle_size * 1.28
+    gap = 5
+    total_height = label_height + gap + subtitle_height
+    top = center_y - total_height / 2
+
+    label_center = top + label_height / 2
+    subtitle_center = top + label_height + gap + subtitle_height / 2
+    _svg_text(parts, label, x, label_center, node_size, family)
+    _svg_text(parts, subtitle, x, subtitle_center, subtitle_size, family)
+
+
+def _drawio_node_value(node, theme):
+    label = html.escape(str(node["label"])).replace("\n", "<br>")
+    subtitle = node.get("subtitle")
+    if not subtitle:
+        return label
+    subtitle_size = theme["font"].get(
+        "node_subtitle_size",
+        max(9, theme["font"]["node_size"] - 3),
+    )
+    subtitle_html = html.escape(str(subtitle)).replace("\n", "<br>")
+    return (
+        f'{label}<br><span style="font-size:{subtitle_size}px">'
+        f'{subtitle_html}</span>'
+    )
+
+
 def render_svg(data, theme, out: Path):
     d = data["diagram"]
     family = theme["font"]["family"]
@@ -247,7 +290,7 @@ def render_svg(data, theme, out: Path):
             f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
             f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
         )
-        _svg_text(parts, node["label"], r["x"] + r["w"] / 2, r["y"] + r["h"] / 2, theme["font"]["node_size"], family)
+        _svg_node_text(parts, node, theme, family)
 
     parts.append("</svg>")
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
@@ -308,7 +351,7 @@ def render_drawio(data, theme, out: Path):
     for node in data["nodes"]:
         r = node["layout"]
         cell = ET.SubElement(
-            root, "mxCell", id=node["id"], value=node["label"].replace("\n", "<br>"),
+            root, "mxCell", id=node["id"], value=_drawio_node_value(node, theme),
             style=_drawio_node_style(theme, node["kind"]), vertex="1", parent="1"
         )
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
