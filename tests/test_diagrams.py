@@ -39,8 +39,14 @@ def test_simple_flow_generates_parseable_deterministic_outputs(tmp_path):
     ET.parse(svg)
     ET.parse(drawio)
 
-    assert "Source" in svg.read_text(encoding="utf-8")
-    assert "Target" in drawio.read_text(encoding="utf-8")
+    svg_text = svg.read_text(encoding="utf-8")
+    drawio_text = drawio.read_text(encoding="utf-8")
+    assert "Source" in svg_text
+    assert "secondary explanation" in svg_text
+    assert 'font-size="11"' in svg_text
+    assert "Target" in drawio_text
+    assert "secondary explanation" in drawio_text
+    assert "font-size:11px" in drawio_text
     assert svg.read_bytes() == (second / "simple-flow.svg").read_bytes()
     assert drawio.read_bytes() == (second / "simple-flow.drawio").read_bytes()
 
