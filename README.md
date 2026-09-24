@@ -11,7 +11,7 @@ engineering meaning or build semantics of consuming repositories.
 
 ### Declarative diagrams
 
-- declarative YAML diagram sources;
+- declarative YAML diagram sources, including optional smaller node subtitles;
 - JSON Schema validation plus semantic reference validation;
 - reusable YAML themes;
 - SVG generation;
