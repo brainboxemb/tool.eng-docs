@@ -11,6 +11,7 @@ nodes:
     layout: {x: 80, y: 140, w: 180, h: 80}
   - id: target
     label: Target
+    subtitle: secondary explanation
     kind: service
     layout: {x: 520, y: 140, w: 180, h: 80}
 edges:
