@@ -120,7 +120,11 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
         for element in root.iter()
         if element.tag.endswith("g") and element.attrib.get("data-notation") == "packaging-component"
     )
-    assert any(child.tag.endswith("path") for child in packaging_glyph)
+    packaging_body = next(child for child in packaging_glyph if child.tag.endswith("path"))
+    # Package tab belongs at the upper-left: rise immediately from the left edge,
+    # then run across the tab before dropping back to the body top.
+    assert " v-4 h11 l3,4 " in packaging_body.attrib["d"]
+    assert " h8 l3,-4 " not in packaging_body.attrib["d"]
     packaging_tabs = [child for child in packaging_glyph if child.tag.endswith("rect")]
     assert len(packaging_tabs) == 2
     assert all(child.attrib.get("width") == "8" for child in packaging_tabs)
