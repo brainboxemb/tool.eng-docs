@@ -229,14 +229,16 @@ def _svg_component_glyph(parts, node, stroke):
 
 def _svg_packaging_component_glyph(parts, node, stroke):
     r = node["layout"]
-    x = r["x"] + r["w"] - 32
-    y = r["y"] + 9
+    x = r["x"] + r["w"] - 36
+    y = r["y"] + 7
     parts.append(
-        f'<g data-notation="packaging-component" fill="none" stroke="{stroke}" stroke-width="1.5">'
-        f'<rect x="{x}" y="{y}" width="25" height="19" rx="1" ry="1"/>'
-        f'<rect x="{x + 8}" y="{y + 5}" width="12" height="9"/>'
-        f'<rect x="{x + 5}" y="{y + 7}" width="5" height="3" fill="white"/>'
-        f'<rect x="{x + 5}" y="{y + 12}" width="5" height="3" fill="white"/>'
+        f'<g data-notation="packaging-component" fill="none" stroke="{stroke}" stroke-width="1.6">'
+        # Package/folder outline: a small tab plus the package body.
+        f'<path d="M{x + 1},{y + 5} h8 l3,-4 h17 v22 h-28 z" fill="white"/>'
+        # UML component symbol embedded in the package body.
+        f'<rect x="{x + 13}" y="{y + 7}" width="12" height="11" fill="white"/>'
+        f'<rect x="{x + 9}" y="{y + 9}" width="6" height="3" fill="white"/>'
+        f'<rect x="{x + 9}" y="{y + 14}" width="6" height="3" fill="white"/>'
         '</g>'
     )
 
