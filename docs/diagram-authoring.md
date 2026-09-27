@@ -288,8 +288,9 @@ notation: packaging-component
 ```
 
 The SVG uses a compact integrated packaging-component glyph: the package/folder
-outline is also the component body, and the UML component tabs cross its left
-edge. It does not draw a second complete component rectangle inside the package.
+tab sits at the upper-left, while the UML component tabs cross the left edge of
+the same body. It does not draw a second complete component rectangle inside the
+package.
 This matches the semantics of a component that behaves as a package/container.
 draw.io keeps the element editable as a container/component.
 Ordinary layers such as Presentation, Domain or I/O should normally remain plain
