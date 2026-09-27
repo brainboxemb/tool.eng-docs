@@ -11,7 +11,8 @@ engineering meaning or build semantics of consuming repositories.
 
 ### Declarative diagrams
 
-- declarative YAML diagram sources, including optional smaller node subtitles;
+- declarative YAML diagram sources, including optional smaller node subtitles and structured node list/tree items;
+- node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
 - reusable YAML themes;
 - SVG generation;
@@ -148,10 +149,13 @@ Diagram examples:
 ```text
 examples/minimal-flow.yaml
 examples/routed-flow.yaml
+examples/structured-layer.yaml
 ```
 
 The first demonstrates the minimal model and automatic routing. The second shows
-visual grouping, explicit edge anchors, a dashed edge and manual waypoints.
+visual grouping, explicit edge anchors, a dashed edge and manual waypoints. The
+third demonstrates structured node items and a high-level edge that terminates on
+a group/layer boundary.
 
 Document-assembly example:
 
