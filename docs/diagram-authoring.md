@@ -271,6 +271,11 @@ nodes:
 
 The referenced group ID must exist.
 
+Groups may also be used directly as edge `from` or `to` endpoints. Anchors
+then attach to the group boundary just as they do to a node boundary. This is
+preferable to inventing a component-level dependency in a high-level view when
+only the layer relationship is established.
+
 ---
 
 ## `nodes`
@@ -302,6 +307,7 @@ Optional fields:
 ```text
 group
 subtitle
+items
 note
 ```
 
@@ -340,6 +346,36 @@ Custom themes may define `font.node_subtitle_size`. When omitted, the renderer
 derives a smaller size from `font.node_size`, so existing custom themes remain
 compatible.
 
+### Node `items`
+
+Use `items` when a node represents a small structured list or tree rather than
+a single explanatory subtitle. Items are rendered left-aligned beneath the node
+label (and optional subtitle).
+
+Leaf items may be strings:
+
+```yaml
+items:
+  - Reader
+  - Display
+  - Keypad
+```
+
+Nested items use an object with `label` and optional child `items`:
+
+```yaml
+items:
+  - Browser
+  - label: Terminals
+    items:
+      - Local
+      - Remote
+```
+
+The renderer shows top-level entries as bullets and nested entries as indented
+tree rows. Keep this structure small; a large hierarchy normally deserves its
+own detail diagram.
+
 ### Node `kind`
 
 Selects a style from the active theme.
@@ -374,7 +410,8 @@ render it inside the node.
 
 ## `edges`
 
-Edges are directed connections between nodes.
+Edges are directed connections between diagram endpoints. An endpoint may be a
+node or a visual group/layer.
 
 Minimal form:
 
@@ -384,7 +421,9 @@ edges:
     to: service
 ```
 
-Both IDs must reference existing nodes.
+Both IDs must reference an existing node or group. Referencing a group is useful
+for high-level architecture where the relationship is known to cross a layer
+boundary but the concrete component dependency has intentionally not been fixed.
 
 Optional fields:
 
@@ -439,8 +478,12 @@ This is the preferred starting point. Add routing hints only when automatic
 routing produces crossings/overlaps or when the diagram needs deliberately stable
 entry/exit points.
 
-Automatic routing uses node geometry and relative positions. It is deterministic,
-but it is intentionally a small router rather than a global graph-layout solver.
+Automatic routing uses endpoint geometry and relative positions. Nodes and
+groups use the same rectangular boundary model. Routing is deterministic, but it
+is intentionally a small orthogonal router rather than a global graph-layout
+solver. Prefer fewer high-level edges and group endpoints over forcing speculative
+component-to-component arrows; use explicit anchors/routes only where the
+relationship is concrete and the visual path needs stabilising.
 
 ---
 
