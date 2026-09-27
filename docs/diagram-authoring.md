@@ -418,10 +418,10 @@ items:
   - state
 ```
 
-The class keeps the same compact card layout as other nodes, but replaces the
-component glyph with a small `C` class glyph. Properties can be shown as
-structured bullet items. This keeps a high-level architecture view readable
-without turning it into a full class diagram.
+The class uses a compact UML class-style box: a small `«class»` stereotype,
+the class name, a separator, and a short property list. Keep the box compact in
+high-level architecture views; it does not need to span the width of the
+containing component.
 
 A packaging component can be either a group that geometrically contains child
 nodes or a node that summarizes a contained hierarchy:
