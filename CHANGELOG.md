@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2 — 2026-09-27
+
+### Added
+
+- `notation: component` is also supported on grouping boxes, allowing packaging-component style diagrams where a component visually owns child components while remaining distinct from a plain layer/package.
+
+### Changed
+
+- structured nodes with `items` place their heading at the top and flow the item hierarchy downward; simple and subtitle-only nodes retain balanced vertical alignment.
+
 ## 0.3.1 — 2026-09-27
 
 ### Added
