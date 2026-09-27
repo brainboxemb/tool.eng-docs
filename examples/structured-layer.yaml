@@ -1,0 +1,42 @@
+diagram:
+  id: structured-layer
+  title: Structured layer example
+  width: 900
+  height: 520
+  note: Node items can form a small tree; high-level edges may end on a group boundary.
+
+groups:
+  - id: interface-layer
+    label: Interface layer
+    kind: group-primary
+    layout: {x: 70, y: 80, w: 760, h: 160}
+  - id: application-layer
+    label: Application layer
+    kind: group-secondary
+    layout: {x: 70, y: 290, w: 760, h: 150}
+
+nodes:
+  - id: entrypoints
+    group: interface-layer
+    label: Entry points
+    items:
+      - Browser
+      - label: Terminals
+        items:
+          - Local
+          - Remote
+    kind: component
+    layout: {x: 150, y: 120, w: 260, h: 100}
+
+  - id: service
+    group: application-layer
+    label: Application service
+    subtitle: detailed component relationship intentionally omitted
+    kind: service
+    layout: {x: 480, y: 335, w: 280, h: 75}
+
+edges:
+  - from: entrypoints
+    to: application-layer
+    from_anchor: {side: bottom, position: 0.50}
+    to_anchor: {side: top, position: 0.32}
