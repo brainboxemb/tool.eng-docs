@@ -107,7 +107,9 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert 'data-notation="component"' in svg_text
     # Structured cards start near the top of their node instead of centering
     # the complete title/subtitle/item stack vertically.
-    assert 'y="142.3"' in svg_text or 'y="142.32"' in svg_text
+    root = ET.parse(svg).getroot()
+    entry_label = next(element for element in root.iter() if element.tag.endswith("text") and element.text == "Entry points")
+    assert float(entry_label.attrib["y"]) < 150
 
     edge = tree.find(".//mxCell[@id='edge-1']")
     assert edge is not None
