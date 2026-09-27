@@ -85,10 +85,36 @@ def test_routing_fixture_keeps_waypoints_anchors_dashed_edges_and_labels(tmp_pat
     assert len(tree.findall(".//Array[@as='points']/mxPoint")) >= 8
 
 
+def test_structured_items_and_group_edge_endpoint_render(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    example = Path(__file__).parents[1] / "examples" / "structured-layer.yaml"
+    (source / example.name).write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+
+    svg = out / "structured-layer.svg"
+    drawio = out / "structured-layer.drawio"
+    ET.parse(svg)
+    tree = ET.parse(drawio)
+
+    svg_text = svg.read_text(encoding="utf-8")
+    assert "• Browser" in svg_text
+    assert "• Terminals" in svg_text
+    assert "└─ Local" in svg_text
+    assert "└─ Remote" in svg_text
+
+    edge = tree.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert edge.attrib["source"] == "entrypoints"
+    assert edge.attrib["target"] == "group-application-layer"
+
+
 def test_missing_edge_reference_is_rejected():
     data = load_yaml(FIXTURES / "simple-flow.yaml")
     data["edges"][0]["to"] = "missing"
-    with pytest.raises(ValueError, match="edge references missing node"):
+    with pytest.raises(ValueError, match="edge references missing endpoint"):
         validate_refs(data, load_yaml(THEME), FIXTURES / "simple-flow.yaml")
 
 
