@@ -115,6 +115,13 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
         child.tag.endswith("rect") and child.attrib.get("width") == "20"
         for child in component_glyph
     )
+    packaging_glyph = next(
+        element
+        for element in root.iter()
+        if element.tag.endswith("g") and element.attrib.get("data-notation") == "packaging-component"
+    )
+    assert any(child.tag.endswith("path") for child in packaging_glyph)
+    assert sum(child.tag.endswith("rect") for child in packaging_glyph) == 3
     assert svg_text.count('data-notation="packaging-component"') >= 2
     assert "«class»" in svg_text
     assert "- sessionId" in svg_text
