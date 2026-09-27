@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 — 2026-09-27
+
+### Added
+
+- optional `notation: component` for nodes, rendered with UML-style component notation in SVG and native draw.io output;
+- documented distinction between visual groups/containers and concrete component nodes without coupling theme `kind` to semantic notation.
+
+
 All notable changes to `tool.eng-docs` are recorded here.
 
 ## 0.3.0 — 2026-09-27
