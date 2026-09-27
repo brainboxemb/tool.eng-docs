@@ -380,7 +380,7 @@ own detail diagram.
 ### Node `notation`
 
 Use the optional `notation` field when a node needs a standard semantic
-adornmentment independent of its theme/color `kind`.
+adornment independent of its theme/color `kind`.
 
 The first supported notation is:
 
