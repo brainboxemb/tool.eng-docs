@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.7 — 2026-09-27
+
+### Changed
+
+- packaging-component SVG notation now uses one integrated package/component outline: the package body is the component body and the UML component tabs cross its left edge, removing the misleading nested component rectangle from v0.3.6.
+
 ## 0.3.6 — 2026-09-27
 
 ### Changed
