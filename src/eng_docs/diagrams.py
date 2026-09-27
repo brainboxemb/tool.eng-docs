@@ -216,13 +216,13 @@ def _svg_text(parts, text, x, y, size, family, weight="normal", anchor="middle")
 
 def _svg_component_glyph(parts, node, stroke):
     r = node["layout"]
-    x = r["x"] + r["w"] - 28
-    y = r["y"] + 10
+    x = r["x"] + r["w"] - 34
+    y = r["y"] + 8
     parts.append(
-        f'<g data-notation="component" fill="none" stroke="{stroke}" stroke-width="1.5">'
-        f'<rect x="{x + 6}" y="{y}" width="16" height="18"/>'
-        f'<rect x="{x}" y="{y + 3}" width="9" height="5" fill="white"/>'
-        f'<rect x="{x}" y="{y + 11}" width="9" height="5" fill="white"/>'
+        f'<g data-notation="component" fill="none" stroke="{stroke}" stroke-width="1.7">'
+        f'<rect x="{x + 8}" y="{y}" width="20" height="22"/>'
+        f'<rect x="{x}" y="{y + 4}" width="11" height="6" fill="white"/>'
+        f'<rect x="{x}" y="{y + 14}" width="11" height="6" fill="white"/>'
         '</g>'
     )
 
