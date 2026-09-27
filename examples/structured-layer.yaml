@@ -20,6 +20,7 @@ nodes:
   - id: entrypoints
     group: interface-layer
     label: Entry points
+    notation: component
     items:
       - Browser
       - label: Terminals
