@@ -221,10 +221,11 @@ kind
 layout
 ```
 
-Optional field:
+Optional fields:
 
 ```text
 note
+notation
 ```
 
 ### Group `id`
@@ -275,6 +276,24 @@ Groups may also be used directly as edge `from` or `to` endpoints. Anchors
 then attach to the group boundary just as they do to a node boundary. This is
 preferable to inventing a component-level dependency in a high-level view when
 only the layer relationship is established.
+
+### Group `notation`
+
+A group is normally a plain visual layer/container and has no semantic glyph.
+When the enclosing box is itself a software component that owns or packages
+child components, use:
+
+```yaml
+notation: packaging-component
+```
+
+This renders a distinct packaging-component glyph in SVG and an editable package/
+container shape in draw.io. Do not use it merely because a group contains nodes:
+ordinary architecture layers remain plain groups.
+
+For backwards compatibility, `notation: component` on groups is still accepted,
+but new diagrams should use `packaging-component` when the box is both a
+component and a container.
 
 ---
 
@@ -379,22 +398,36 @@ own detail diagram.
 
 ### Node `notation`
 
-Use the optional `notation` field when a node needs a standard semantic
-adornment independent of its theme/color `kind`.
+Use the optional `notation` field when a node needs standard semantic notation
+independent of its theme/color `kind`.
 
-The first supported notation is:
+For a concrete modular software component:
 
 ```yaml
 notation: component
 ```
 
-`component` adds the standard UML component glyph in the SVG and uses the
-native component shape in draw.io. Use it for a concrete modular software
-component when distinguishing that component from visual groups/containers
-improves the diagram. Do not put `notation` on a group merely to make the
-group look more prominent; groups remain visual/semantic containers.
+This adds the UML component glyph in SVG and uses the native component shape in
+draw.io.
 
-`kind` continues to select the theme style. `notation` is deliberately
+For a class/type whose identity or state is relevant to the architecture view:
+
+```yaml
+notation: class
+items:
+  - id
+  - state
+```
+
+This renders a squared UML class-style box with an explicit `«class»`
+stereotype and an attribute compartment. Keep class detail intentionally small
+in a high-level architecture diagram.
+
+Packaging components are modeled as groups with
+`notation: packaging-component`, because they are both semantic components and
+containers for child nodes.
+
+`kind` continues to select theme styling. `notation` is deliberately
 orthogonal to that styling choice.
 
 ### Node `kind`
