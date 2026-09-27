@@ -308,6 +308,7 @@ Optional fields:
 group
 subtitle
 items
+notation
 note
 ```
 
@@ -375,6 +376,26 @@ items:
 The renderer shows top-level entries as bullets and nested entries as indented
 tree rows. Keep this structure small; a large hierarchy normally deserves its
 own detail diagram.
+
+### Node `notation`
+
+Use the optional `notation` field when a node needs a standard semantic
+adornmentment independent of its theme/color `kind`.
+
+The first supported notation is:
+
+```yaml
+notation: component
+```
+
+`component` adds the standard UML component glyph in the SVG and uses the
+native component shape in draw.io. Use it for a concrete modular software
+component when distinguishing that component from visual groups/containers
+improves the diagram. Do not put `notation` on a group merely to make the
+group look more prominent; groups remain visual/semantic containers.
+
+`kind` continues to select the theme style. `notation` is deliberately
+orthogonal to that styling choice.
 
 ### Node `kind`
 
@@ -664,7 +685,8 @@ Examples of schema errors:
 - non-positive layout width/height;
 - unsupported anchor side;
 - anchor position outside `0..1`;
-- malformed route point.
+- malformed route point;
+- unsupported node `notation`.
 
 The error includes the YAML field path where possible.
 
