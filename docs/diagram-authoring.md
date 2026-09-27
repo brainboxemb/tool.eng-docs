@@ -280,20 +280,19 @@ only the layer relationship is established.
 ### Group `notation`
 
 A group is normally a plain visual layer/container and has no semantic glyph.
-When the enclosing box is itself a software component that owns or packages
-child components, use:
+Use `notation: packaging-component` only when the enclosing box is itself a
+software packaging component, not merely because it is an architecture layer.
 
 ```yaml
 notation: packaging-component
 ```
 
-This renders a distinct packaging-component glyph in SVG and an editable package/
-container shape in draw.io. Do not use it merely because a group contains nodes:
-ordinary architecture layers remain plain groups.
+The SVG uses a compact packaging-component glyph derived from the normal
+component symbol. draw.io keeps the element editable as a container/component.
+Ordinary layers such as Presentation, Domain or I/O should normally remain plain
+groups with no notation.
 
-For backwards compatibility, `notation: component` on groups is still accepted,
-but new diagrams should use `packaging-component` when the box is both a
-component and a container.
+For backwards compatibility, `notation: component` on groups is still accepted.
 
 ---
 
@@ -419,13 +418,20 @@ items:
   - state
 ```
 
-This renders a squared UML class-style box with an explicit `«class»`
-stereotype and an attribute compartment. Keep class detail intentionally small
-in a high-level architecture diagram.
+The class uses a compact UML class-style box: a small `«class»` stereotype,
+the class name, a separator, and a short property list. Keep the box compact in
+high-level architecture views; it does not need to span the width of the
+containing component.
 
-Packaging components are modeled as groups with
-`notation: packaging-component`, because they are both semantic components and
-containers for child nodes.
+A packaging component can be either a group that geometrically contains child
+nodes or a node that summarizes a contained hierarchy:
+
+```yaml
+notation: packaging-component
+```
+
+Use it for the actual packaging component, not for the surrounding architecture
+layer.
 
 `kind` continues to select theme styling. `notation` is deliberately
 orthogonal to that styling choice.

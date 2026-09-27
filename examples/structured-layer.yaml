@@ -20,6 +20,7 @@ nodes:
   - id: entrypoints
     group: interface-layer
     label: Entry points
+    notation: component
     items:
       - Browser
       - label: Terminals
@@ -32,10 +33,12 @@ nodes:
   - id: service
     group: application-layer
     label: Application service
-    subtitle: detailed component relationship intentionally omitted
-    notation: component
+    items:
+      - Worker
+      - Repository
+    notation: packaging-component
     kind: service
-    layout: {x: 455, y: 335, w: 300, h: 75}
+    layout: {x: 455, y: 325, w: 300, h: 100}
 
   - id: state
     group: application-layer

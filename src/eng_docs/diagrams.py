@@ -229,13 +229,14 @@ def _svg_component_glyph(parts, node, stroke):
 
 def _svg_packaging_component_glyph(parts, node, stroke):
     r = node["layout"]
-    x = r["x"] + r["w"] - 31
+    x = r["x"] + r["w"] - 32
     y = r["y"] + 9
     parts.append(
         f'<g data-notation="packaging-component" fill="none" stroke="{stroke}" stroke-width="1.5">'
-        f'<path d="M{x},{y + 4} h8 l3,3 h14 v15 h-25 z"/>'
-        f'<rect x="{x + 7}" y="{y + 10}" width="12" height="9"/>'
-        f'<rect x="{x + 4}" y="{y + 12}" width="5" height="3" fill="white"/>'
+        f'<rect x="{x}" y="{y}" width="25" height="19" rx="1" ry="1"/>'
+        f'<rect x="{x + 8}" y="{y + 5}" width="12" height="9"/>'
+        f'<rect x="{x + 5}" y="{y + 7}" width="5" height="3" fill="white"/>'
+        f'<rect x="{x + 5}" y="{y + 12}" width="5" height="3" fill="white"/>'
         '</g>'
     )
 
@@ -245,25 +246,29 @@ def _svg_class_node_text(parts, node, theme, family):
     x = r["x"] + r["w"] / 2
     node_size = theme["font"]["node_size"]
     detail_size = theme["font"].get("node_subtitle_size", max(9, node_size - 3))
-    _svg_text(parts, "«class»", x, r["y"] + 12, detail_size, family)
-    _svg_text(parts, node["label"], x, r["y"] + 29, node_size, family)
-    separator_y = r["y"] + 42
+    stroke = _style(theme, node["kind"])["stroke"]
+
+    _svg_text(parts, "«class»", x, r["y"] + 13, detail_size, family)
+    _svg_text(parts, node["label"], x, r["y"] + 31, node_size, family)
+    separator_y = r["y"] + 44
     parts.append(
         f'<line x1="{r["x"]}" y1="{separator_y}" x2="{r["x"] + r["w"]}" y2="{separator_y}" '
-        f'stroke="{_style(theme, node["kind"])["stroke"]}" stroke-width="1"/>'
+        f'stroke="{stroke}" stroke-width="1"/>'
     )
-    cursor = separator_y + 12
+
+    cursor = separator_y + 14
     for depth, item_label in _flatten_node_items(node.get("items", [])):
+        prefix = "- " if depth == 0 else "  - "
         _svg_text(
             parts,
-            item_label,
+            prefix + item_label,
             r["x"] + 14 + depth * 12,
             cursor,
             detail_size,
             family,
             anchor="start",
         )
-        cursor += detail_size * 1.35
+        cursor += detail_size * 1.45
 
 
 def _svg_node_text(parts, node, theme, family):
@@ -337,7 +342,7 @@ def _drawio_node_value(node, theme):
         )
         attrs = _flatten_node_items(node.get("items", []))
         attr_html = "<br>".join(
-            ("&nbsp;" * (depth * 4)) + html.escape(item_label)
+            ("&nbsp;" * (depth * 4)) + html.escape(("- " if depth == 0 else "  - ") + item_label)
             for depth, item_label in attrs
         )
         return (
@@ -426,13 +431,14 @@ def render_svg(data, theme, out: Path):
     for node in data["nodes"]:
         r = node["layout"]
         s = _style(theme, node["kind"])
-        radius = 0 if node.get("notation") == "class" else 8
         parts.append(
             f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
-            f'rx="{radius}" ry="{radius}" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
+            f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
         )
         if node.get("notation") == "component":
             _svg_component_glyph(parts, node, s["stroke"])
+        elif node.get("notation") == "packaging-component":
+            _svg_packaging_component_glyph(parts, node, s["stroke"])
         _svg_node_text(parts, node, theme, family)
 
     parts.append("</svg>")
@@ -452,7 +458,7 @@ def _drawio_node_style(theme, kind, group=False, notation=None):
     if notation == "component":
         result += "shape=component;"
     elif notation == "packaging-component":
-        result += "shape=folder;container=1;"
+        result += "shape=component;container=1;"
     elif notation == "class":
         result += "rounded=0;verticalAlign=top;align=center;spacingTop=3;"
     return result
