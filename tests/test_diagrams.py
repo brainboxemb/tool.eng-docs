@@ -105,6 +105,11 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "└─ Local" in svg_text
     assert "└─ Remote" in svg_text
     assert 'data-notation="component"' in svg_text
+    # Structured cards start near the top of their node instead of centering
+    # the complete title/subtitle/item stack vertically.
+    root = ET.parse(svg).getroot()
+    entry_label = next(element for element in root.iter() if element.tag.endswith("text") and element.text == "Entry points")
+    assert float(entry_label.attrib["y"]) < 150
 
     edge = tree.find(".//mxCell[@id='edge-1']")
     assert edge is not None
@@ -114,6 +119,22 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert service is not None
     assert "shape=component;" in service.attrib["style"]
 
+
+
+def test_group_can_render_as_packaging_component(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    text = (FIXTURES / "layered-architecture.yaml").read_text(encoding="utf-8")
+    text = text.replace("kind: group-primary", "kind: group-primary\n    notation: component", 1)
+    (source / "layered-architecture.yaml").write_text(text, encoding="utf-8")
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+    svg_text = (out / "layered-architecture.svg").read_text(encoding="utf-8")
+    tree = ET.parse(out / "layered-architecture.drawio")
+    assert 'data-notation="component"' in svg_text
+    group = tree.find(".//mxCell[@id='group-interface-layer']")
+    assert group is not None
+    assert "shape=component;" in group.attrib["style"]
 
 def test_missing_edge_reference_is_rejected():
     data = load_yaml(FIXTURES / "simple-flow.yaml")

@@ -253,7 +253,10 @@ def _svg_node_text(parts, node, theme, family):
     if items:
         gaps += 7
     total_height = label_height + subtitle_height + items_height + gaps
-    top = center_y - total_height / 2
+    # Structured nodes read like compact component cards: keep the heading at
+    # the top and let the item hierarchy flow downward. Subtitle-only nodes
+    # remain vertically balanced.
+    top = r["y"] + 14 if items else center_y - total_height / 2
 
     label_center = top + label_height / 2
     _svg_text(parts, label, x, label_center, node_size, family)
@@ -335,6 +338,8 @@ def render_svg(data, theme, out: Path):
             f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
             f'rx="10" ry="10" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
         )
+        if group.get("notation") == "component":
+            _svg_component_glyph(parts, group, s["stroke"])
         _svg_text(parts, group["label"], r["x"] + 16, r["y"] + 22, theme["font"]["group_title_size"], family, "bold", "start")
 
     endpoints = {g["id"]: g for g in data["groups"]}
@@ -383,8 +388,8 @@ def _drawio_node_style(theme, kind, group=False, notation=None):
         result += "verticalAlign=top;align=left;spacingTop=8;spacingLeft=10;fontStyle=1;fontSize=17;"
     else:
         result += "fontSize=14;"
-        if notation == "component":
-            result += "shape=component;"
+    if notation == "component":
+        result += "shape=component;"
     return result
 
 
@@ -423,7 +428,7 @@ def render_drawio(data, theme, out: Path):
         r = group["layout"]
         cell = ET.SubElement(
             root, "mxCell", id=f"group-{group['id']}", value=group["label"],
-            style=_drawio_node_style(theme, group["kind"], True), vertex="1", parent="1"
+            style=_drawio_node_style(theme, group["kind"], True, group.get("notation")), vertex="1", parent="1"
         )
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
