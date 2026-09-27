@@ -198,9 +198,8 @@ def _flatten_node_items(items, depth=0):
 
 
 def _item_line(depth, label):
-    indent = "  " * depth
     marker = "• " if depth == 0 else "└─ "
-    return f"{indent}{marker}{label}"
+    return f"{marker}{label}"
 
 
 def _svg_text(parts, text, x, y, size, family, weight="normal", anchor="middle"):
