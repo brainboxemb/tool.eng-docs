@@ -2,6 +2,19 @@
 
 All notable changes to `tool.eng-docs` are recorded here.
 
+## 0.3.0 — 2026-09-27
+
+### Added
+
+- structured node `items` for compact left-aligned lists and nested tree rows in SVG and native draw.io output;
+- edges may reference visual groups/layers as endpoints in addition to concrete nodes, including explicit anchors and orthogonal routing;
+- domain-neutral `structured-layer.yaml` user example covering both capabilities.
+
+### Clarified
+
+- high-level architecture may terminate an edge on a layer boundary when the layer relationship is established but a concrete component dependency would be premature;
+- automatic routing remains intentionally small and deterministic; fewer meaningful edges and layer endpoints are preferred over speculative component-to-component routing.
+
 ## 0.2.1 — 2026-09-24
 
 ### Added
