@@ -105,6 +105,8 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "└─ Local" in svg_text
     assert "└─ Remote" in svg_text
     assert 'data-notation="component"' in svg_text
+    assert 'data-notation="packaging-component"' in svg_text
+    assert "«class»" in svg_text
     # Structured cards start near the top of their node instead of centering
     # the complete title/subtitle/item stack vertically.
     root = ET.parse(svg).getroot()
@@ -118,10 +120,18 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     service = tree.find(".//mxCell[@id='service']")
     assert service is not None
     assert "shape=component;" in service.attrib["style"]
+    package = tree.find(".//mxCell[@id='group-application-layer']")
+    assert package is not None
+    assert "shape=folder;" in package.attrib["style"]
+    state = tree.find(".//mxCell[@id='state']")
+    assert state is not None
+    assert "rounded=0;" in state.attrib["style"]
+    assert "«class»" in state.attrib["value"]
+    assert "sessionId" in state.attrib["value"]
 
 
 
-def test_group_can_render_as_packaging_component(tmp_path):
+def test_group_component_notation_remains_backwards_compatible(tmp_path):
     source = tmp_path / "source"
     source.mkdir()
     text = (FIXTURES / "layered-architecture.yaml").read_text(encoding="utf-8")
