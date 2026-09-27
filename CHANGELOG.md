@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.4 — 2026-09-27
+
+### Changed
+
+- architecture layers can remain plain groups while actual packaging components carry their own semantic notation;
+- `packaging-component` is supported on both grouping containers and normal nodes;
+- packaging components use a compact EA-inspired component/package glyph rather than a folder-style symbol;
+- class notation uses a compact UML class box with `«class»`, class name and a short property compartment, suitable for mixed component/class architecture views.
+
 ## 0.3.3 — 2026-09-27
 
 ### Added
