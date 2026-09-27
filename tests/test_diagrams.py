@@ -121,7 +121,13 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
         if element.tag.endswith("g") and element.attrib.get("data-notation") == "packaging-component"
     )
     assert any(child.tag.endswith("path") for child in packaging_glyph)
-    assert sum(child.tag.endswith("rect") for child in packaging_glyph) == 3
+    packaging_tabs = [child for child in packaging_glyph if child.tag.endswith("rect")]
+    assert len(packaging_tabs) == 2
+    assert all(child.attrib.get("width") == "8" for child in packaging_tabs)
+    assert all(child.attrib.get("height") == "4" for child in packaging_tabs)
+    # Packaging-component is one integrated package/component outline: it must
+    # not contain a second complete component body rectangle.
+    assert not any(child.attrib.get("width") == "12" for child in packaging_tabs)
     assert svg_text.count('data-notation="packaging-component"') >= 2
     assert "«class»" in svg_text
     assert "- sessionId" in svg_text
