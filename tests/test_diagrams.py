@@ -106,9 +106,8 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "└─ Remote" in svg_text
     assert 'data-notation="component"' in svg_text
     assert svg_text.count('data-notation="packaging-component"') >= 2
-    assert 'data-notation="class"' in svg_text
-    assert ">C</text>" in svg_text
-    assert "«class»" not in svg_text
+    assert "«class»" in svg_text
+    assert "- sessionId" in svg_text
     # Structured cards start near the top of their node instead of centering
     # the complete title/subtitle/item stack vertically.
     root = ET.parse(svg).getroot()
@@ -129,9 +128,9 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "container=1;" in package.attrib["style"]
     state = tree.find(".//mxCell[@id='state']")
     assert state is not None
-    assert "rounded=1;" in state.attrib["style"]
-    assert "«class»" not in state.attrib["value"]
-    assert "• sessionId" in state.attrib["value"]
+    assert "rounded=0;" in state.attrib["style"]
+    assert "«class»" in state.attrib["value"]
+    assert "- sessionId" in state.attrib["value"]
 
 
 
