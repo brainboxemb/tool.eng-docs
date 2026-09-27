@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.8 — 2026-09-27
+
+### Fixed
+
+- packaging-component SVG notation now places the package/folder tab at the upper-left while keeping the UML component tabs on the left edge, matching the intended combined package + component icon.
+
 ## 0.3.7 — 2026-09-27
 
 ### Changed
