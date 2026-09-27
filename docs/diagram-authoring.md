@@ -287,8 +287,10 @@ software packaging component, not merely because it is an architecture layer.
 notation: packaging-component
 ```
 
-The SVG uses a compact packaging-component glyph derived from the normal
-component symbol. draw.io keeps the element editable as a container/component.
+The SVG uses a compact packaging-component glyph that visibly combines a
+package/folder outline with the UML component symbol, matching the semantics of
+a component that behaves as a package/container. draw.io keeps the element
+editable as a container/component.
 Ordinary layers such as Presentation, Domain or I/O should normally remain plain
 groups with no notation.
 
