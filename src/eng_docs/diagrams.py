@@ -253,7 +253,10 @@ def _svg_node_text(parts, node, theme, family):
     if items:
         gaps += 7
     total_height = label_height + subtitle_height + items_height + gaps
-    top = center_y - total_height / 2
+    # Structured nodes read like compact component cards: keep the heading at
+    # the top and let the item hierarchy flow downward. Subtitle-only nodes
+    # remain vertically balanced.
+    top = r["y"] + 14 if items else center_y - total_height / 2
 
     label_center = top + label_height / 2
     _svg_text(parts, label, x, label_center, node_size, family)
