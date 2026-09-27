@@ -233,12 +233,11 @@ def _svg_packaging_component_glyph(parts, node, stroke):
     y = r["y"] + 7
     parts.append(
         f'<g data-notation="packaging-component" fill="none" stroke="{stroke}" stroke-width="1.6">'
-        # Package/folder outline: a small tab plus the package body.
+        # Integrated package + component notation: the package body is also the
+        # component body, with the UML component tabs crossing its left edge.
         f'<path d="M{x + 1},{y + 5} h8 l3,-4 h17 v22 h-28 z" fill="white"/>'
-        # UML component symbol embedded in the package body.
-        f'<rect x="{x + 13}" y="{y + 7}" width="12" height="11" fill="white"/>'
-        f'<rect x="{x + 9}" y="{y + 9}" width="6" height="3" fill="white"/>'
-        f'<rect x="{x + 9}" y="{y + 14}" width="6" height="3" fill="white"/>'
+        f'<rect x="{x - 1}" y="{y + 9}" width="8" height="4" fill="white"/>'
+        f'<rect x="{x - 1}" y="{y + 15}" width="8" height="4" fill="white"/>'
         '</g>'
     )
 
