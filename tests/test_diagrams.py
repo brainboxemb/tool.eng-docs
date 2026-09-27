@@ -100,17 +100,26 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     tree = ET.parse(drawio)
 
     svg_text = svg.read_text(encoding="utf-8")
+    root = ET.parse(svg).getroot()
     assert "• Browser" in svg_text
     assert "• Terminals" in svg_text
     assert "└─ Local" in svg_text
     assert "└─ Remote" in svg_text
     assert 'data-notation="component"' in svg_text
+    component_glyph = next(
+        element
+        for element in root.iter()
+        if element.tag.endswith("g") and element.attrib.get("data-notation") == "component"
+    )
+    assert any(
+        child.tag.endswith("rect") and child.attrib.get("width") == "20"
+        for child in component_glyph
+    )
     assert svg_text.count('data-notation="packaging-component"') >= 2
     assert "«class»" in svg_text
     assert "- sessionId" in svg_text
     # Structured cards start near the top of their node instead of centering
     # the complete title/subtitle/item stack vertically.
-    root = ET.parse(svg).getroot()
     entry_label = next(element for element in root.iter() if element.tag.endswith("text") and element.text == "Entry points")
     assert float(entry_label.attrib["y"]) < 150
 
