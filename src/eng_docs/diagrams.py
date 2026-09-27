@@ -227,7 +227,50 @@ def _svg_component_glyph(parts, node, stroke):
     )
 
 
+def _svg_packaging_component_glyph(parts, node, stroke):
+    r = node["layout"]
+    x = r["x"] + r["w"] - 31
+    y = r["y"] + 9
+    parts.append(
+        f'<g data-notation="packaging-component" fill="none" stroke="{stroke}" stroke-width="1.5">'
+        f'<path d="M{x},{y + 4} h8 l3,3 h14 v15 h-25 z"/>'
+        f'<rect x="{x + 7}" y="{y + 10}" width="12" height="9"/>'
+        f'<rect x="{x + 4}" y="{y + 12}" width="5" height="3" fill="white"/>'
+        '</g>'
+    )
+
+
+def _svg_class_node_text(parts, node, theme, family):
+    r = node["layout"]
+    x = r["x"] + r["w"] / 2
+    node_size = theme["font"]["node_size"]
+    detail_size = theme["font"].get("node_subtitle_size", max(9, node_size - 3))
+    _svg_text(parts, "«class»", x, r["y"] + 12, detail_size, family)
+    _svg_text(parts, node["label"], x, r["y"] + 29, node_size, family)
+    separator_y = r["y"] + 42
+    parts.append(
+        f'<line x1="{r["x"]}" y1="{separator_y}" x2="{r["x"] + r["w"]}" y2="{separator_y}" '
+        f'stroke="{_style(theme, node["kind"])["stroke"]}" stroke-width="1"/>'
+    )
+    cursor = separator_y + 12
+    for depth, item_label in _flatten_node_items(node.get("items", [])):
+        _svg_text(
+            parts,
+            item_label,
+            r["x"] + 14 + depth * 12,
+            cursor,
+            detail_size,
+            family,
+            anchor="start",
+        )
+        cursor += detail_size * 1.35
+
+
 def _svg_node_text(parts, node, theme, family):
+    if node.get("notation") == "class":
+        _svg_class_node_text(parts, node, theme, family)
+        return
+
     r = node["layout"]
     label = str(node["label"])
     subtitle = node.get("subtitle")
@@ -287,6 +330,21 @@ def _svg_node_text(parts, node, theme, family):
 
 def _drawio_node_value(node, theme):
     label = html.escape(str(node["label"])).replace("\n", "<br>")
+    if node.get("notation") == "class":
+        detail_size = theme["font"].get(
+            "node_subtitle_size",
+            max(9, theme["font"]["node_size"] - 3),
+        )
+        attrs = _flatten_node_items(node.get("items", []))
+        attr_html = "<br>".join(
+            ("&nbsp;" * (depth * 4)) + html.escape(item_label)
+            for depth, item_label in attrs
+        )
+        return (
+            f'<span style="font-size:{detail_size}px">«class»</span><br>'
+            f'{label}<hr>'
+            f'<div style="text-align:left;font-size:{detail_size}px;margin-left:10px">{attr_html}</div>'
+        )
     subtitle = node.get("subtitle")
     items = _flatten_node_items(node.get("items", []))
     if not subtitle and not items:
@@ -340,6 +398,8 @@ def render_svg(data, theme, out: Path):
         )
         if group.get("notation") == "component":
             _svg_component_glyph(parts, group, s["stroke"])
+        elif group.get("notation") == "packaging-component":
+            _svg_packaging_component_glyph(parts, group, s["stroke"])
         _svg_text(parts, group["label"], r["x"] + 16, r["y"] + 22, theme["font"]["group_title_size"], family, "bold", "start")
 
     endpoints = {g["id"]: g for g in data["groups"]}
@@ -366,9 +426,10 @@ def render_svg(data, theme, out: Path):
     for node in data["nodes"]:
         r = node["layout"]
         s = _style(theme, node["kind"])
+        radius = 0 if node.get("notation") == "class" else 8
         parts.append(
             f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
-            f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
+            f'rx="{radius}" ry="{radius}" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
         )
         if node.get("notation") == "component":
             _svg_component_glyph(parts, node, s["stroke"])
@@ -390,6 +451,10 @@ def _drawio_node_style(theme, kind, group=False, notation=None):
         result += "fontSize=14;"
     if notation == "component":
         result += "shape=component;"
+    elif notation == "packaging-component":
+        result += "shape=folder;container=1;"
+    elif notation == "class":
+        result += "rounded=0;verticalAlign=top;align=center;spacingTop=3;"
     return result
 
 

@@ -122,7 +122,8 @@
         "notation": {
           "type": "string",
           "enum": [
-            "component"
+            "component",
+            "packaging-component"
           ]
         }
       }
@@ -159,7 +160,8 @@
         "notation": {
           "type": "string",
           "enum": [
-            "component"
+            "component",
+            "class"
           ]
         },
         "layout": {
