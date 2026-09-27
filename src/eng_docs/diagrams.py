@@ -38,6 +38,7 @@ def validate_refs(data, theme, path: Path):
 
     known_groups = set(group_ids)
     known_nodes = set(node_ids)
+    known_endpoints = known_groups | known_nodes
     kinds = theme.get("kinds", {})
     for item in [*data["groups"], *data["nodes"]]:
         if item["kind"] not in kinds:
@@ -46,8 +47,10 @@ def validate_refs(data, theme, path: Path):
         if node.get("group") and node["group"] not in known_groups:
             raise ValueError(f"{path}: node {node['id']} references missing group {node['group']}")
     for edge in data["edges"]:
-        if edge["from"] not in known_nodes or edge["to"] not in known_nodes:
-            raise ValueError(f"{path}: edge references missing node: {edge['from']} -> {edge['to']}")
+        if edge["from"] not in known_endpoints or edge["to"] not in known_endpoints:
+            raise ValueError(
+                f"{path}: edge references missing endpoint: {edge['from']} -> {edge['to']}"
+            )
 
 
 def _style(theme, kind):
@@ -183,6 +186,23 @@ def _label_point(points):
     return (first[0] + second[0]) / 2, (first[1] + second[1]) / 2
 
 
+def _flatten_node_items(items, depth=0):
+    rows = []
+    for item in items or []:
+        if isinstance(item, str):
+            rows.append((depth, item))
+            continue
+        rows.append((depth, item["label"]))
+        rows.extend(_flatten_node_items(item.get("items", []), depth + 1))
+    return rows
+
+
+def _item_line(depth, label):
+    indent = "  " * depth
+    marker = "• " if depth == 0 else "└─ "
+    return f"{indent}{marker}{label}"
+
+
 def _svg_text(parts, text, x, y, size, family, weight="normal", anchor="middle"):
     lines = str(text).splitlines() or [""]
     line_height = size * 1.28
@@ -199,43 +219,85 @@ def _svg_node_text(parts, node, theme, family):
     r = node["layout"]
     label = str(node["label"])
     subtitle = node.get("subtitle")
+    items = _flatten_node_items(node.get("items", []))
     x = r["x"] + r["w"] / 2
     center_y = r["y"] + r["h"] / 2
     node_size = theme["font"]["node_size"]
+    subtitle_size = theme["font"].get("node_subtitle_size", max(9, node_size - 3))
 
-    if not subtitle:
+    if not subtitle and not items:
         _svg_text(parts, label, x, center_y, node_size, family)
         return
 
-    subtitle_size = theme["font"].get("node_subtitle_size", max(9, node_size - 3))
     label_lines = label.splitlines() or [""]
-    subtitle_lines = str(subtitle).splitlines() or [""]
+    subtitle_lines = str(subtitle).splitlines() if subtitle else []
     label_height = len(label_lines) * node_size * 1.28
     subtitle_height = len(subtitle_lines) * subtitle_size * 1.28
-    gap = 5
-    total_height = label_height + gap + subtitle_height
+    item_line_height = subtitle_size * 1.38
+    items_height = len(items) * item_line_height
+    gaps = 0
+    if subtitle_lines:
+        gaps += 5
+    if items:
+        gaps += 7
+    total_height = label_height + subtitle_height + items_height + gaps
     top = center_y - total_height / 2
 
     label_center = top + label_height / 2
-    subtitle_center = top + label_height + gap + subtitle_height / 2
     _svg_text(parts, label, x, label_center, node_size, family)
-    _svg_text(parts, subtitle, x, subtitle_center, subtitle_size, family)
+    cursor = top + label_height
+
+    if subtitle_lines:
+        cursor += 5
+        subtitle_center = cursor + subtitle_height / 2
+        _svg_text(parts, subtitle, x, subtitle_center, subtitle_size, family)
+        cursor += subtitle_height
+
+    if items:
+        cursor += 7
+        item_x = r["x"] + 16
+        for depth, item_label in items:
+            row_y = cursor + item_line_height / 2
+            _svg_text(
+                parts,
+                _item_line(depth, item_label),
+                item_x + depth * 12,
+                row_y,
+                subtitle_size,
+                family,
+                anchor="start",
+            )
+            cursor += item_line_height
 
 
 def _drawio_node_value(node, theme):
     label = html.escape(str(node["label"])).replace("\n", "<br>")
     subtitle = node.get("subtitle")
-    if not subtitle:
+    items = _flatten_node_items(node.get("items", []))
+    if not subtitle and not items:
         return label
+
     subtitle_size = theme["font"].get(
         "node_subtitle_size",
         max(9, theme["font"]["node_size"] - 3),
     )
-    subtitle_html = html.escape(str(subtitle)).replace("\n", "<br>")
-    return (
-        f'{label}<br><span style="font-size:{subtitle_size}px">'
-        f'{subtitle_html}</span>'
-    )
+    parts = [label]
+    if subtitle:
+        subtitle_html = html.escape(str(subtitle)).replace("\n", "<br>")
+        parts.append(
+            f'<span style="font-size:{subtitle_size}px">{subtitle_html}</span>'
+        )
+    if items:
+        rows = []
+        for depth, item_label in items:
+            indent = "&nbsp;" * (depth * 4)
+            marker = "• " if depth == 0 else "└─ "
+            rows.append(f"{indent}{html.escape(marker + item_label)}")
+        parts.append(
+            f'<div style="text-align:left;font-size:{subtitle_size}px;'
+            f'margin-left:12px">{"<br>".join(rows)}</div>'
+        )
+    return "<br>".join(parts)
 
 
 def render_svg(data, theme, out: Path):
@@ -263,10 +325,11 @@ def render_svg(data, theme, out: Path):
         )
         _svg_text(parts, group["label"], r["x"] + 16, r["y"] + 22, theme["font"]["group_title_size"], family, "bold", "start")
 
-    nodes = {n["id"]: n for n in data["nodes"]}
+    endpoints = {g["id"]: g for g in data["groups"]}
+    endpoints.update({n["id"]: n for n in data["nodes"]})
     for edge in data["edges"]:
-        source = nodes[edge["from"]]
-        target = nodes[edge["to"]]
+        source = endpoints[edge["from"]]
+        target = endpoints[edge["to"]]
         points = _edge_points(source, target, edge)
         dash = ' stroke-dasharray="7 5"' if edge.get("dashed") else ""
         pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
@@ -356,6 +419,8 @@ def render_drawio(data, theme, out: Path):
         )
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
+    group_ids = {group["id"] for group in data["groups"]}
+
     for i, edge in enumerate(data["edges"], 1):
         edge_style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;"
         edge_style += _drawio_anchor_style(edge.get("from_anchor"), "exit")
@@ -364,7 +429,9 @@ def render_drawio(data, theme, out: Path):
             edge_style += "dashed=1;"
         cell = ET.SubElement(
             root, "mxCell", id=f"edge-{i}", value=edge.get("label", ""), style=edge_style,
-            edge="1", parent="1", source=edge["from"], target=edge["to"]
+            edge="1", parent="1",
+            source=f"group-{edge['from']}" if edge["from"] in group_ids else edge["from"],
+            target=f"group-{edge['to']}" if edge["to"] in group_ids else edge["to"],
         )
         geom = ET.SubElement(cell, "mxGeometry", relative="1", **{"as": "geometry"})
         if edge.get("route"):
