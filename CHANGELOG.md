@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.6 — 2026-09-27
+
+### Changed
+
+- packaging-component notation now renders as a visible combination of a package/folder outline and the UML component symbol, matching the intended package-like component semantics more closely.
+
 ## 0.3.5 — 2026-09-27
 
 ### Changed
