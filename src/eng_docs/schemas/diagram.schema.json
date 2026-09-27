@@ -118,6 +118,12 @@
         },
         "note": {
           "type": "string"
+        },
+        "notation": {
+          "type": "string",
+          "enum": [
+            "component"
+          ]
         }
       }
     },
