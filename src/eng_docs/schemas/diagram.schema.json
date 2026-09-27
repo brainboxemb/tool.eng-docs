@@ -150,6 +150,12 @@
         "group": {
           "type": "string"
         },
+        "notation": {
+          "type": "string",
+          "enum": [
+            "component"
+          ]
+        },
         "layout": {
           "$ref": "#/$defs/rect"
         },

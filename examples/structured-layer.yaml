@@ -32,6 +32,7 @@ nodes:
     group: application-layer
     label: Application service
     subtitle: detailed component relationship intentionally omitted
+    notation: component
     kind: service
     layout: {x: 480, y: 335, w: 280, h: 75}
 

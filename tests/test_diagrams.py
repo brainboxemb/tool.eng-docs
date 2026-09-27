@@ -104,11 +104,15 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "• Terminals" in svg_text
     assert "└─ Local" in svg_text
     assert "└─ Remote" in svg_text
+    assert 'data-notation="component"' in svg_text
 
     edge = tree.find(".//mxCell[@id='edge-1']")
     assert edge is not None
     assert edge.attrib["source"] == "entrypoints"
     assert edge.attrib["target"] == "group-application-layer"
+    service = tree.find(".//mxCell[@id='service']")
+    assert service is not None
+    assert "shape=component;" in service.attrib["style"]
 
 
 def test_missing_edge_reference_is_rejected():
