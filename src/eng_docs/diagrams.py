@@ -214,6 +214,19 @@ def _svg_text(parts, text, x, y, size, family, weight="normal", anchor="middle")
         )
 
 
+def _svg_component_glyph(parts, node, stroke):
+    r = node["layout"]
+    x = r["x"] + r["w"] - 28
+    y = r["y"] + 10
+    parts.append(
+        f'<g data-notation="component" fill="none" stroke="{stroke}" stroke-width="1.5">'
+        f'<rect x="{x + 6}" y="{y}" width="16" height="18"/>'
+        f'<rect x="{x}" y="{y + 3}" width="9" height="5" fill="white"/>'
+        f'<rect x="{x}" y="{y + 11}" width="9" height="5" fill="white"/>'
+        '</g>'
+    )
+
+
 def _svg_node_text(parts, node, theme, family):
     r = node["layout"]
     label = str(node["label"])
@@ -352,13 +365,15 @@ def render_svg(data, theme, out: Path):
             f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
             f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
         )
+        if node.get("notation") == "component":
+            _svg_component_glyph(parts, node, s["stroke"])
         _svg_node_text(parts, node, theme, family)
 
     parts.append("</svg>")
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
 
 
-def _drawio_node_style(theme, kind, group=False):
+def _drawio_node_style(theme, kind, group=False, notation=None):
     s = _style(theme, kind)
     result = (
         "rounded=1;whiteSpace=wrap;html=1;"
@@ -368,6 +383,8 @@ def _drawio_node_style(theme, kind, group=False):
         result += "verticalAlign=top;align=left;spacingTop=8;spacingLeft=10;fontStyle=1;fontSize=17;"
     else:
         result += "fontSize=14;"
+        if notation == "component":
+            result += "shape=component;"
     return result
 
 
@@ -414,7 +431,7 @@ def render_drawio(data, theme, out: Path):
         r = node["layout"]
         cell = ET.SubElement(
             root, "mxCell", id=node["id"], value=_drawio_node_value(node, theme),
-            style=_drawio_node_style(theme, node["kind"]), vertex="1", parent="1"
+            style=_drawio_node_style(theme, node["kind"], notation=node.get("notation")), vertex="1", parent="1"
         )
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
