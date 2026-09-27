@@ -235,7 +235,7 @@ def _svg_packaging_component_glyph(parts, node, stroke):
         f'<g data-notation="packaging-component" fill="none" stroke="{stroke}" stroke-width="1.6">'
         # Integrated package + component notation: the package body is also the
         # component body, with the UML component tabs crossing its left edge.
-        f'<path d="M{x + 1},{y + 5} h8 l3,-4 h17 v22 h-28 z" fill="white"/>'
+        f'<path d="M{x + 1},{y + 5} v-4 h11 l3,4 h14 v18 h-28 z" fill="white"/>'
         f'<rect x="{x - 1}" y="{y + 9}" width="8" height="4" fill="white"/>'
         f'<rect x="{x - 1}" y="{y + 15}" width="8" height="4" fill="white"/>'
         '</g>'
