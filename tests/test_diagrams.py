@@ -105,6 +105,9 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "└─ Local" in svg_text
     assert "└─ Remote" in svg_text
     assert 'data-notation="component"' in svg_text
+    # Structured cards start near the top of their node instead of centering
+    # the complete title/subtitle/item stack vertically.
+    assert 'y="173.0"' in svg_text or 'y="173"' in svg_text
 
     edge = tree.find(".//mxCell[@id='edge-1']")
     assert edge is not None
