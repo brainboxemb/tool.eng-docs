@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.3 — 2026-09-27
+
+### Added
+
+- distinct `packaging-component` notation for component containers, separate from ordinary component glyphs and plain visual groups/layers;
+- explicit `class` notation for architecture diagrams, including a compact attribute compartment in SVG and editable draw.io output.
+
+### Clarified
+
+- component, packaging-component, class and visual-group semantics are now documented separately so consuming diagrams do not overload one glyph for multiple meanings.
+
 ## 0.3.2 — 2026-09-27
 
 ### Added
