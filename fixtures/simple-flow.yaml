@@ -1,0 +1,20 @@
+diagram:
+  id: simple-flow
+  title: Simple flow
+  width: 800
+  height: 360
+groups: []
+nodes:
+  - id: source
+    label: Source
+    kind: component
+    layout: {x: 80, y: 140, w: 180, h: 80}
+  - id: target
+    label: Target
+    subtitle: secondary explanation
+    kind: service
+    layout: {x: 520, y: 140, w: 180, h: 80}
+edges:
+  - from: source
+    to: target
+    label: request
