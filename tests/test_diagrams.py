@@ -105,6 +105,15 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "└─ Local" in svg_text
     assert "└─ Remote" in svg_text
     assert 'data-notation="component"' in svg_text
+    component_glyph = next(
+        element
+        for element in root.iter()
+        if element.tag.endswith("g") and element.attrib.get("data-notation") == "component"
+    )
+    assert any(
+        child.tag.endswith("rect") and child.attrib.get("width") == "20"
+        for child in component_glyph
+    )
     assert svg_text.count('data-notation="packaging-component"') >= 2
     assert "«class»" in svg_text
     assert "- sessionId" in svg_text
