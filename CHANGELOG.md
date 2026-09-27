@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5 — 2026-09-27
+
+### Changed
+
+- enlarged the SVG UML component glyph so component notation remains legible in normal architecture cards while staying visually subordinate to the component name.
+
 ## 0.3.4 — 2026-09-27
 
 ### Changed
