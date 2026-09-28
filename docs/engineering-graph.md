@@ -1,33 +1,30 @@
-# Engineering graph authoring and review
+# Engineering graph normalization and review
 
-The engineering-graph capability turns small, project-owned metadata fragments
-inside normal Markdown and declarative diagram sources into a normalized graph
-and a human review view.
+The engineering-graph capability consumes an existing Sphinx-Needs
+`needs.json` export and turns the selected outgoing relation fields into a
+small deterministic BrainboxEmb graph plus a human review view.
 
-The tool owns extraction, validation and generated views. The consuming project
-owns object IDs, object types, relation names and engineering meaning.
+`tool.eng-docs` does **not** own the engineering authoring syntax. Native
+MyST/Sphinx-Needs owns graph-exposed engineering objects, IDs, relation
+authoring and typed relation validation.
 
-## Authoring model
+## Source boundary
 
-Normal Markdown remains the readable engineering source.
-
-A graph-exposed Markdown object uses an explicit stable anchor followed by one
-hidden `eng` metadata comment:
+A consuming project authors graph-exposed objects as normal MyST/Sphinx-Needs
+directives, for example:
 
 ```md
-<a id="REQ-1"></a>
-**REQ-1 — Service response**
-
-<!-- eng {"type":"requirement","relations":{"derived_from":["GOAL-1"]}} -->
+```{req} Service response
+:id: REQ-1
+:derived_from: GOAL-1
 
 The system shall provide a response through the service boundary.
 ```
+```
 
-The metadata is hidden in normal rendered Markdown but stays adjacent to the
-object it describes.
+The relation is authored at the object that owns it.
 
-Relationships are authored at the object that owns them. A project can therefore
-follow its normal engineering flow, for example:
+A typical engineering flow can therefore be:
 
 ```text
 requirement  --derived_from--> upstream requirement/use case
@@ -35,12 +32,23 @@ design       --satisfies-----> requirement
 verification --verifies------> requirement
 ```
 
-The relation names above are examples. They are not hard-coded by
-`tool.eng-docs`.
+The relation names above are examples. They are consumer-owned and configured in
+Sphinx-Needs; `tool.eng-docs` does not hard-code them.
+
+Sphinx-Needs then provides:
+
+- stable object IDs;
+- typed objects;
+- typed outgoing relation validation;
+- generated inverse/backlinks;
+- reader-facing object anchors;
+- machine-readable `needs.json`.
+
+The `needs.json` export is the input boundary for `eng-docs graph`.
 
 ## Diagram engineering identity
 
-Declarative diagram nodes may already carry an engineering `object_id`:
+Declarative diagram nodes may carry an engineering `object_id`:
 
 ```yaml
 nodes:
@@ -51,92 +59,72 @@ nodes:
     layout: {x: 290, y: 150, w: 180, h: 60}
 ```
 
-The graph extractor imports that object identity directly. A project should not
-create a second Markdown object merely to repeat the same identity.
+The diagram does **not** define a second engineering object.
 
-When design text owns relations for an existing diagram object, use an
-`eng-rel` extension beside that design text:
+The design/Need with ID `Service` owns the engineering object. The diagram
+`object_id` references that existing object for navigation and cross-view
+identity.
 
-```md
-<!-- eng-rel {"id":"Service","relations":{"satisfies":["REQ-1"]}} -->
-
-The Service design owns the implementation responsibility for REQ-1.
-```
-
-The extension adds relations to the already-defined object. It does not define a
-second `Service`.
-
-## Consumer-owned graph model
-
-An optional YAML model can constrain object and relation types without embedding
-project semantics in the reusable tool.
-
-Example:
-
-```yaml
-schema_version: 1
-diagram_object_type: design
-
-object_types:
-  - goal
-  - requirement
-  - design
-  - verification
-
-relations:
-  derived_from:
-    from: [requirement]
-    to: [goal, requirement]
-  satisfies:
-    from: [design]
-    to: [requirement]
-  verifies:
-    from: [verification]
-    to: [requirement]
-```
-
-With a model supplied, extraction fails when:
-
-- an object uses an undeclared type;
-- a relation name is undeclared;
-- a relation source type is not allowed;
-- a relation target type is not allowed.
-
-The model is optional. Duplicate IDs and unknown owners/targets are always
-validated.
+When `--diagrams` is supplied, `eng-docs graph` validates every diagram
+`object_id` against the Needs graph and records the diagram reference on the
+normalized object. An unresolved diagram ID fails the command.
 
 ## CLI
 
-Generate normalized JSON and a human review:
+Generate normalized JSON and an optional human review:
 
 ```text
 eng-docs graph \
-  --root . \
-  --docs examples/graph/docs \
-  --diagrams examples/graph/diagrams \
-  --model examples/graph/model.yml \
+  --needs bld/needs/needs.json \
+  --relation derived_from \
+  --relation satisfies \
+  --relation verifies \
+  --diagrams docs/_diagrams \
   --out bld/engineering-graph.json \
   --review bld/engineering-graph-review.md \
   --source-revision <exact-source-revision>
 ```
 
-`--diagrams`, `--model` and `--review` are optional. `--docs`, `--out`
-and `--source-revision` are required.
+`--relation` may be repeated. Only those outgoing relation fields are
+normalized into the BrainboxEmb graph.
 
-Source paths stored in the graph are relative to `--root` where possible.
+`--diagrams` and `--review` are optional.
 
-## Human review view
+`--needs`, `--out` and `--source-revision` are required.
 
-The generated review intentionally makes hidden authoring visible.
+## Normalized graph
 
-For every engineering object it shows:
+The normalized graph retains:
 
-1. **Authored input** — the exact `eng`, `eng-rel` or diagram
-   `object_id` source;
-2. **Authored outgoing** — normalized relations owned by that object;
-3. **Generated incoming** — inverse context derived from other objects.
+- exact source revision supplied by the consuming build;
+- Sphinx-Needs project/version provenance;
+- object ID;
+- Need type and human type name;
+- title;
+- source document/line from the Needs export;
+- content;
+- zero or more diagram references;
+- explicitly selected outgoing relations.
 
-For a requirement the result can therefore read conceptually as:
+Incoming/backlink context is derived from the normalized outgoing relations and
+is not stored as a second authored relation set.
+
+The output is validated against:
+
+```text
+src/eng_docs/schemas/engineering-graph.schema.json
+```
+
+## Human review
+
+The generated Markdown review shows, for every object:
+
+1. source identity from Sphinx-Needs;
+2. **Authored outgoing** relations;
+3. **Generated incoming** relations;
+4. diagram references.
+
+For a requirement the review can therefore read conceptually as:
 
 ```text
 REQ-1
@@ -147,24 +135,45 @@ Authored outgoing
 Generated incoming
   satisfies <- Service
   verifies  <- VC-1
+
+Diagram references
+  none
 ```
 
-Only the outgoing relations are authored. The incoming view is derived and must
-not be maintained separately.
+The review is derived from `needs.json`. It does not parse or reproduce a
+second custom Markdown metadata language.
 
-## Validation boundary
+## Validation ownership
 
-The first reusable boundary intentionally validates a small contract:
+Sphinx-Needs remains responsible for authoring-level rules such as:
 
-- stable Markdown anchors for `eng` objects;
-- unique engineering IDs across Markdown and diagram nodes;
-- valid JSON metadata;
-- relation targets that exist;
-- `eng-rel` owners that already exist;
-- optional consumer-owned type compatibility;
-- deterministic normalized JSON and Markdown review output.
+- valid Need IDs;
+- project-specific Need types;
+- allowed relation names;
+- allowed source/target type combinations;
+- ordinary backlink generation.
 
-It does not mutate source Markdown, generate a portal, depend on Sphinx-Needs or
-own project-specific traceability policy.
+`tool.eng-docs` adds only the reusable post-export checks needed by its
+derived views:
 
-See `examples/graph/` for the executable domain-neutral example.
+- valid Sphinx-Needs export structure;
+- embedded Need ID consistency;
+- selected relation fields must contain lists of IDs;
+- selected relation targets must exist;
+- diagram `object_id` values must resolve to existing Needs;
+- deterministic normalized graph/review output.
+
+This keeps project semantics in the consuming repository while avoiding a
+second authoring parser.
+
+## Runtime dependency boundary
+
+`eng-docs graph` consumes JSON and therefore does not need Sphinx-Needs as a
+runtime dependency.
+
+The consuming documentation build runs Sphinx-Needs first and passes its export
+to `tool.eng-docs` only when a normalized BrainboxEmb graph, diagram
+cross-validation or another derived view is required.
+
+See `examples/graph/` for the domain-neutral source, Needs export and diagram
+reference example.
