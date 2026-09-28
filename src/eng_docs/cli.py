@@ -11,6 +11,7 @@ import yaml
 
 from .assembly_output import assemble_output
 from .diagrams import generate
+from .engineering_graph import write_graph
 from .manifests import build_manifest
 
 
@@ -49,6 +50,15 @@ def main(argv=None):
         help="optional relative glob to include; may be repeated",
     )
 
+    graph = sub.add_parser("graph", help="extract and review an engineering graph")
+    graph.add_argument("--root", default=".", help="project root for source paths")
+    graph.add_argument("--docs", required=True, help="Markdown source directory")
+    graph.add_argument("--diagrams", help="optional declarative diagram YAML directory")
+    graph.add_argument("--model", help="optional consumer-owned graph model YAML")
+    graph.add_argument("--out", required=True, help="normalized graph JSON path")
+    graph.add_argument("--review", help="optional human Markdown review path")
+    graph.add_argument("--source-revision", required=True, help="exact source revision/provenance")
+
     assembly = sub.add_parser("assemble", help="assemble Markdown and produced assets")
     assembly.add_argument("--root", default=".", help="project root for source/config paths")
     assembly.add_argument("--config", required=True, help="assembly YAML configuration")
@@ -67,6 +77,19 @@ def main(argv=None):
                 print(f"diagram source directory does not exist: {source}", file=sys.stderr)
                 return 2
             generate(source, schema, theme, Path(args.out))
+            return 0
+
+        if args.command == "graph":
+            root = Path(args.root)
+            write_graph(
+                root,
+                Path(args.docs),
+                Path(args.out),
+                diagrams_root=Path(args.diagrams) if args.diagrams else None,
+                model_path=Path(args.model) if args.model else None,
+                review_path=Path(args.review) if args.review else None,
+                source_revision=args.source_revision,
+            )
             return 0
 
         if args.command == "manifest":
