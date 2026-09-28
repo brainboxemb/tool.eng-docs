@@ -226,6 +226,7 @@ Optional fields:
 ```text
 note
 notation
+outline
 ```
 
 ### Group `id`
@@ -239,6 +240,43 @@ Group IDs:
 ### Group `label`
 
 Rendered heading for the visual group.
+
+### Group `outline`
+
+By default a group is rendered as the existing rounded rectangle described by
+`layout`. A group may instead define one closed polygon outline while keeping
+that same rectangular layout as its bounding box:
+
+```yaml
+groups:
+  - id: upper-area
+    label: Upper responsibility
+    kind: group-primary
+    layout: {x: 70, y: 85, w: 760, h: 190}
+    outline:
+      points:
+        - {x: 0.0, y: 0.0}
+        - {x: 1.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
+        - {x: 0.62, y: 1.0}
+        - {x: 0.62, y: 0.76}
+        - {x: 0.0, y: 0.76}
+```
+
+Outline coordinates are normalized relative to the layout box: `0,0` is its
+upper-left and `1,1` its lower-right. At least three distinct points are
+required and all coordinates must remain in the inclusive `0..1` range. Do
+not repeat the first point at the end; the renderer closes the polygon.
+
+SVG and draw.io use the same polygon. The draw.io representation remains a
+native editable polygon (`mxgraph.basic.polygon`), not an embedded image.
+Group titles and edge routing still use the rectangular `layout` bounding box.
+Keep the title area inside the polygon and use explicit edge anchors when a
+non-rectangular boundary makes the default bounding-box anchor visually
+ambiguous.
+
+Polygon outlines currently apply to groups only and cannot be combined with
+`notation`; component/class notation remains rectangular.
 
 ### Group `kind`
 

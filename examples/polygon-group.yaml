@@ -1,0 +1,48 @@
+diagram:
+  id: polygon-group
+  title: Polygon group outline
+  width: 900
+  height: 520
+  note: Groups can use stepped polygon outlines while keeping rectangular layout boxes.
+
+groups:
+  - id: upper-area
+    label: Upper responsibility
+    kind: group-primary
+    layout: {x: 70, y: 85, w: 760, h: 190}
+    outline:
+      points:
+        - {x: 0.0, y: 0.0}
+        - {x: 1.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
+        - {x: 0.62, y: 1.0}
+        - {x: 0.62, y: 0.76}
+        - {x: 0.0, y: 0.76}
+
+  - id: lower-area
+    label: Lower responsibility
+    kind: group-secondary
+    layout: {x: 70, y: 230, w: 760, h: 205}
+    outline:
+      points:
+        - {x: 0.0, y: 0.22}
+        - {x: 0.62, y: 0.22}
+        - {x: 0.62, y: 0.0}
+        - {x: 1.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
+        - {x: 0.0, y: 1.0}
+
+nodes:
+  - id: upper-service
+    group: upper-area
+    label: Upper service
+    kind: service
+    layout: {x: 160, y: 135, w: 240, h: 70}
+
+  - id: adjacent-adapter
+    group: lower-area
+    label: Adjacent adapter
+    kind: integration
+    layout: {x: 540, y: 250, w: 220, h: 70}
+
+edges: []

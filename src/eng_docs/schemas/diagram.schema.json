@@ -116,6 +116,9 @@
         "layout": {
           "$ref": "#/$defs/rect"
         },
+        "outline": {
+          "$ref": "#/$defs/outline"
+        },
         "note": {
           "type": "string"
         },
@@ -176,6 +179,42 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/nodeItem"
+          }
+        }
+      }
+    },
+    "normalizedPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "outline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "points"
+      ],
+      "properties": {
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "$ref": "#/$defs/normalizedPoint"
           }
         }
       }

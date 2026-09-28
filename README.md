@@ -150,12 +150,14 @@ Diagram examples:
 examples/minimal-flow.yaml
 examples/routed-flow.yaml
 examples/structured-layer.yaml
+examples/polygon-group.yaml
 ```
 
 The first demonstrates the minimal model and automatic routing. The second shows
 visual grouping, explicit edge anchors, a dashed edge and manual waypoints. The
 third demonstrates structured node items and a high-level edge that terminates on
-a group/layer boundary.
+a group/layer boundary. The fourth demonstrates native stepped polygon outlines
+for groups while retaining a rectangular layout box for labels and routing.
 
 Document-assembly example:
 
