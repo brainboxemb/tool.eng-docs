@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- reusable `eng-docs graph` extraction from stable Markdown anchors, compact
+  `eng` / `eng-rel` metadata and declarative diagram `object_id` values;
+- deterministic normalized graph JSON retaining source locations and exact
+  authored input;
+- human Markdown review with authored outgoing and generated incoming relations;
+- optional consumer-owned object/relation model validation;
+- domain-neutral executable example and Linux/Windows test coverage.
+
+### Boundary
+
+- relation names and engineering semantics remain consumer-owned;
+- no Sphinx-Needs, portal or project-specific traceability policy is introduced
+  by this reusable graph boundary.
+
 ## 0.3.11 — 2026-09-28
 
 ### Added
