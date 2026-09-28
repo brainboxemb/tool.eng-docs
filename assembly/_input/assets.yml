@@ -1,0 +1,11 @@
+schema_version: 1
+producer:
+  name: tool.eng-docs.example-diagrams
+  version: 0.3.10
+  source_revision: 84fb9eae2efa5ed4a423747740875d9fcc9302aa
+assets:
+- id: tool.eng-docs.example-diagrams:system.svg
+  kind: image/svg+xml
+  lifecycle: docs
+  relationship: producer-source
+  path: system.svg
