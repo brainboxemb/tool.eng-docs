@@ -119,6 +119,26 @@ jobs:
           cp examples/assembly/docs/overview.md bld/docs/assembly/_input/overview.md
           cp "$example_root/produced/assets.yml" bld/docs/assembly/_input/assets.yml
 
+      - name: Generate engineering-graph conformance example
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bld/docs/graph/input
+          eng-docs graph \
+            --root . \
+            --docs examples/graph/docs \
+            --diagrams examples/graph/diagrams \
+            --model examples/graph/model.yml \
+            --out bld/docs/graph/engineering-graph.json \
+            --review bld/docs/graph/review.md \
+            --source-revision "$SOURCE_SHA"
+          cp examples/graph/model.yml bld/docs/graph/input/model.yml
+          cp examples/graph/docs/requirements.md bld/docs/graph/input/requirements.md
+          cp examples/graph/docs/design.md bld/docs/graph/input/design.md
+          cp examples/graph/diagrams/system.yaml bld/docs/graph/input/system.yaml
+
       - name: Build generated documentation index
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -146,6 +166,17 @@ jobs:
           - [assembly configuration](assembly/_input/assembly.yml)
           - [source Markdown before assembly](assembly/_input/overview.md)
           - [producer asset manifest](assembly/_input/assets.yml)
+
+          ## Engineering graph example
+
+          The human review makes compact hidden authoring visible beside generated inverse context.
+
+          - [human graph review](graph/review.md)
+          - [normalized graph JSON](graph/engineering-graph.json)
+          - [graph model](graph/input/model.yml)
+          - [requirements source](graph/input/requirements.md)
+          - [design/verification source](graph/input/design.md)
+          - [diagram identity source](graph/input/system.yaml)
 
           ## Diagram conformance
 
@@ -184,6 +215,15 @@ jobs:
           test -f bld/docs/assembly/_input/assembly.yml
           test -f bld/docs/assembly/_input/overview.md
           test -f bld/docs/assembly/_input/assets.yml
+          test -f bld/docs/graph/review.md
+          test -f bld/docs/graph/engineering-graph.json
+          test -f bld/docs/graph/input/model.yml
+          test -f bld/docs/graph/input/requirements.md
+          test -f bld/docs/graph/input/design.md
+          test -f bld/docs/graph/input/system.yaml
+          grep -Fq 'Generated incoming' bld/docs/graph/review.md
+          grep -Fq '"object_count": 4' bld/docs/graph/engineering-graph.json
+          grep -Fq "$SOURCE_SHA" bld/docs/graph/engineering-graph.json
           grep -Fq 'repository: brainboxemb/tool.eng-docs' bld/docs/assembly/assembly-info.yml
           grep -Fq '../assets/architecture/system.svg' bld/docs/assembly/documents/overview.md
           grep -Fq '../../../raw/prod/docs/assets/architecture/system.svg' bld/docs/assembly/_input/overview.md
