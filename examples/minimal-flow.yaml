@@ -9,10 +9,12 @@ groups: []
 
 nodes:
   - id: client
+    object_id: example.client
     label: Client
     kind: component
     layout: {x: 80, y: 150, w: 180, h: 60}
   - id: service
+    object_id: example.service
     label: Service
     subtitle: handles requests
     kind: service

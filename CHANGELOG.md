@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.11 — 2026-09-28
+
+### Added
+
+- optional node `object_id` as opaque project-owned engineering identity, separate from diagram-local routing/layout `id`;
+- SVG preservation through `data-engineering-id` on the rendered node group;
+- matching `data-engineering-id` metadata on editable draw.io node cells;
+- duplicate engineering-object identity validation and domain-neutral example/test coverage.
+
+### Compatibility
+
+- nodes without `object_id` render exactly through the existing visual path;
+- the renderer does not depend on Sphinx-Needs or validate object IDs against an external engineering graph;
+- groups do not gain engineering identity in this first slice.
+
 ## 0.3.10 — 2026-09-28
 
 ### Added

@@ -51,6 +51,35 @@ def test_simple_flow_generates_parseable_deterministic_outputs(tmp_path):
     assert drawio.read_bytes() == (second / "simple-flow.drawio").read_bytes()
 
 
+def test_engineering_object_id_is_preserved_in_svg_and_drawio(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    example = Path(__file__).parents[1] / "examples" / "minimal-flow.yaml"
+    (source / example.name).write_text(
+        example.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+
+    svg_root = ET.parse(out / "minimal-flow.svg").getroot()
+    identities = {
+        element.attrib["data-engineering-id"]
+        for element in svg_root.iter()
+        if element.tag.endswith("g") and "data-engineering-id" in element.attrib
+    }
+    assert identities == {"example.client", "example.service"}
+
+    drawio_root = ET.parse(out / "minimal-flow.drawio")
+    client = drawio_root.find(".//mxCell[@id='client']")
+    service = drawio_root.find(".//mxCell[@id='service']")
+    assert client is not None
+    assert service is not None
+    assert client.attrib["data-engineering-id"] == "example.client"
+    assert service.attrib["data-engineering-id"] == "example.service"
+
+
 def test_layered_fixture_preserves_groups_and_semantic_labels(tmp_path):
     out = _render_fixture(tmp_path, "layered-architecture.yaml")
     svg = out / "layered-architecture.svg"
@@ -292,6 +321,22 @@ def test_duplicate_node_id_is_rejected():
     data["nodes"].append(dict(data["nodes"][0]))
     with pytest.raises(ValueError, match="duplicate node id"):
         validate_refs(data, load_yaml(THEME), FIXTURES / "simple-flow.yaml")
+
+
+def test_duplicate_node_object_id_is_rejected():
+    data = load_yaml(FIXTURES / "simple-flow.yaml")
+    data["nodes"][0]["object_id"] = "example.shared"
+    data["nodes"][1]["object_id"] = "example.shared"
+    with pytest.raises(ValueError, match="duplicate node object_id"):
+        validate_refs(data, load_yaml(THEME), FIXTURES / "simple-flow.yaml")
+
+
+def test_empty_node_object_id_is_rejected_by_schema():
+    data = load_yaml(FIXTURES / "simple-flow.yaml")
+    data["nodes"][0]["object_id"] = ""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "simple-flow.yaml")
 
 
 def test_duplicate_group_id_is_rejected():

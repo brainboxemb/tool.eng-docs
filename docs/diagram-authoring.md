@@ -379,6 +379,7 @@ layout
 Optional fields:
 
 ```text
+object_id
 group
 subtitle
 items
@@ -394,6 +395,40 @@ Node IDs:
 - must be unique among nodes;
 - may not reuse a group ID;
 - are referenced by edge `from` and `to` fields.
+
+### Node `object_id`
+
+Use `object_id` when the diagram node represents an engineering object that
+also exists outside the diagram.
+
+```yaml
+- id: service-card
+  object_id: example.service
+  label: Service
+  kind: service
+  layout: {x: 500, y: 150, w: 180, h: 60}
+```
+
+`id` and `object_id` have deliberately different responsibilities:
+
+- `id` is local diagram identity used by routing, grouping and edges;
+- `object_id` is optional project-owned semantic identity used to connect
+  generated output to other engineering-documentation views.
+
+`object_id` is treated as an opaque non-empty string. The renderer does not
+look it up in a requirements database or engineering graph.
+
+When present:
+
+- SVG wraps the rendered node in an element carrying
+  `data-engineering-id="<object_id>"`;
+- editable draw.io output preserves the same
+  `data-engineering-id` metadata on the node cell;
+- duplicate `object_id` values within one diagram are rejected because they
+  would make interactive selection ambiguous.
+
+The field is node-only in the current contract. Do not use a second
+label-to-object lookup table when the node itself can declare the identity.
 
 ### Node `label`
 
@@ -777,6 +812,7 @@ Examples of schema errors:
 - invalid `diagram.id`;
 - canvas too small;
 - missing node/group properties;
+- empty node `object_id`;
 - non-positive layout width/height;
 - unsupported anchor side;
 - anchor position outside `0..1`;
@@ -791,6 +827,7 @@ Additional checks include:
 
 - duplicate group IDs;
 - duplicate node IDs;
+- duplicate node `object_id` values;
 - one ID reused as both group and node;
 - unknown group/node `kind` in the selected theme;
 - node referencing a missing group;

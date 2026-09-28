@@ -6,10 +6,12 @@ diagram:
 groups: []
 nodes:
   - id: source
+    object_id: example.source
     label: Source
     kind: component
     layout: {x: 80, y: 140, w: 180, h: 80}
   - id: target
+    object_id: example.target
     label: Target
     subtitle: secondary explanation
     kind: service

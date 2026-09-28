@@ -32,6 +32,13 @@ def validate_refs(data, theme, path: Path):
         raise ValueError(f"{path}: duplicate group id")
     if len(set(node_ids)) != len(node_ids):
         raise ValueError(f"{path}: duplicate node id")
+    object_ids = [n["object_id"] for n in data["nodes"] if n.get("object_id")]
+    if len(set(object_ids)) != len(object_ids):
+        duplicates = sorted(
+            object_id for object_id in set(object_ids)
+            if object_ids.count(object_id) > 1
+        )
+        raise ValueError(f"{path}: duplicate node object_id: {duplicates}")
     overlap = set(group_ids) & set(node_ids)
     if overlap:
         raise ValueError(f"{path}: ids reused by group and node: {sorted(overlap)}")
@@ -489,6 +496,11 @@ def render_svg(data, theme, out: Path):
     for node in data["nodes"]:
         r = node["layout"]
         s = _style(theme, node["kind"])
+        object_id = node.get("object_id")
+        if object_id:
+            parts.append(
+                f'<g data-engineering-id="{html.escape(object_id, quote=True)}">'
+            )
         parts.append(
             f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
             f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
@@ -498,6 +510,8 @@ def render_svg(data, theme, out: Path):
         elif node.get("notation") == "packaging-component":
             _svg_packaging_component_glyph(parts, node, s["stroke"])
         _svg_node_text(parts, node, theme, family)
+        if object_id:
+            parts.append("</g>")
 
     parts.append("</svg>")
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
@@ -591,10 +605,18 @@ def render_drawio(data, theme, out: Path):
 
     for node in data["nodes"]:
         r = node["layout"]
-        cell = ET.SubElement(
-            root, "mxCell", id=node["id"], value=_drawio_node_value(node, theme),
-            style=_drawio_node_style(theme, node["kind"], notation=node.get("notation")), vertex="1", parent="1"
-        )
+        attrs = {
+            "id": node["id"],
+            "value": _drawio_node_value(node, theme),
+            "style": _drawio_node_style(
+                theme, node["kind"], notation=node.get("notation")
+            ),
+            "vertex": "1",
+            "parent": "1",
+        }
+        if node.get("object_id"):
+            attrs["data-engineering-id"] = node["object_id"]
+        cell = ET.SubElement(root, "mxCell", attrs)
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
     group_ids = {group["id"] for group in data["groups"]}
