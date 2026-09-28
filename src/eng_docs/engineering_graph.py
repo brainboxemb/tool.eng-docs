@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 
 from jsonschema import Draft202012Validator
+from jsonschema.exceptions import ValidationError
 import yaml
 
 
@@ -68,7 +69,10 @@ def _load_model(path: Path | None) -> dict | None:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     schema_path = Path(str(files("eng_docs").joinpath("schemas/engineering-graph-model.schema.json")))
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
-    Draft202012Validator(schema).validate(data)
+    try:
+        Draft202012Validator(schema).validate(data)
+    except ValidationError as exc:
+        raise ValueError(f"invalid engineering graph model: {exc.message}") from exc
 
     if data.get("diagram_object_type") and data["diagram_object_type"] not in data["object_types"]:
         raise ValueError("diagram_object_type must be declared in object_types")
