@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -6,106 +7,121 @@ from eng_docs.engineering_graph import build_graph, render_review
 
 
 ROOT = Path(__file__).resolve().parents[1]
+NEEDS = ROOT / "examples/graph/needs.json"
+DIAGRAMS = ROOT / "examples/graph/diagrams"
+RELATIONS = ["derived_from", "satisfies", "verifies"]
 
 
-def test_domain_neutral_example_builds_deterministically():
+def test_domain_neutral_needs_example_builds_deterministically():
     kwargs = dict(
-        root=ROOT,
-        docs_root=Path("examples/graph/docs"),
-        diagrams_root=Path("examples/graph/diagrams"),
-        model_path=Path("examples/graph/model.yml"),
+        needs_path=NEEDS,
+        diagrams_root=DIAGRAMS,
+        relation_types=RELATIONS,
         source_revision="example-sha",
     )
     first = build_graph(**kwargs)
     second = build_graph(**kwargs)
 
     assert first == second
+    assert first["source_graph"] == {
+        "kind": "sphinx-needs",
+        "project": "tool.eng-docs graph example",
+        "version": "1.0",
+    }
     assert first["object_count"] == 4
     assert first["relation_count"] == 3
-    assert [item["id"] for item in first["objects"]] == ["GOAL-1", "REQ-1", "Service", "VC-1"]
-    assert {(item["from"], item["type"], item["to"]) for item in first["relations"]} == {
+    assert [item["id"] for item in first["objects"]] == [
+        "GOAL-1",
+        "REQ-1",
+        "Service",
+        "VC-1",
+    ]
+    assert {
+        (item["from"], item["type"], item["to"])
+        for item in first["relations"]
+    } == {
         ("REQ-1", "derived_from", "GOAL-1"),
         ("Service", "satisfies", "REQ-1"),
         ("VC-1", "verifies", "REQ-1"),
     }
 
+    service = next(item for item in first["objects"] if item["id"] == "Service")
+    assert len(service["diagram_refs"]) == 1
+    assert service["diagram_refs"][0]["diagram_id"] == "graph-example"
+    assert service["diagram_refs"][0]["node_id"] == "service"
+
     review = render_review(first)
-    assert "### Authored input" in review
+    assert "### Authored outgoing" in review
     assert "### Generated incoming" in review
+    assert "### Diagram references" in review
     assert "satisfies <- **Service**" in review
     assert "verifies <- **VC-1**" in review
 
 
-def write(path: Path, text: str) -> None:
+def write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
-def test_duplicate_object_id_fails(tmp_path):
-    write(tmp_path / "docs/a.md", '<a id="REQ-1"></a>\n<!-- eng {"type":"requirement"} -->\n')
-    write(tmp_path / "docs/b.md", '<a id="REQ-1"></a>\n<!-- eng {"type":"requirement"} -->\n')
+def load_example() -> dict:
+    return json.loads(NEEDS.read_text(encoding="utf-8"))
 
-    with pytest.raises(ValueError, match="duplicate engineering id REQ-1"):
-        build_graph(tmp_path, Path("docs"))
+
+def test_only_requested_relation_fields_are_normalized():
+    graph = build_graph(
+        NEEDS,
+        relation_types=["derived_from"],
+        source_revision="example-sha",
+    )
+
+    assert graph["relation_count"] == 1
+    assert graph["relations"][0]["type"] == "derived_from"
 
 
 def test_unknown_relation_target_fails(tmp_path):
-    write(
-        tmp_path / "docs/a.md",
-        '<a id="REQ-1"></a>\n'
-        '<!-- eng {"type":"requirement","relations":{"derived_from":["Missing"]}} -->\n',
+    data = load_example()
+    data["versions"]["1.0"]["needs"]["REQ-1"]["derived_from"] = ["MISSING"]
+    path = tmp_path / "needs.json"
+    write_json(path, data)
+
+    with pytest.raises(ValueError, match="unknown derived_from target MISSING"):
+        build_graph(path, relation_types=["derived_from"])
+
+
+def test_unknown_diagram_object_fails(tmp_path):
+    diagrams = tmp_path / "diagrams"
+    diagrams.mkdir()
+    (diagrams / "system.yaml").write_text(
+        "diagram:\n"
+        "  id: bad-diagram\n"
+        "nodes:\n"
+        "  - id: missing\n"
+        "    object_id: MissingObject\n"
+        "    label: Missing\n"
+        "    kind: service\n"
+        "    layout: {x: 10, y: 10, w: 100, h: 50}\n"
+        "groups: []\n"
+        "edges: []\n",
+        encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="unknown derived_from target Missing"):
-        build_graph(tmp_path, Path("docs"))
+    with pytest.raises(ValueError, match="does not resolve to a Need"):
+        build_graph(NEEDS, diagrams_root=diagrams)
 
 
-def test_unknown_relation_extension_owner_fails(tmp_path):
-    write(
-        tmp_path / "docs/a.md",
-        '<!-- eng-rel {"id":"MissingDesign","relations":{"satisfies":[]}} -->\n',
-    )
+def test_mismatched_embedded_need_id_fails(tmp_path):
+    data = load_example()
+    data["versions"]["1.0"]["needs"]["REQ-1"]["id"] = "OTHER"
+    path = tmp_path / "needs.json"
+    write_json(path, data)
 
-    with pytest.raises(ValueError, match="eng-rel owner does not exist: MissingDesign"):
-        build_graph(tmp_path, Path("docs"))
-
-
-def test_consumer_model_rejects_invalid_relation_source_type(tmp_path):
-    write(
-        tmp_path / "model.yml",
-        "schema_version: 1\n"
-        "object_types: [requirement, design]\n"
-        "relations:\n"
-        "  satisfies:\n"
-        "    from: [design]\n"
-        "    to: [requirement]\n",
-    )
-    write(
-        tmp_path / "docs/a.md",
-        '<a id="REQ-1"></a>\n'
-        '<!-- eng {"type":"requirement","relations":{"satisfies":["REQ-2"]}} -->\n'
-        '<a id="REQ-2"></a>\n'
-        '<!-- eng {"type":"requirement"} -->\n',
-    )
-
-    with pytest.raises(ValueError, match="does not allow source type requirement"):
-        build_graph(tmp_path, Path("docs"), model_path=Path("model.yml"))
+    with pytest.raises(ValueError, match="does not match embedded id"):
+        build_graph(path)
 
 
-def test_consumer_model_rejects_unknown_relation_type(tmp_path):
-    write(
-        tmp_path / "model.yml",
-        "schema_version: 1\n"
-        "object_types: [requirement]\n"
-        "relations: {}\n",
-    )
-    write(
-        tmp_path / "docs/a.md",
-        '<a id="REQ-1"></a>\n'
-        '<!-- eng {"type":"requirement","relations":{"unknown":["REQ-2"]}} -->\n'
-        '<a id="REQ-2"></a>\n'
-        '<!-- eng {"type":"requirement"} -->\n',
-    )
-
-    with pytest.raises(ValueError, match="unknown relation type unknown"):
-        build_graph(tmp_path, Path("docs"), model_path=Path("model.yml"))
+def test_repeated_relation_field_fails():
+    with pytest.raises(ValueError, match="must not be repeated"):
+        build_graph(
+            NEEDS,
+            relation_types=["derived_from", "derived_from"],
+        )
