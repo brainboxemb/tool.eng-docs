@@ -6,6 +6,7 @@
     "schema",
     "schema_version",
     "source_revision",
+    "source_graph",
     "object_count",
     "relation_count",
     "objects",
@@ -25,6 +26,30 @@
         "null"
       ]
     },
+    "source_graph": {
+      "type": "object",
+      "required": [
+        "kind",
+        "project",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "sphinx-needs"
+        },
+        "project": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "object_count": {
       "type": "integer",
       "minimum": 0
@@ -40,8 +65,11 @@
         "required": [
           "id",
           "type",
+          "type_name",
+          "title",
           "source",
-          "authoring"
+          "content",
+          "diagram_refs"
         ],
         "additionalProperties": false,
         "properties": {
@@ -53,17 +81,36 @@
             "type": "string",
             "minLength": 1
           },
+          "type_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "source": {
             "type": "string",
             "minLength": 1
           },
-          "authoring": {
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "diagram_refs": {
             "type": "array",
             "items": {
               "type": "object",
               "required": [
                 "source",
-                "input"
+                "diagram_id",
+                "node_id"
               ],
               "additionalProperties": false,
               "properties": {
@@ -71,9 +118,17 @@
                   "type": "string",
                   "minLength": 1
                 },
-                "input": {
-                  "type": "string",
-                  "minLength": 1
+                "diagram_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "node_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               }
             }
