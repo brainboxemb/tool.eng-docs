@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.10 — 2026-09-28
+
+### Added
+
+- optional non-negative `label_offset` for visual groups, allowing shaped polygon groups to keep their heading inside the visible area while retaining the same layout/routing bounding box;
+- matching SVG and editable draw.io label-offset rendering plus schema validation and executable example coverage.
+
+### Compatibility
+
+- groups without `label_offset` keep the existing title placement exactly.
+
 ## 0.3.9 — 2026-09-28
 
 ### Added
