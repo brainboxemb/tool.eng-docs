@@ -152,6 +152,10 @@
           "type": "string",
           "minLength": 1
         },
+        "object_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "subtitle": {
           "type": "string",
           "minLength": 1
