@@ -127,16 +127,16 @@ jobs:
           set -euo pipefail
           mkdir -p bld/docs/graph/input
           eng-docs graph \
-            --root . \
-            --docs examples/graph/docs \
+            --needs examples/graph/needs.json \
+            --relation derived_from \
+            --relation satisfies \
+            --relation verifies \
             --diagrams examples/graph/diagrams \
-            --model examples/graph/model.yml \
             --out bld/docs/graph/engineering-graph.json \
             --review bld/docs/graph/review.md \
             --source-revision "$SOURCE_SHA"
-          cp examples/graph/model.yml bld/docs/graph/input/model.yml
-          cp examples/graph/docs/requirements.md bld/docs/graph/input/requirements.md
-          cp examples/graph/docs/design.md bld/docs/graph/input/design.md
+          cp examples/graph/needs.json bld/docs/graph/input/needs.json
+          cp examples/graph/source.md bld/docs/graph/input/source.md
           cp examples/graph/diagrams/system.yaml bld/docs/graph/input/system.yaml
 
       - name: Build generated documentation index
@@ -169,13 +169,12 @@ jobs:
 
           ## Engineering graph example
 
-          The human review makes compact hidden authoring visible beside generated inverse context.
+          The example shows native MyST authoring, its Sphinx-Needs export, normalized outgoing/incoming context and a diagram identity reference to the same engineering object.
 
           - [human graph review](graph/review.md)
           - [normalized graph JSON](graph/engineering-graph.json)
-          - [graph model](graph/input/model.yml)
-          - [requirements source](graph/input/requirements.md)
-          - [design/verification source](graph/input/design.md)
+          - [native MyST source](graph/input/source.md)
+          - [Sphinx-Needs export](graph/input/needs.json)
           - [diagram identity source](graph/input/system.yaml)
 
           ## Diagram conformance
@@ -219,12 +218,14 @@ jobs:
           test -f bld/docs/assembly/_input/assets.yml
           test -f bld/docs/graph/review.md
           test -f bld/docs/graph/engineering-graph.json
-          test -f bld/docs/graph/input/model.yml
-          test -f bld/docs/graph/input/requirements.md
-          test -f bld/docs/graph/input/design.md
+          test -f bld/docs/graph/input/needs.json
+          test -f bld/docs/graph/input/source.md
           test -f bld/docs/graph/input/system.yaml
           grep -Fq 'Generated incoming' bld/docs/graph/review.md
+          grep -Fq 'Diagram references' bld/docs/graph/review.md
           grep -Fq '"object_count": 4' bld/docs/graph/engineering-graph.json
+          grep -Fq '"kind": "sphinx-needs"' bld/docs/graph/engineering-graph.json
+          grep -Fq '"diagram_id": "graph-example"' bld/docs/graph/engineering-graph.json
           grep -Fq "$SOURCE_SHA" bld/docs/graph/engineering-graph.json
           grep -Fq 'repository: brainboxemb/tool.eng-docs' bld/docs/assembly/assembly-info.yml
           grep -Fq '../assets/architecture/system.svg' bld/docs/assembly/documents/overview.md
