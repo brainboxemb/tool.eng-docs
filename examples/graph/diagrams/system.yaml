@@ -1,0 +1,17 @@
+diagram:
+  id: graph-example
+  title: Engineering graph example
+  width: 760
+  height: 360
+  description: Domain-neutral graph identity example.
+
+groups: []
+
+nodes:
+  - id: service
+    object_id: Service
+    label: Service
+    kind: service
+    layout: {x: 290, y: 150, w: 180, h: 60}
+
+edges: []
