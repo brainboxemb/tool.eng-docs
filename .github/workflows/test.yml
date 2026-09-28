@@ -203,6 +203,8 @@ jobs:
           printf '%s\n' "$SOURCE_SHA" > bld/docs/source-sha.txt
 
       - name: Validate generated documentation
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
           test -f bld/docs/README.md
