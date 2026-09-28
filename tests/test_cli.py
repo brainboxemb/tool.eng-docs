@@ -37,3 +37,24 @@ def test_cli_reports_missing_source_directory(tmp_path, capsys):
 
     assert result == 2
     assert "diagram source directory does not exist" in capsys.readouterr().err
+
+
+def test_cli_builds_engineering_graph_example(tmp_path):
+    out = tmp_path / "graph.json"
+    review = tmp_path / "review.md"
+    result = main([
+        "graph",
+        "--root", str(Path(__file__).resolve().parents[1]),
+        "--docs", "examples/graph/docs",
+        "--diagrams", "examples/graph/diagrams",
+        "--model", "examples/graph/model.yml",
+        "--out", str(out),
+        "--review", str(review),
+        "--source-revision", "example-sha",
+    ])
+
+    assert result == 0
+    assert out.is_file()
+    assert review.is_file()
+    assert '"object_count": 4' in out.read_text(encoding="utf-8")
+    assert "Generated incoming" in review.read_text(encoding="utf-8")
