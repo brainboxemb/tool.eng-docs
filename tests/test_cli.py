@@ -40,14 +40,16 @@ def test_cli_reports_missing_source_directory(tmp_path, capsys):
 
 
 def test_cli_builds_engineering_graph_example(tmp_path):
+    root = Path(__file__).resolve().parents[1]
     out = tmp_path / "graph.json"
     review = tmp_path / "review.md"
     result = main([
         "graph",
-        "--root", str(Path(__file__).resolve().parents[1]),
-        "--docs", "examples/graph/docs",
-        "--diagrams", "examples/graph/diagrams",
-        "--model", "examples/graph/model.yml",
+        "--needs", str(root / "examples/graph/needs.json"),
+        "--relation", "derived_from",
+        "--relation", "satisfies",
+        "--relation", "verifies",
+        "--diagrams", str(root / "examples/graph/diagrams"),
         "--out", str(out),
         "--review", str(review),
         "--source-revision", "example-sha",
@@ -57,4 +59,6 @@ def test_cli_builds_engineering_graph_example(tmp_path):
     assert out.is_file()
     assert review.is_file()
     assert '"object_count": 4' in out.read_text(encoding="utf-8")
+    assert '"kind": "sphinx-needs"' in out.read_text(encoding="utf-8")
     assert "Generated incoming" in review.read_text(encoding="utf-8")
+    assert "Diagram references" in review.read_text(encoding="utf-8")

@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-The current development branch adds a third bounded capability for reusable
-engineering-graph extraction and review on top of the released diagram and
-document-assembly capabilities.
+`v0.4.0` adds a third bounded capability for reusable engineering-graph
+normalization and review on top of the released diagram and document-assembly
+capabilities.
 
 ### Declarative diagrams
 
@@ -49,18 +49,20 @@ it does **not** run OpenSCAD, Maven, verification or diagram producers itself.
 See [docs/document-assembly.md](docs/document-assembly.md) and the executable
 `examples/assembly/` example.
 
-### Engineering graph extraction and review
+### Engineering graph normalization and review
 
-- `eng-docs graph` extracts stable engineering objects and typed relations from
-  compact hidden Markdown metadata plus diagram `object_id` values;
-- relation extensions can add design-owned relations to an existing diagram
-  object without duplicating its identity;
-- duplicate IDs and unknown relation owners/targets fail validation;
-- an optional consumer-owned model validates object/relation type compatibility
-  without hard-coding project semantics in the tool;
-- normalized JSON preserves source locations and exact authored input;
+- native MyST/Sphinx-Needs remains the authoring/relationship engine;
+- `eng-docs graph` consumes an existing Sphinx-Needs `needs.json` export;
+- consuming repositories explicitly select which outgoing relation fields are
+  normalized;
+- diagram `object_id` values are validated as references to existing
+  engineering objects rather than defining duplicate objects;
+- normalized JSON preserves object identity, type, title, source location,
+  content, selected outgoing relations and diagram references;
 - generated Markdown review shows authored outgoing relations beside derived
-  incoming/backlink context.
+  incoming/backlink context;
+- the graph command does not require Sphinx-Needs as a runtime dependency because
+  it consumes the exported JSON boundary.
 
 See [docs/engineering-graph.md](docs/engineering-graph.md) and the executable
 `examples/graph/` example.
@@ -72,7 +74,7 @@ Planning/roadmap and printable PDF work is tracked separately in issue #3.
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.2.0"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.4.0"
 ```
 
 The package installs the `eng-docs` command.
@@ -279,6 +281,11 @@ Document assembly validates asset manifests and assembly configuration against
 packaged JSON Schemas and also checks path safety, source immutability and
 resolvable declared assets.
 
+Engineering-graph normalization validates the Sphinx-Needs export structure,
+selected relation targets and diagram `object_id` references. Project-specific
+Need types and typed relation rules remain owned by the consuming Sphinx-Needs
+configuration.
+
 ## Release model
 
 This is a tooling repository, so root `VERSION`, the Python package version in
@@ -304,7 +311,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.2.0
+v0.4.0
 ```
 
 Consumers should pin a release rather than a feature branch.
@@ -329,6 +336,8 @@ Published conformance output includes:
 - the executable assembly example as a self-contained generated document tree;
 - assembly input/configuration, producer manifest and `assembly-info.yml`
   provenance;
+- the domain-neutral Sphinx-Needs graph export example, normalized graph and
+  human relation review;
 - human-readable pytest output;
 - `source-sha.txt` provenance for the owner repository snapshot.
 

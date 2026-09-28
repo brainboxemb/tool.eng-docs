@@ -4,19 +4,28 @@
 
 ### Added
 
-- reusable `eng-docs graph` extraction from stable Markdown anchors, compact
-  `eng` / `eng-rel` metadata and declarative diagram `object_id` values;
-- deterministic normalized graph JSON retaining source locations and exact
-  authored input;
+- reusable `eng-docs graph` normalization from an existing Sphinx-Needs
+  `needs.json` export;
+- explicit selection of outgoing relation fields without hard-coding project
+  relation names;
+- deterministic normalized graph JSON retaining Need identity, type, title,
+  content, source location and diagram references;
 - human Markdown review with authored outgoing and generated incoming relations;
-- optional consumer-owned object/relation model validation;
-- domain-neutral executable example and Linux/Windows test coverage.
+- diagram `object_id` cross-validation against existing engineering objects;
+- domain-neutral executable Needs-export example and Linux/Windows test coverage.
 
 ### Boundary
 
-- relation names and engineering semantics remain consumer-owned;
-- no Sphinx-Needs, portal or project-specific traceability policy is introduced
-  by this reusable graph boundary.
+- native MyST/Sphinx-Needs owns engineering-object authoring, stable IDs, typed
+  relation rules and backlink generation;
+- `tool.eng-docs` does not maintain a second Markdown/hidden-JSON authoring
+  parser;
+- diagram `object_id` values reference existing engineering objects rather
+  than define duplicates;
+- relation names and project semantics remain consumer-owned;
+- consuming a Needs JSON export does not add a Sphinx-Needs runtime dependency
+  to `tool.eng-docs`;
+- portal generation remains outside this release.
 
 ## 0.3.11 — 2026-09-28
 
