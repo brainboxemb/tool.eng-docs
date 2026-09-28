@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.9 — 2026-09-28
+
+### Added
+
+- optional normalized polygon outlines for visual groups while retaining the existing rectangular layout box for labels, routing and geometry;
+- matching native SVG and editable draw.io polygon rendering using the same source points;
+- a domain-neutral polygon-group example and validation for invalid outline/notation combinations, degenerate outlines and out-of-range coordinates.
+
+### Compatibility
+
+- groups without `outline` render exactly through the existing rounded-rectangle path;
+- polygon outlines are deliberately limited to plain visual groups in this first slice; component/package/class notation remains rectangular.
+
 ## 0.3.8 — 2026-09-27
 
 ### Fixed

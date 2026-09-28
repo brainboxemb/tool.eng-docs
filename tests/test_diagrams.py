@@ -160,6 +160,88 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
 
 
 
+def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    example = Path(__file__).parents[1] / "examples" / "polygon-group.yaml"
+    (source / example.name).write_text(
+        example.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    generate(source, SCHEMA, THEME, first)
+    generate(source, SCHEMA, THEME, second)
+
+    svg = first / "polygon-group.svg"
+    drawio = first / "polygon-group.drawio"
+    svg_root = ET.parse(svg).getroot()
+    drawio_tree = ET.parse(drawio)
+
+    polygons = [
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("polygon")
+        and element.attrib.get("data-outline") == "polygon"
+    ]
+    assert len(polygons) == 2
+    assert polygons[0].attrib["points"].startswith("70.0,85.0")
+    assert polygons[0].attrib["stroke-linejoin"] == "round"
+
+    upper = drawio_tree.find(".//mxCell[@id='group-upper-area']")
+    lower = drawio_tree.find(".//mxCell[@id='group-lower-area']")
+    assert upper is not None
+    assert lower is not None
+    assert "shape=mxgraph.basic.polygon;" in upper.attrib["style"]
+    assert "polyCoords=[[0.0,0.0],[1.0,0.0]" in upper.attrib["style"]
+    assert "polyline=0;" in lower.attrib["style"]
+
+    assert svg.read_bytes() == (second / "polygon-group.svg").read_bytes()
+    assert drawio.read_bytes() == (second / "polygon-group.drawio").read_bytes()
+
+
+def test_polygon_group_rejects_notation():
+    data = load_yaml(FIXTURES / "layered-architecture.yaml")
+    data["groups"][0]["outline"] = {
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 1.0, "y": 0.0},
+            {"x": 1.0, "y": 1.0},
+        ]
+    }
+    data["groups"][0]["notation"] = "component"
+    with pytest.raises(ValueError, match="cannot combine outline with notation"):
+        validate_refs(data, load_yaml(THEME), FIXTURES / "layered-architecture.yaml")
+
+
+def test_polygon_group_requires_distinct_points():
+    data = load_yaml(FIXTURES / "layered-architecture.yaml")
+    data["groups"][0]["outline"] = {
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 0.0, "y": 0.0},
+            {"x": 1.0, "y": 1.0},
+        ]
+    }
+    with pytest.raises(ValueError, match="at least three distinct points"):
+        validate_refs(data, load_yaml(THEME), FIXTURES / "layered-architecture.yaml")
+
+
+def test_polygon_group_rejects_point_outside_layout_box():
+    data = load_yaml(FIXTURES / "layered-architecture.yaml")
+    data["groups"][0]["outline"] = {
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 1.2, "y": 0.0},
+            {"x": 1.0, "y": 1.0},
+        ]
+    }
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "layered-architecture.yaml")
+
+
 def test_group_component_notation_remains_backwards_compatible(tmp_path):
     source = tmp_path / "source"
     source.mkdir()

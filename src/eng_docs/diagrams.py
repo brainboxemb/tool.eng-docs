@@ -43,6 +43,20 @@ def validate_refs(data, theme, path: Path):
     for item in [*data["groups"], *data["nodes"]]:
         if item["kind"] not in kinds:
             raise ValueError(f"{path}: unknown kind {item['kind']!r} on {item['id']}")
+    for group in data["groups"]:
+        if group.get("outline") and group.get("notation"):
+            raise ValueError(
+                f"{path}: group {group['id']} cannot combine outline with notation"
+            )
+        if group.get("outline"):
+            points = {
+                (point["x"], point["y"])
+                for point in group["outline"]["points"]
+            }
+            if len(points) < 3:
+                raise ValueError(
+                    f"{path}: group {group['id']} outline needs at least three distinct points"
+                )
     for node in data["nodes"]:
         if node.get("group") and node["group"] not in known_groups:
             raise ValueError(f"{path}: node {node['id']} references missing group {node['group']}")
@@ -55,6 +69,28 @@ def validate_refs(data, theme, path: Path):
 
 def _style(theme, kind):
     return theme["kinds"][kind]
+
+
+def _outline_canvas_points(group):
+    """Map normalized group outline coordinates into the group's layout box."""
+    r = group["layout"]
+    return [
+        (
+            r["x"] + point["x"] * r["w"],
+            r["y"] + point["y"] * r["h"],
+        )
+        for point in group.get("outline", {}).get("points", [])
+    ]
+
+
+def _drawio_outline_coords(outline):
+    return json.dumps(
+        [
+            [point["x"], point["y"]]
+            for point in outline["points"]
+        ],
+        separators=(",", ":"),
+    )
 
 
 def _center(item):
@@ -398,10 +434,21 @@ def render_svg(data, theme, out: Path):
     for group in data["groups"]:
         r = group["layout"]
         s = _style(theme, group["kind"])
-        parts.append(
-            f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
-            f'rx="10" ry="10" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
-        )
+        if group.get("outline"):
+            points = " ".join(
+                f"{x:.1f},{y:.1f}"
+                for x, y in _outline_canvas_points(group)
+            )
+            parts.append(
+                f'<polygon data-outline="polygon" points="{points}" '
+                f'fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2" '
+                f'stroke-linejoin="round"/>'
+            )
+        else:
+            parts.append(
+                f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
+                f'rx="10" ry="10" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
+            )
         if group.get("notation") == "component":
             _svg_component_glyph(parts, group, s["stroke"])
         elif group.get("notation") == "packaging-component":
@@ -446,7 +493,7 @@ def render_svg(data, theme, out: Path):
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
 
 
-def _drawio_node_style(theme, kind, group=False, notation=None):
+def _drawio_node_style(theme, kind, group=False, notation=None, outline=None):
     s = _style(theme, kind)
     result = (
         "rounded=1;whiteSpace=wrap;html=1;"
@@ -456,7 +503,13 @@ def _drawio_node_style(theme, kind, group=False, notation=None):
         result += "verticalAlign=top;align=left;spacingTop=8;spacingLeft=10;fontStyle=1;fontSize=17;"
     else:
         result += "fontSize=14;"
-    if notation == "component":
+    if outline:
+        result += (
+            "shape=mxgraph.basic.polygon;"
+            f"polyCoords={_drawio_outline_coords(outline)};"
+            "polyline=0;"
+        )
+    elif notation == "component":
         result += "shape=component;"
     elif notation == "packaging-component":
         result += "shape=component;container=1;"
@@ -500,7 +553,15 @@ def render_drawio(data, theme, out: Path):
         r = group["layout"]
         cell = ET.SubElement(
             root, "mxCell", id=f"group-{group['id']}", value=group["label"],
-            style=_drawio_node_style(theme, group["kind"], True, group.get("notation")), vertex="1", parent="1"
+            style=_drawio_node_style(
+                theme,
+                group["kind"],
+                True,
+                group.get("notation"),
+                group.get("outline"),
+            ),
+            vertex="1",
+            parent="1"
         )
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
