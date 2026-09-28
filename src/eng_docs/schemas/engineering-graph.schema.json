@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized engineering graph",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "source_revision",
+    "object_count",
+    "relation_count",
+    "objects",
+    "relations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "brainboxemb.engineering-graph"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "source_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "object_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "relation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "source",
+          "authoring"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authoring": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "input"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "input": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "type",
+          "to",
+          "source"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

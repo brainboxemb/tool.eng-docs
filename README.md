@@ -7,7 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.2.0` provides two bounded capabilities.
+The current development branch adds a third bounded capability for reusable
+engineering-graph extraction and review on top of the released diagram and
+document-assembly capabilities.
 
 ### Declarative diagrams
 
@@ -46,6 +48,22 @@ it does **not** run OpenSCAD, Maven, verification or diagram producers itself.
 
 See [docs/document-assembly.md](docs/document-assembly.md) and the executable
 `examples/assembly/` example.
+
+### Engineering graph extraction and review
+
+- `eng-docs graph` extracts stable engineering objects and typed relations from
+  compact hidden Markdown metadata plus diagram `object_id` values;
+- relation extensions can add design-owned relations to an existing diagram
+  object without duplicating its identity;
+- duplicate IDs and unknown relation owners/targets fail validation;
+- an optional consumer-owned model validates object/relation type compatibility
+  without hard-coding project semantics in the tool;
+- normalized JSON preserves source locations and exact authored input;
+- generated Markdown review shows authored outgoing relations beside derived
+  incoming/backlink context.
+
+See [docs/engineering-graph.md](docs/engineering-graph.md) and the executable
+`examples/graph/` example.
 
 Planning/roadmap and printable PDF work is tracked separately in issue #3.
 
@@ -165,6 +183,12 @@ Document-assembly example:
 examples/assembly/
 ```
 
+Engineering-graph example:
+
+```text
+examples/graph/
+```
+
 The examples are exercised by automated tests so documentation and behavior stay
 aligned. Files under `tests/fixtures/` are conformance/stress fixtures rather than
 the recommended user starting point.
@@ -180,6 +204,9 @@ eng-docs diagrams \
   [--schema <diagram-schema.json>] \
   [--theme <theme.yaml>]
 ```
+
+Engineering graph generation is documented in
+[docs/engineering-graph.md](docs/engineering-graph.md).
 
 Asset manifest generation and assembly are documented in
 [docs/document-assembly.md](docs/document-assembly.md). The executable example
