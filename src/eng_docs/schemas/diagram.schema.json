@@ -119,6 +119,9 @@
         "outline": {
           "$ref": "#/$defs/outline"
         },
+        "label_offset": {
+          "$ref": "#/$defs/nonNegativeOffset"
+        },
         "note": {
           "type": "string"
         },
@@ -180,6 +183,24 @@
           "items": {
             "$ref": "#/$defs/nodeItem"
           }
+        }
+      }
+    },
+    "nonNegativeOffset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
         }
       }
     },

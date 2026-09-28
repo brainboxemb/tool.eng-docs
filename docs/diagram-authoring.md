@@ -227,6 +227,7 @@ Optional fields:
 note
 notation
 outline
+label_offset
 ```
 
 ### Group `id`
@@ -240,6 +241,19 @@ Group IDs:
 ### Group `label`
 
 Rendered heading for the visual group.
+
+By default the heading keeps the established inset from the layout box's
+upper-left corner. Shaped groups may move that heading further right/down
+without changing the group's bounding box:
+
+```yaml
+label_offset: {x: 0, y: 45}
+```
+
+Both values are non-negative diagram units/pixels and are added to the default
+heading inset. SVG and editable draw.io output apply the same offset semantics.
+This is especially useful when a polygon's bounding-box upper-left lies outside
+the visible filled area.
 
 ### Group `outline`
 

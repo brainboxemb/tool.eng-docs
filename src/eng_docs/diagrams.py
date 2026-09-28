@@ -453,7 +453,17 @@ def render_svg(data, theme, out: Path):
             _svg_component_glyph(parts, group, s["stroke"])
         elif group.get("notation") == "packaging-component":
             _svg_packaging_component_glyph(parts, group, s["stroke"])
-        _svg_text(parts, group["label"], r["x"] + 16, r["y"] + 22, theme["font"]["group_title_size"], family, "bold", "start")
+        label_offset = group.get("label_offset", {"x": 0, "y": 0})
+        _svg_text(
+            parts,
+            group["label"],
+            r["x"] + 16 + label_offset["x"],
+            r["y"] + 22 + label_offset["y"],
+            theme["font"]["group_title_size"],
+            family,
+            "bold",
+            "start",
+        )
 
     endpoints = {g["id"]: g for g in data["groups"]}
     endpoints.update({n["id"]: n for n in data["nodes"]})
@@ -493,14 +503,27 @@ def render_svg(data, theme, out: Path):
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
 
 
-def _drawio_node_style(theme, kind, group=False, notation=None, outline=None):
+def _drawio_node_style(
+    theme,
+    kind,
+    group=False,
+    notation=None,
+    outline=None,
+    label_offset=None,
+):
     s = _style(theme, kind)
     result = (
         "rounded=1;whiteSpace=wrap;html=1;"
         f"fillColor={s['fill']};strokeColor={s['stroke']};fontFamily=Helvetica;"
     )
     if group:
-        result += "verticalAlign=top;align=left;spacingTop=8;spacingLeft=10;fontStyle=1;fontSize=17;"
+        label_offset = label_offset or {"x": 0, "y": 0}
+        result += (
+            "verticalAlign=top;align=left;"
+            f"spacingTop={8 + label_offset['y']};"
+            f"spacingLeft={10 + label_offset['x']};"
+            "fontStyle=1;fontSize=17;"
+        )
     else:
         result += "fontSize=14;"
     if outline:
@@ -559,6 +582,7 @@ def render_drawio(data, theme, out: Path):
                 True,
                 group.get("notation"),
                 group.get("outline"),
+                group.get("label_offset"),
             ),
             vertex="1",
             parent="1"

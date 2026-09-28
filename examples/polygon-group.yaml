@@ -23,6 +23,7 @@ groups:
     label: Lower responsibility
     kind: group-secondary
     layout: {x: 70, y: 230, w: 760, h: 205}
+    label_offset: {x: 0, y: 45}
     outline:
       points:
         - {x: 0.0, y: 0.22}

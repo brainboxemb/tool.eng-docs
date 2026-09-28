@@ -196,9 +196,25 @@ def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
     assert "shape=mxgraph.basic.polygon;" in upper.attrib["style"]
     assert "polyCoords=[[0.0,0.0],[1.0,0.0]" in upper.attrib["style"]
     assert "polyline=0;" in lower.attrib["style"]
+    assert "spacingTop=53;" in lower.attrib["style"]
+
+    lower_label = next(
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("text") and element.text == "Lower responsibility"
+    )
+    assert float(lower_label.attrib["y"]) == 297.0
 
     assert svg.read_bytes() == (second / "polygon-group.svg").read_bytes()
     assert drawio.read_bytes() == (second / "polygon-group.drawio").read_bytes()
+
+
+def test_group_label_offset_rejects_negative_values():
+    data = load_yaml(FIXTURES / "layered-architecture.yaml")
+    data["groups"][0]["label_offset"] = {"x": 0, "y": -1}
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "layered-architecture.yaml")
 
 
 def test_polygon_group_rejects_notation():
