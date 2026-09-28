@@ -320,6 +320,12 @@ def render_review(graph: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _validate_graph_schema(graph: dict) -> None:
+    schema_path = Path(str(files("eng_docs").joinpath("schemas/engineering-graph.schema.json")))
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(graph)
+
+
 def write_graph(
     root: Path,
     docs_root: Path,
@@ -337,6 +343,7 @@ def write_graph(
         model_path=model_path,
         source_revision=source_revision,
     )
+    _validate_graph_schema(graph)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
     if review_path is not None:
