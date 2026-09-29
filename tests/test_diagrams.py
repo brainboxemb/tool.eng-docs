@@ -139,7 +139,14 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
         for element in root.iter()
         if element.tag.endswith("g") and "data-engineering-id" in element.attrib
     }
-    assert {"example.terminals", "example.worker"}.issubset(nested_identities)
+    assert {"example.interface", "example.terminals", "example.worker"}.issubset(nested_identities)
+    interface_group = tree.find(".//mxCell[@id='group-interface-layer']")
+    assert interface_group is not None
+    assert interface_group.attrib["data-engineering-id"] == "example.interface"
+    assert "stable boundary" in interface_group.attrib["value"]
+    assert "2 entry modes" in interface_group.attrib["value"]
+    assert "stable boundary" in svg_text
+    assert "2 entry modes" in svg_text
     entrypoints = tree.find(".//mxCell[@id='entrypoints']")
     service_cell = tree.find(".//mxCell[@id='service']")
     assert entrypoints is not None
@@ -333,6 +340,21 @@ def test_duplicate_node_id_is_rejected():
     data["nodes"].append(dict(data["nodes"][0]))
     with pytest.raises(ValueError, match="duplicate node id"):
         validate_refs(data, load_yaml(THEME), FIXTURES / "simple-flow.yaml")
+
+
+def test_group_object_id_participates_in_duplicate_validation():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "structured-layer.yaml")
+    data["nodes"][0]["object_id"] = data["groups"][0]["object_id"]
+    with pytest.raises(ValueError, match="duplicate diagram object_id"):
+        validate_refs(data, load_yaml(THEME), FIXTURES / "structured-layer.yaml")
+
+
+def test_empty_group_object_id_is_rejected_by_schema():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "structured-layer.yaml")
+    data["groups"][0]["object_id"] = ""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "structured-layer.yaml")
 
 
 def test_duplicate_node_object_id_is_rejected():
