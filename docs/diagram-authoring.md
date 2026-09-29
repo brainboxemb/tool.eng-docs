@@ -396,10 +396,10 @@ Node IDs:
 - may not reuse a group ID;
 - are referenced by edge `from` and `to` fields.
 
-### Node `object_id`
+### Engineering `object_id`
 
-Use `object_id` when the diagram node represents an engineering object that
-also exists outside the diagram.
+Use `object_id` when a diagram node or selected structured item represents an
+engineering object that also exists outside the diagram.
 
 ```yaml
 - id: service-card
@@ -411,24 +411,41 @@ also exists outside the diagram.
 
 `id` and `object_id` have deliberately different responsibilities:
 
-- `id` is local diagram identity used by routing, grouping and edges;
+- node `id` is local diagram identity used by routing, grouping and edges;
 - `object_id` is optional project-owned semantic identity used to connect
   generated output to other engineering-documentation views.
 
 `object_id` is treated as an opaque non-empty string. The renderer does not
 look it up in a requirements database or engineering graph.
 
-When present:
+When present on a node:
 
 - SVG wraps the rendered node in an element carrying
   `data-engineering-id="<object_id>"`;
 - editable draw.io output preserves the same
-  `data-engineering-id` metadata on the node cell;
-- duplicate `object_id` values within one diagram are rejected because they
-  would make interactive selection ambiguous.
+  `data-engineering-id` metadata on the node cell.
 
-The field is node-only in the current contract. Do not use a second
-label-to-object lookup table when the node itself can declare the identity.
+Object-form structured items may carry the same optional field:
+
+```yaml
+items:
+  - label: Worker
+    object_id: example.worker
+  - label: Workers
+    items:
+      - label: Primary
+        object_id: example.worker.primary
+```
+
+For an identified item, SVG wraps that rendered row with the same
+`data-engineering-id` attribute. Draw.io preserves the identity on the row's
+embedded HTML inside the editable parent node. Strings remain display-only
+items and cannot carry identity.
+
+`object_id` values must be unique across both nodes and nested items in one
+diagram because duplicate semantic identity would make interactive selection
+ambiguous. Do not use a second label-to-object lookup table when the diagram
+source itself can declare the identity.
 
 ### Node `label`
 
@@ -471,7 +488,7 @@ items:
   - Keypad
 ```
 
-Nested items use an object with `label` and optional child `items`:
+Nested items use an object with `label`, optional `object_id`, and optional child `items`:
 
 ```yaml
 items:

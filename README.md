@@ -13,7 +13,7 @@ capabilities.
 
 ### Declarative diagrams
 
-- declarative YAML diagram sources, including optional smaller node subtitles and structured node list/tree items;
+- declarative YAML diagram sources, including optional smaller node subtitles, structured node list/tree items and optional engineering identity on nodes or selected structured items;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
 - reusable YAML themes;
@@ -55,7 +55,7 @@ See [docs/document-assembly.md](docs/document-assembly.md) and the executable
 - `eng-docs graph` consumes an existing Sphinx-Needs `needs.json` export;
 - consuming repositories explicitly select which outgoing relation fields are
   normalized;
-- diagram `object_id` values are validated as references to existing
+- diagram `object_id` values on nodes and selected structured items are validated as references to existing
   engineering objects rather than defining duplicate objects;
 - normalized JSON preserves object identity, type, title, source location,
   content, selected outgoing relations and diagram references;

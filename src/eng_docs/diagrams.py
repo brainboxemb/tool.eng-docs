@@ -32,13 +32,27 @@ def validate_refs(data, theme, path: Path):
         raise ValueError(f"{path}: duplicate group id")
     if len(set(node_ids)) != len(node_ids):
         raise ValueError(f"{path}: duplicate node id")
-    object_ids = [n["object_id"] for n in data["nodes"] if n.get("object_id")]
+    def item_object_ids(items):
+        result = []
+        for item in items or []:
+            if isinstance(item, str):
+                continue
+            if item.get("object_id"):
+                result.append(item["object_id"])
+            result.extend(item_object_ids(item.get("items", [])))
+        return result
+
+    object_ids = []
+    for node in data["nodes"]:
+        if node.get("object_id"):
+            object_ids.append(node["object_id"])
+        object_ids.extend(item_object_ids(node.get("items", [])))
     if len(set(object_ids)) != len(object_ids):
         duplicates = sorted(
             object_id for object_id in set(object_ids)
             if object_ids.count(object_id) > 1
         )
-        raise ValueError(f"{path}: duplicate node object_id: {duplicates}")
+        raise ValueError(f"{path}: duplicate diagram object_id: {duplicates}")
     overlap = set(group_ids) & set(node_ids)
     if overlap:
         raise ValueError(f"{path}: ids reused by group and node: {sorted(overlap)}")
@@ -233,9 +247,9 @@ def _flatten_node_items(items, depth=0):
     rows = []
     for item in items or []:
         if isinstance(item, str):
-            rows.append((depth, item))
+            rows.append((depth, item, None))
             continue
-        rows.append((depth, item["label"]))
+        rows.append((depth, item["label"], item.get("object_id")))
         rows.extend(_flatten_node_items(item.get("items", []), depth + 1))
     return rows
 
@@ -301,8 +315,12 @@ def _svg_class_node_text(parts, node, theme, family):
     )
 
     cursor = separator_y + 14
-    for depth, item_label in _flatten_node_items(node.get("items", [])):
+    for depth, item_label, object_id in _flatten_node_items(node.get("items", [])):
         prefix = "- " if depth == 0 else "  - "
+        if object_id:
+            parts.append(
+                f'<g data-engineering-id="{html.escape(object_id, quote=True)}">'
+            )
         _svg_text(
             parts,
             prefix + item_label,
@@ -312,6 +330,8 @@ def _svg_class_node_text(parts, node, theme, family):
             family,
             anchor="start",
         )
+        if object_id:
+            parts.append("</g>")
         cursor += detail_size * 1.45
 
 
@@ -363,8 +383,12 @@ def _svg_node_text(parts, node, theme, family):
     if items:
         cursor += 7
         item_x = r["x"] + 16
-        for depth, item_label in items:
+        for depth, item_label, object_id in items:
             row_y = cursor + item_line_height / 2
+            if object_id:
+                parts.append(
+                    f'<g data-engineering-id="{html.escape(object_id, quote=True)}">'
+                )
             _svg_text(
                 parts,
                 _item_line(depth, item_label),
@@ -374,6 +398,8 @@ def _svg_node_text(parts, node, theme, family):
                 family,
                 anchor="start",
             )
+            if object_id:
+                parts.append("</g>")
             cursor += item_line_height
 
 
@@ -385,10 +411,18 @@ def _drawio_node_value(node, theme):
             max(9, theme["font"]["node_size"] - 3),
         )
         attrs = _flatten_node_items(node.get("items", []))
-        attr_html = "<br>".join(
-            ("&nbsp;" * (depth * 4)) + html.escape(("- " if depth == 0 else "  - ") + item_label)
-            for depth, item_label in attrs
-        )
+        attr_rows = []
+        for depth, item_label, object_id in attrs:
+            row = ("&nbsp;" * (depth * 4)) + html.escape(
+                ("- " if depth == 0 else "  - ") + item_label
+            )
+            if object_id:
+                row = (
+                    f'<span data-engineering-id="{html.escape(object_id, quote=True)}">'
+                    f"{row}</span>"
+                )
+            attr_rows.append(row)
+        attr_html = "<br>".join(attr_rows)
         return (
             f'<span style="font-size:{detail_size}px">«class»</span><br>'
             f'{label}<hr>'
@@ -411,10 +445,16 @@ def _drawio_node_value(node, theme):
         )
     if items:
         rows = []
-        for depth, item_label in items:
+        for depth, item_label, object_id in items:
             indent = "&nbsp;" * (depth * 4)
             marker = "• " if depth == 0 else "└─ "
-            rows.append(f"{indent}{html.escape(marker + item_label)}")
+            row = f"{indent}{html.escape(marker + item_label)}"
+            if object_id:
+                row = (
+                    f'<span data-engineering-id="{html.escape(object_id, quote=True)}">'
+                    f"{row}</span>"
+                )
+            rows.append(row)
         parts.append(
             f'<div style="text-align:left;font-size:{subtitle_size}px;'
             f'margin-left:12px">{"<br>".join(rows)}</div>'

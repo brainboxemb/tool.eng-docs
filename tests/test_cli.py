@@ -58,7 +58,7 @@ def test_cli_builds_engineering_graph_example(tmp_path):
     assert result == 0
     assert out.is_file()
     assert review.is_file()
-    assert '"object_count": 4' in out.read_text(encoding="utf-8")
+    assert '"object_count": 5' in out.read_text(encoding="utf-8")
     assert '"kind": "sphinx-needs"' in out.read_text(encoding="utf-8")
     assert "Generated incoming" in review.read_text(encoding="utf-8")
     assert "Diagram references" in review.read_text(encoding="utf-8")
