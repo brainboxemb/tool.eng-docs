@@ -321,6 +321,7 @@ groups:
     kind: group-primary
     layout: {x: 70, y: 85, w: 760, h: 190}
     outline:
+      corner_radius: 10
       points:
         - {x: 0.0, y: 0.0}
         - {x: 1.0, y: 0.0}
@@ -334,6 +335,19 @@ Outline coordinates are normalized relative to the layout box: `0,0` is its
 upper-left and `1,1` its lower-right. At least three distinct points are
 required and all coordinates must remain in the inclusive `0..1` range. Do
 not repeat the first point at the end; the renderer closes the polygon.
+
+Use optional `corner_radius` to round custom-outline vertices in diagram units:
+
+```yaml
+outline:
+  corner_radius: 10
+  points:
+    # ...
+```
+
+Omitting `corner_radius`, or setting it to `0`, preserves the existing sharp
+polygon vertices. Positive values round each vertex while retaining the authored
+polygon geometry and sloped/stepped boundary.
 
 SVG and draw.io use the same polygon. The draw.io representation remains a
 native editable polygon (`mxgraph.basic.polygon`), not an embedded image.
