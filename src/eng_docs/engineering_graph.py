@@ -134,39 +134,51 @@ def _diagram_refs(diagrams_root: Path | None, objects: dict[str, dict]) -> None:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             continue
+        groups = data.get("groups", [])
         nodes = data.get("nodes", [])
-        if not isinstance(nodes, list):
+        if not isinstance(groups, list) or not isinstance(nodes, list):
             continue
 
         lines = path.read_text(encoding="utf-8").splitlines()
         search_from = 0
+
+        def add_ref(object_id, element_id):
+            nonlocal search_from
+            if not isinstance(object_id, str) or not object_id:
+                raise ValueError(f"{path}: diagram object_id must be a non-empty string")
+            if object_id not in objects:
+                raise ValueError(
+                    f"{path}: diagram object_id {object_id} does not resolve to a Need"
+                )
+
+            line_number = 1
+            needle = f"object_id: {object_id}"
+            for index in range(search_from, len(lines)):
+                if needle in lines[index]:
+                    line_number = index + 1
+                    search_from = index + 1
+                    break
+
+            ref = {
+                "source": f"{path.as_posix()}:{line_number}",
+                "diagram_id": data.get("diagram", {}).get("id")
+                if isinstance(data.get("diagram"), dict)
+                else None,
+                "node_id": element_id,
+            }
+            objects[object_id]["diagram_refs"].append(ref)
+
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            if group.get("object_id") is not None:
+                add_ref(group.get("object_id"), group.get("id"))
+
         for node in nodes:
             if not isinstance(node, dict):
                 continue
             for object_id in _iter_diagram_object_ids(node):
-                if not isinstance(object_id, str) or not object_id:
-                    raise ValueError(f"{path}: diagram object_id must be a non-empty string")
-                if object_id not in objects:
-                    raise ValueError(
-                        f"{path}: diagram object_id {object_id} does not resolve to a Need"
-                    )
-
-                line_number = 1
-                needle = f"object_id: {object_id}"
-                for index in range(search_from, len(lines)):
-                    if needle in lines[index]:
-                        line_number = index + 1
-                        search_from = index + 1
-                        break
-
-                ref = {
-                    "source": f"{path.as_posix()}:{line_number}",
-                    "diagram_id": data.get("diagram", {}).get("id")
-                    if isinstance(data.get("diagram"), dict)
-                    else None,
-                    "node_id": node.get("id"),
-                }
-                objects[object_id]["diagram_refs"].append(ref)
+                add_ref(object_id, node.get("id"))
 
     for obj in objects.values():
         obj["diagram_refs"].sort(
