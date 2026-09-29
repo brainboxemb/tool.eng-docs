@@ -24,6 +24,7 @@ nodes:
     items:
       - Browser
       - label: Terminals
+        object_id: example.terminals
         items:
           - Local
           - Remote
@@ -34,7 +35,8 @@ nodes:
     group: application-layer
     label: Application service
     items:
-      - Worker
+      - label: Worker
+        object_id: example.worker
       - Repository
     notation: packaging-component
     kind: service
