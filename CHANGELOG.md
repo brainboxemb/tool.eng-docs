@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.2 — 2026-09-29
+
+### Added
+
+- optional `object_id` on semantic diagram groups;
+- SVG and editable draw.io `data-engineering-id` preservation for identified groups;
+- engineering-graph normalization of group diagram references;
+- rendering of the existing optional group `note` directly below the group heading;
+- duplicate identity validation across groups, nodes and nested items;
+- domain-neutral examples and Linux/Windows regression coverage.
+
+### Compatibility
+
+- visual groups that omit `object_id` and `note` keep the existing rendering path;
+- consumers decide whether a group is merely layout or a stable engineering object.
+
 ## 0.4.1 — 2026-09-29
 
 ### Added
