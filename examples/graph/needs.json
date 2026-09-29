@@ -57,10 +57,20 @@
           "content": "Exercise the Service and verify a valid response.",
           "docname": "source",
           "doctype": ".md",
-          "lineno": 28,
+          "lineno": 35,
           "verifies": [
             "REQ-1"
           ]
+        },
+        "Worker": {
+          "id": "Worker",
+          "type": "arch",
+          "type_name": "Architecture Element",
+          "title": "Worker",
+          "content": "The Worker is a nested architecture responsibility shown inside the Service.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 28
         }
       }
     }
