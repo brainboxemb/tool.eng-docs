@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.4 — 2026-09-29
+
+### Added
+
+- optional `properties_width` layout control for semantic-group property blocks;
+- SVG/draw.io regression coverage for explicit property-column alignment.
+
+### Compatibility
+
+- automatic property-block sizing remains the default when `properties_width` is omitted.
+
 ## 0.4.3 — 2026-09-29
 
 ### Added

@@ -13,6 +13,7 @@ groups:
     properties:
       - boundaryId
       - state
+    properties_width: 260
     kind: group-primary
     layout: {x: 70, y: 80, w: 760, h: 160}
   - id: application-layer

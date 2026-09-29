@@ -481,7 +481,11 @@ def _group_properties_geometry(group, theme):
     note_height = len(note_lines) * theme["font"]["note_size"] * 1.28
     top = r["y"] + 40 + label_offset["y"] + note_height
     longest = max(len(str(item)) for item in properties)
-    width = max(150, min(r["w"] - 40, longest * property_size * 0.62 + 34))
+    automatic_width = max(
+        150,
+        min(r["w"] - 40, longest * property_size * 0.62 + 34),
+    )
+    width = group.get("properties_width", automatic_width)
     height = 14 + len(properties) * property_size * 1.45
     return {
         "x": r["x"] + 20 + label_offset["x"],

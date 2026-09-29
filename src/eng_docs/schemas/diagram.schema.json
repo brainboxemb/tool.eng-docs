@@ -143,6 +143,10 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "properties_width": {
+          "type": "number",
+          "exclusiveMinimum": 0
         }
       }
     },
