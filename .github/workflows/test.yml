@@ -223,7 +223,7 @@ jobs:
           test -f bld/docs/graph/input/system.yaml
           grep -Fq 'Generated incoming' bld/docs/graph/review.md
           grep -Fq 'Diagram references' bld/docs/graph/review.md
-          grep -Fq '"object_count": 5' bld/docs/graph/engineering-graph.json
+          grep -Fq '"object_count": 6' bld/docs/graph/engineering-graph.json
           grep -Fq '"kind": "sphinx-needs"' bld/docs/graph/engineering-graph.json
           grep -Fq '"diagram_id": "graph-example"' bld/docs/graph/engineering-graph.json
           grep -Fq "$SOURCE_SHA" bld/docs/graph/engineering-graph.json
