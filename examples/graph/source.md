@@ -24,6 +24,13 @@ The system shall provide a response through the service boundary.
 The Service owns the implementation responsibility for REQ-1.
 ```
 
+
+```{arch} Worker
+:id: Worker
+
+The Worker is a nested architecture responsibility shown inside the Service.
+```
+
 ```{vc} Service response verification
 :id: VC-1
 :verifies: REQ-1
