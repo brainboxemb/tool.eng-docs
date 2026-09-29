@@ -521,6 +521,7 @@ def render_svg(data, theme, out: Path):
             "bold",
             "start",
         )
+        note_bottom = r["y"] + 35 + label_offset["y"]
         if group.get("note"):
             note_size = theme["font"]["note_size"]
             note_lines = str(group["note"]).splitlines() or [""]
@@ -540,6 +541,33 @@ def render_svg(data, theme, out: Path):
                 "normal",
                 "start",
             )
+            note_bottom = note_y + len(note_lines) * note_size * 1.28 / 2
+
+        properties = group.get("properties", [])
+        if properties:
+            property_size = theme["font"].get(
+                "node_subtitle_size",
+                max(9, theme["font"]["node_size"] - 3),
+            )
+            separator_y = note_bottom + 10
+            parts.append(
+                f'<line x1="{r["x"]}" y1="{separator_y:.1f}" '
+                f'x2="{r["x"] + r["w"]}" y2="{separator_y:.1f}" '
+                f'stroke="{s["stroke"]}" stroke-width="1"/>'
+            )
+            cursor = separator_y + 15
+            for property_label in properties:
+                _svg_text(
+                    parts,
+                    property_label,
+                    text_x,
+                    cursor,
+                    property_size,
+                    family,
+                    "normal",
+                    "start",
+                )
+                cursor += property_size * 1.45
         if object_id:
             parts.append("</g>")
 
@@ -666,6 +694,19 @@ def render_drawio(data, theme, out: Path):
                 f"<b>{value}</b><br>"
                 f'<span style="font-size:{theme["font"]["note_size"]}px;font-weight:normal;">'
                 f"{note}</span>"
+            )
+        if group.get("properties"):
+            property_size = theme["font"].get(
+                "node_subtitle_size",
+                max(9, theme["font"]["node_size"] - 3),
+            )
+            properties_html = "<br>".join(
+                html.escape(str(item)) for item in group["properties"]
+            )
+            value = (
+                f"{value}<hr>"
+                f'<div style="text-align:left;font-size:{property_size}px;'
+                f'font-weight:normal;margin-left:4px">{properties_html}</div>'
             )
         attrs = {
             "id": f"group-{group['id']}",
