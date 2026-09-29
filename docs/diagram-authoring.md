@@ -226,6 +226,7 @@ Optional fields:
 ```text
 note
 notation
+object_id
 outline
 label_offset
 ```
@@ -350,6 +351,31 @@ groups with no notation.
 
 For backwards compatibility, `notation: component` on groups is still accepted.
 
+### Group `object_id` and `note`
+
+A group that is itself a semantic architecture object may carry `object_id`.
+This is especially useful for composite/component views where the enclosing
+component owns child components and should be the engineering identity itself:
+
+```yaml
+- id: timing-system
+  object_id: example.timing-system
+  label: TimingSystem
+  note: "systemId • state"
+  kind: group-primary
+  notation: component
+  layout: {x: 70, y: 80, w: 760, h: 280}
+```
+
+When present, `object_id` is preserved as `data-engineering-id` in SVG and
+editable draw.io output and participates in graph normalization exactly like a
+node/item identity. A short `note` renders beneath the group title and is
+appropriate for compact identity/state information that belongs to the
+architecture object without implying a UML class field list.
+
+Plain layers or layout-only groups should omit `object_id`. Do not create a
+duplicate child node solely to make a semantic component-container clickable.
+
 ---
 
 ## `nodes`
@@ -398,7 +424,7 @@ Node IDs:
 
 ### Engineering `object_id`
 
-Use `object_id` when a diagram node or selected structured item represents an
+Use `object_id` when a semantic diagram group, node or selected structured item represents an
 engineering object that also exists outside the diagram.
 
 ```yaml
@@ -442,7 +468,7 @@ For an identified item, SVG wraps that rendered row with the same
 embedded HTML inside the editable parent node. Strings remain display-only
 items and cannot carry identity.
 
-`object_id` values must be unique across both nodes and nested items in one
+`object_id` values must be unique across semantic groups, nodes and nested items in one
 diagram because duplicate semantic identity would make interactive selection
 ambiguous. Do not use a second label-to-object lookup table when the diagram
 source itself can declare the identity.
@@ -829,7 +855,7 @@ Examples of schema errors:
 - invalid `diagram.id`;
 - canvas too small;
 - missing node/group properties;
-- empty node `object_id`;
+- empty group/node/item `object_id`;
 - non-positive layout width/height;
 - unsupported anchor side;
 - anchor position outside `0..1`;
@@ -844,7 +870,7 @@ Additional checks include:
 
 - duplicate group IDs;
 - duplicate node IDs;
-- duplicate node `object_id` values;
+- duplicate diagram `object_id` values across groups, nodes or nested items;
 - one ID reused as both group and node;
 - unknown group/node `kind` in the selected theme;
 - node referencing a missing group;
