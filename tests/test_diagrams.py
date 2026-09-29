@@ -139,7 +139,11 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
         for element in root.iter()
         if element.tag.endswith("g") and "data-engineering-id" in element.attrib
     }
-    assert {"example.terminals", "example.worker"}.issubset(nested_identities)
+    assert {
+        "example.application-package",
+        "example.terminals",
+        "example.worker",
+    }.issubset(nested_identities)
     entrypoints = tree.find(".//mxCell[@id='entrypoints']")
     service_cell = tree.find(".//mxCell[@id='service']")
     assert entrypoints is not None
@@ -191,8 +195,12 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "container=1;" in service.attrib["style"]
     package = tree.find(".//mxCell[@id='group-application-layer']")
     assert package is not None
+    assert package.attrib["data-engineering-id"] == "example.application-package"
+    assert "Application package" in package.attrib["value"]
+    assert "instanceId • state" in package.attrib["value"]
     assert "shape=component;" in package.attrib["style"]
     assert "container=1;" in package.attrib["style"]
+    assert "instanceId • state" in svg_text
     state = tree.find(".//mxCell[@id='state']")
     assert state is not None
     assert "rounded=0;" in state.attrib["style"]
@@ -354,6 +362,22 @@ def test_duplicate_nested_item_object_id_is_rejected():
 def test_empty_nested_item_object_id_is_rejected_by_schema():
     data = load_yaml(Path(__file__).parents[1] / "examples" / "structured-layer.yaml")
     data["nodes"][0]["items"][1]["object_id"] = ""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "structured-layer.yaml")
+
+
+def test_duplicate_group_and_node_object_id_is_rejected():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "structured-layer.yaml")
+    data["groups"][1]["object_id"] = "example.shared"
+    data["nodes"][1]["object_id"] = "example.shared"
+    with pytest.raises(ValueError, match="duplicate diagram object_id"):
+        validate_refs(data, load_yaml(THEME), FIXTURES / "structured-layer.yaml")
+
+
+def test_empty_group_object_id_is_rejected_by_schema():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "structured-layer.yaml")
+    data["groups"][1]["object_id"] = ""
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     with pytest.raises(ValueError, match="invalid diagram source"):
         validate_source(data, schema, FIXTURES / "structured-layer.yaml")
