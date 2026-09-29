@@ -11,6 +11,9 @@ nodes:
   - id: service
     object_id: Service
     label: Service
+    items:
+      - label: Worker
+        object_id: Worker
     kind: service
     layout: {x: 290, y: 150, w: 180, h: 60}
 
