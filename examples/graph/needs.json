@@ -44,7 +44,7 @@
           "content": "The Service owns the implementation responsibility for REQ-1.",
           "docname": "source",
           "doctype": ".md",
-          "lineno": 20,
+          "lineno": 27,
           "satisfies": [
             "REQ-1"
           ]
@@ -57,7 +57,7 @@
           "content": "Exercise the Service and verify a valid response.",
           "docname": "source",
           "doctype": ".md",
-          "lineno": 35,
+          "lineno": 42,
           "verifies": [
             "REQ-1"
           ]
@@ -70,7 +70,17 @@
           "content": "The Worker is a nested architecture responsibility shown inside the Service.",
           "docname": "source",
           "doctype": ".md",
-          "lineno": 28
+          "lineno": 35
+        },
+        "ServiceBoundary": {
+          "id": "ServiceBoundary",
+          "type": "arch",
+          "type_name": "Architecture Element",
+          "title": "Service boundary",
+          "content": "The Service boundary is the semantic component container for the example.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 20
         }
       }
     }
