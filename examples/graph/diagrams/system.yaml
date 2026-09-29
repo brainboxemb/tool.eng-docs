@@ -5,10 +5,18 @@ diagram:
   height: 360
   description: Domain-neutral graph identity example.
 
-groups: []
+groups:
+  - id: service-boundary
+    object_id: ServiceBoundary
+    label: Service boundary
+    note: aggregateId
+    kind: group-primary
+    notation: component
+    layout: {x: 220, y: 95, w: 320, h: 190}
 
 nodes:
   - id: service
+    group: service-boundary
     object_id: Service
     label: Service
     items:
