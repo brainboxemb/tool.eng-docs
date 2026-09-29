@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.5 — 2026-09-29
+
+### Added
+
+- optional non-negative `outline.corner_radius` for custom group outlines;
+- rounded SVG path rendering that preserves authored polygon geometry;
+- editable draw.io rounded-polygon styling;
+- regression coverage for both rounded and unchanged sharp custom outlines.
+
+### Compatibility
+
+- custom outlines without `corner_radius`, or with radius `0`, retain the existing sharp polygon rendering.
+
 ## 0.4.4 — 2026-09-29
 
 ### Added

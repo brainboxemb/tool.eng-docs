@@ -11,6 +11,7 @@ groups:
     kind: group-primary
     layout: {x: 70, y: 85, w: 760, h: 190}
     outline:
+      corner_radius: 10
       points:
         - {x: 0.0, y: 0.0}
         - {x: 1.0, y: 0.0}
