@@ -144,12 +144,12 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert interface_group is not None
     assert interface_group.attrib["data-engineering-id"] == "example.interface"
     assert "stable boundary" in interface_group.attrib["value"]
-    assert "<hr>" in interface_group.attrib["value"]
-    assert "boundaryId" in interface_group.attrib["value"]
-    assert "state" in interface_group.attrib["value"]
+    assert "- boundaryId" in interface_group.attrib["value"]
+    assert "- state" in interface_group.attrib["value"]
+    assert "<hr>" not in interface_group.attrib["value"]
     assert "stable boundary" in svg_text
-    assert "boundaryId" in svg_text
-    assert "state" in svg_text
+    assert "- boundaryId" in svg_text
+    assert "- state" in svg_text
     entrypoints = tree.find(".//mxCell[@id='entrypoints']")
     service_cell = tree.find(".//mxCell[@id='service']")
     assert entrypoints is not None
