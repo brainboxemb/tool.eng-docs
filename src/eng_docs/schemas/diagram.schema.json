@@ -257,6 +257,10 @@
           "items": {
             "$ref": "#/$defs/normalizedPoint"
           }
+        },
+        "corner_radius": {
+          "type": "number",
+          "minimum": 0
         }
       }
     },
