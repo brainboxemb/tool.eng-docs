@@ -248,15 +248,24 @@ def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
     svg_root = ET.parse(svg).getroot()
     drawio_tree = ET.parse(drawio)
 
-    polygons = [
+    rounded_paths = [
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("path")
+        and element.attrib.get("data-outline") == "polygon"
+    ]
+    sharp_polygons = [
         element
         for element in svg_root.iter()
         if element.tag.endswith("polygon")
         and element.attrib.get("data-outline") == "polygon"
     ]
-    assert len(polygons) == 2
-    assert polygons[0].attrib["points"].startswith("70.0,85.0")
-    assert polygons[0].attrib["stroke-linejoin"] == "round"
+    assert len(rounded_paths) == 1
+    assert len(sharp_polygons) == 1
+    assert rounded_paths[0].attrib["d"].startswith("M ")
+    assert " Q " in rounded_paths[0].attrib["d"]
+    assert sharp_polygons[0].attrib["points"].startswith("70.0,275.1")
+    assert sharp_polygons[0].attrib["stroke-linejoin"] == "round"
 
     upper = drawio_tree.find(".//mxCell[@id='group-upper-area']")
     lower = drawio_tree.find(".//mxCell[@id='group-lower-area']")
@@ -264,6 +273,8 @@ def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
     assert lower is not None
     assert "shape=mxgraph.basic.polygon;" in upper.attrib["style"]
     assert "polyCoords=[[0.0,0.0],[1.0,0.0]" in upper.attrib["style"]
+    assert "rounded=1;" in upper.attrib["style"]
+    assert "rounded=1;" not in lower.attrib["style"]
     assert "polyline=0;" in lower.attrib["style"]
     assert "spacingTop=53;" in lower.attrib["style"]
 
@@ -311,6 +322,21 @@ def test_polygon_group_requires_distinct_points():
     }
     with pytest.raises(ValueError, match="at least three distinct points"):
         validate_refs(data, load_yaml(THEME), FIXTURES / "layered-architecture.yaml")
+
+
+def test_polygon_group_rejects_negative_corner_radius():
+    data = load_yaml(FIXTURES / "layered-architecture.yaml")
+    data["groups"][0]["outline"] = {
+        "corner_radius": -1,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 1.0, "y": 0.0},
+            {"x": 1.0, "y": 1.0},
+        ],
+    }
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "layered-architecture.yaml")
 
 
 def test_polygon_group_rejects_point_outside_layout_box():
