@@ -226,6 +226,7 @@ Optional fields:
 ```text
 note
 properties
+properties_width
 object_id
 notation
 outline
@@ -272,6 +273,17 @@ declare exact implementation fields or turn the group into a UML class.
 
 Use `note` for explanatory secondary text. Use `properties` when the text is
 part of the semantic identity/state of the enclosing component.
+
+The property block normally sizes itself from its content. Use
+`properties_width` only when the block should align to a deliberate diagram
+column:
+
+```yaml
+properties_width: 240
+```
+
+The value is an explicit positive width in diagram units/pixels. Omitting it
+keeps the automatic sizing behaviour.
 
 ### Group `object_id`
 
