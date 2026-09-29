@@ -705,8 +705,11 @@ def _drawio_node_style(
     label_offset=None,
 ):
     s = _style(theme, kind)
+    rounded = 1
+    if outline and outline.get("corner_radius", 0) <= 0:
+        rounded = 0
     result = (
-        "rounded=1;whiteSpace=wrap;html=1;"
+        f"rounded={rounded};whiteSpace=wrap;html=1;"
         f"fillColor={s['fill']};strokeColor={s['stroke']};fontFamily=Helvetica;"
     )
     if group:
@@ -725,8 +728,6 @@ def _drawio_node_style(
             f"polyCoords={_drawio_outline_coords(outline)};"
             "polyline=0;"
         )
-        if outline.get("corner_radius", 0) > 0:
-            result += "rounded=1;"
     elif notation == "component":
         result += "shape=component;"
     elif notation == "packaging-component":
