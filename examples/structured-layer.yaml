@@ -9,7 +9,10 @@ groups:
   - id: interface-layer
     object_id: example.interface
     label: Interface layer
-    note: "stable boundary\n2 entry modes"
+    note: "stable boundary"
+    properties:
+      - boundaryId
+      - state
     kind: group-primary
     layout: {x: 70, y: 80, w: 760, h: 160}
   - id: application-layer
