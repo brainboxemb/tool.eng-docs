@@ -106,6 +106,24 @@ def _relation_rows(
     return rows
 
 
+
+def _iter_diagram_object_ids(node: dict):
+    object_id = node.get("object_id")
+    if object_id is not None:
+        yield object_id
+
+    def walk(items):
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+            item_object_id = item.get("object_id")
+            if item_object_id is not None:
+                yield item_object_id
+            yield from walk(item.get("items", []))
+
+    yield from walk(node.get("items", []))
+
+
 def _diagram_refs(diagrams_root: Path | None, objects: dict[str, dict]) -> None:
     if diagrams_root is None:
         return
@@ -125,32 +143,30 @@ def _diagram_refs(diagrams_root: Path | None, objects: dict[str, dict]) -> None:
         for node in nodes:
             if not isinstance(node, dict):
                 continue
-            object_id = node.get("object_id")
-            if object_id is None:
-                continue
-            if not isinstance(object_id, str) or not object_id:
-                raise ValueError(f"{path}: diagram object_id must be a non-empty string")
-            if object_id not in objects:
-                raise ValueError(
-                    f"{path}: diagram object_id {object_id} does not resolve to a Need"
-                )
+            for object_id in _iter_diagram_object_ids(node):
+                if not isinstance(object_id, str) or not object_id:
+                    raise ValueError(f"{path}: diagram object_id must be a non-empty string")
+                if object_id not in objects:
+                    raise ValueError(
+                        f"{path}: diagram object_id {object_id} does not resolve to a Need"
+                    )
 
-            line_number = 1
-            needle = f"object_id: {object_id}"
-            for index in range(search_from, len(lines)):
-                if needle in lines[index]:
-                    line_number = index + 1
-                    search_from = index + 1
-                    break
+                line_number = 1
+                needle = f"object_id: {object_id}"
+                for index in range(search_from, len(lines)):
+                    if needle in lines[index]:
+                        line_number = index + 1
+                        search_from = index + 1
+                        break
 
-            ref = {
-                "source": f"{path.as_posix()}:{line_number}",
-                "diagram_id": data.get("diagram", {}).get("id")
-                if isinstance(data.get("diagram"), dict)
-                else None,
-                "node_id": node.get("id"),
-            }
-            objects[object_id]["diagram_refs"].append(ref)
+                ref = {
+                    "source": f"{path.as_posix()}:{line_number}",
+                    "diagram_id": data.get("diagram", {}).get("id")
+                    if isinstance(data.get("diagram"), dict)
+                    else None,
+                    "node_id": node.get("id"),
+                }
+                objects[object_id]["diagram_refs"].append(ref)
 
     for obj in objects.values():
         obj["diagram_refs"].sort(
