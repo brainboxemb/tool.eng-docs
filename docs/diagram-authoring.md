@@ -225,6 +225,7 @@ Optional fields:
 
 ```text
 note
+object_id
 notation
 outline
 label_offset
@@ -241,6 +242,24 @@ Group IDs:
 ### Group `label`
 
 Rendered heading for the visual group.
+
+### Group `note`
+
+Optional compact secondary text rendered directly below the group heading. Use it
+for a small amount of identity/state context that belongs to the semantic
+container itself, not for a second nested component model.
+
+Newlines are supported.
+
+### Group `object_id`
+
+A group may carry the same project-owned engineering `object_id` as a node when
+the enclosing component/container is itself the stable engineering object.
+
+When present, SVG wraps the complete rendered group with
+`data-engineering-id="<object_id>"`, editable draw.io stores the same metadata on
+the group cell, and engineering-graph normalization records the group as a
+diagram reference. Plain visual layers should omit `object_id`.
 
 By default the heading keeps the established inset from the layout box's
 upper-left corner. Shaped groups may move that heading further right/down
@@ -398,8 +417,8 @@ Node IDs:
 
 ### Engineering `object_id`
 
-Use `object_id` when a diagram node or selected structured item represents an
-engineering object that also exists outside the diagram.
+Use `object_id` when a diagram group, node or selected structured item represents
+an engineering object that also exists outside the diagram.
 
 ```yaml
 - id: service-card
@@ -411,7 +430,7 @@ engineering object that also exists outside the diagram.
 
 `id` and `object_id` have deliberately different responsibilities:
 
-- node `id` is local diagram identity used by routing, grouping and edges;
+- group/node `id` is local diagram identity used by routing, grouping and edges;
 - `object_id` is optional project-owned semantic identity used to connect
   generated output to other engineering-documentation views.
 
@@ -442,7 +461,7 @@ For an identified item, SVG wraps that rendered row with the same
 embedded HTML inside the editable parent node. Strings remain display-only
 items and cannot carry identity.
 
-`object_id` values must be unique across both nodes and nested items in one
+`object_id` values must be unique across groups, nodes and nested items in one
 diagram because duplicate semantic identity would make interactive selection
 ambiguous. Do not use a second label-to-object lookup table when the diagram
 source itself can declare the identity.
@@ -829,7 +848,7 @@ Examples of schema errors:
 - invalid `diagram.id`;
 - canvas too small;
 - missing node/group properties;
-- empty node `object_id`;
+- empty group/node/item `object_id`;
 - non-positive layout width/height;
 - unsupported anchor side;
 - anchor position outside `0..1`;
@@ -844,7 +863,7 @@ Additional checks include:
 
 - duplicate group IDs;
 - duplicate node IDs;
-- duplicate node `object_id` values;
+- duplicate diagram `object_id` values across groups, nodes and items;
 - one ID reused as both group and node;
 - unknown group/node `kind` in the selected theme;
 - node referencing a missing group;

@@ -55,7 +55,7 @@ See [docs/document-assembly.md](docs/document-assembly.md) and the executable
 - `eng-docs graph` consumes an existing Sphinx-Needs `needs.json` export;
 - consuming repositories explicitly select which outgoing relation fields are
   normalized;
-- diagram `object_id` values on nodes and selected structured items are validated as references to existing
+- diagram `object_id` values on semantic groups, nodes and selected structured items are validated as references to existing
   engineering objects rather than defining duplicate objects;
 - normalized JSON preserves object identity, type, title, source location,
   content, selected outgoing relations and diagram references;

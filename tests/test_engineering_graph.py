@@ -94,6 +94,31 @@ def test_unknown_relation_target_fails(tmp_path):
         build_graph(path, relation_types=["derived_from"])
 
 
+def test_group_diagram_object_is_normalized(tmp_path):
+    diagrams = tmp_path / "diagrams"
+    diagrams.mkdir()
+    (diagrams / "system.yaml").write_text(
+        "diagram:\n"
+        "  id: group-object-diagram\n"
+        "groups:\n"
+        "  - id: system-boundary\n"
+        "    object_id: GOAL-1\n"
+        "    label: System boundary\n"
+        "    kind: group-primary\n"
+        "    notation: component\n"
+        "    layout: {x: 10, y: 10, w: 300, h: 180}\n"
+        "nodes: []\n"
+        "edges: []\n",
+        encoding="utf-8",
+    )
+
+    graph = build_graph(NEEDS, diagrams_root=diagrams)
+    goal = next(item for item in graph["objects"] if item["id"] == "GOAL-1")
+    assert len(goal["diagram_refs"]) == 1
+    assert goal["diagram_refs"][0]["diagram_id"] == "group-object-diagram"
+    assert goal["diagram_refs"][0]["node_id"] == "system-boundary"
+
+
 def test_unknown_diagram_object_fails(tmp_path):
     diagrams = tmp_path / "diagrams"
     diagrams.mkdir()
