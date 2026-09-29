@@ -108,6 +108,48 @@ def _outline_canvas_points(group):
     ]
 
 
+def _rounded_outline_path(points, corner_radius):
+    """Return an SVG path for a polygon with rounded vertices."""
+    if not points:
+        return ""
+    if corner_radius <= 0:
+        return " ".join(
+            [f"M {points[0][0]:.1f} {points[0][1]:.1f}"]
+            + [f"L {x:.1f} {y:.1f}" for x, y in points[1:]]
+            + ["Z"]
+        )
+
+    def toward(start, end, distance):
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
+        length = (dx * dx + dy * dy) ** 0.5
+        if length == 0:
+            return start
+        scale = min(distance, length / 2) / length
+        return start[0] + dx * scale, start[1] + dy * scale
+
+    rounded = []
+    count = len(points)
+    for index, current in enumerate(points):
+        previous = points[(index - 1) % count]
+        following = points[(index + 1) % count]
+        entry = toward(current, previous, corner_radius)
+        exit_point = toward(current, following, corner_radius)
+        rounded.append((entry, current, exit_point))
+
+    commands = [
+        f"M {rounded[-1][2][0]:.1f} {rounded[-1][2][1]:.1f}"
+    ]
+    for entry, current, exit_point in rounded:
+        commands.append(f"L {entry[0]:.1f} {entry[1]:.1f}")
+        commands.append(
+            f"Q {current[0]:.1f} {current[1]:.1f} "
+            f"{exit_point[0]:.1f} {exit_point[1]:.1f}"
+        )
+    commands.append("Z")
+    return " ".join(commands)
+
+
 def _drawio_outline_coords(outline):
     return json.dumps(
         [
@@ -521,15 +563,25 @@ def render_svg(data, theme, out: Path):
                 f'<g data-engineering-id="{html.escape(object_id, quote=True)}">'
             )
         if group.get("outline"):
-            points = " ".join(
-                f"{x:.1f},{y:.1f}"
-                for x, y in _outline_canvas_points(group)
-            )
-            parts.append(
-                f'<polygon data-outline="polygon" points="{points}" '
-                f'fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2" '
-                f'stroke-linejoin="round"/>'
-            )
+            outline_points = _outline_canvas_points(group)
+            corner_radius = group["outline"].get("corner_radius", 0)
+            if corner_radius > 0:
+                path_data = _rounded_outline_path(outline_points, corner_radius)
+                parts.append(
+                    f'<path data-outline="polygon" d="{path_data}" '
+                    f'fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2" '
+                    f'stroke-linejoin="round"/>'
+                )
+            else:
+                points = " ".join(
+                    f"{x:.1f},{y:.1f}"
+                    for x, y in outline_points
+                )
+                parts.append(
+                    f'<polygon data-outline="polygon" points="{points}" '
+                    f'fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2" '
+                    f'stroke-linejoin="round"/>'
+                )
         else:
             parts.append(
                 f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
@@ -673,6 +725,8 @@ def _drawio_node_style(
             f"polyCoords={_drawio_outline_coords(outline)};"
             "polyline=0;"
         )
+        if outline.get("corner_radius", 0) > 0:
+            result += "rounded=1;"
     elif notation == "component":
         result += "shape=component;"
     elif notation == "packaging-component":
