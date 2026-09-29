@@ -150,7 +150,14 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "- boundaryId" in svg_text
     assert "- state" in svg_text
     assert 'data-group-properties="true"' in svg_text
-    assert 'data-group-properties="true" x="90.0" y="120.0" width="260.0"' in svg_text
+    property_rect = next(
+        element
+        for element in root.iter()
+        if element.tag.endswith("rect")
+        and element.attrib.get("data-group-properties") == "true"
+    )
+    assert property_rect.attrib["x"] == "90.0"
+    assert property_rect.attrib["width"] == "260.0"
 
     property_cell = tree.find(".//mxCell[@id='group-interface-layer-properties']")
     assert property_cell is not None
