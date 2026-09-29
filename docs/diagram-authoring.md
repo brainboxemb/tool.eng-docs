@@ -265,8 +265,9 @@ properties:
   - state
 ```
 
-SVG renders these values as a compact, left-aligned dash list directly beneath
-the group heading. Editable draw.io output preserves the same unboxed list. The values are architecture-view properties; they do not
+SVG renders these values in a small neutral inner box beneath the group heading,
+using a simple left-aligned dash list with no stereotype, component glyph or
+secondary title. Editable draw.io output preserves the same light inner box. The values are architecture-view properties; they do not
 declare exact implementation fields or turn the group into a UML class.
 
 Use `note` for explanatory secondary text. Use `properties` when the text is
