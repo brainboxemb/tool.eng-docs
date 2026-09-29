@@ -28,12 +28,13 @@ def test_domain_neutral_needs_example_builds_deterministically():
         "project": "tool.eng-docs graph example",
         "version": "1.0",
     }
-    assert first["object_count"] == 5
+    assert first["object_count"] == 6
     assert first["relation_count"] == 3
     assert [item["id"] for item in first["objects"]] == [
         "GOAL-1",
         "REQ-1",
         "Service",
+        "ServiceBoundary",
         "VC-1",
         "Worker",
     ]
@@ -55,6 +56,11 @@ def test_domain_neutral_needs_example_builds_deterministically():
     assert len(worker["diagram_refs"]) == 1
     assert worker["diagram_refs"][0]["diagram_id"] == "graph-example"
     assert worker["diagram_refs"][0]["node_id"] == "service"
+
+    boundary = next(item for item in first["objects"] if item["id"] == "ServiceBoundary")
+    assert len(boundary["diagram_refs"]) == 1
+    assert boundary["diagram_refs"][0]["diagram_id"] == "graph-example"
+    assert boundary["diagram_refs"][0]["node_id"] == "service-boundary"
 
     review = render_review(first)
     assert "### Authored outgoing" in review
@@ -107,6 +113,27 @@ def test_unknown_diagram_object_fails(tmp_path):
         "    kind: service\n"
         "    layout: {x: 10, y: 10, w: 100, h: 50}\n"
         "groups: []\n"
+        "edges: []\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="does not resolve to a Need"):
+        build_graph(NEEDS, diagrams_root=diagrams)
+
+
+def test_unknown_group_diagram_object_fails(tmp_path):
+    diagrams = tmp_path / "diagrams"
+    diagrams.mkdir()
+    (diagrams / "system.yaml").write_text(
+        "diagram:\n"
+        "  id: bad-group-diagram\n"
+        "groups:\n"
+        "  - id: missing-group\n"
+        "    object_id: MissingGroupObject\n"
+        "    label: Missing group\n"
+        "    kind: group-primary\n"
+        "    layout: {x: 10, y: 10, w: 100, h: 50}\n"
+        "nodes: []\n"
         "edges: []\n",
         encoding="utf-8",
     )
