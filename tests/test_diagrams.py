@@ -150,6 +150,7 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "- boundaryId" in svg_text
     assert "- state" in svg_text
     assert 'data-group-properties="true"' in svg_text
+    assert 'data-group-properties="true" x="90.0" y="120.0" width="260.0"' in svg_text
 
     property_cell = tree.find(".//mxCell[@id='group-interface-layer-properties']")
     assert property_cell is not None
@@ -157,6 +158,9 @@ def test_structured_items_and_group_edge_endpoint_render(tmp_path):
     assert "- state" in property_cell.attrib["value"]
     assert "shape=component" not in property_cell.attrib["style"]
     assert "fillColor=#ffffff" in property_cell.attrib["style"]
+    property_geometry = property_cell.find("mxGeometry")
+    assert property_geometry is not None
+    assert property_geometry.attrib["width"] == "260"
     entrypoints = tree.find(".//mxCell[@id='entrypoints']")
     service_cell = tree.find(".//mxCell[@id='service']")
     assert entrypoints is not None
@@ -357,6 +361,14 @@ def test_group_object_id_participates_in_duplicate_validation():
     data["nodes"][0]["object_id"] = data["groups"][0]["object_id"]
     with pytest.raises(ValueError, match="duplicate diagram object_id"):
         validate_refs(data, load_yaml(THEME), FIXTURES / "structured-layer.yaml")
+
+
+def test_non_positive_group_properties_width_is_rejected_by_schema():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "structured-layer.yaml")
+    data["groups"][0]["properties_width"] = 0
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="invalid diagram source"):
+        validate_source(data, schema, FIXTURES / "structured-layer.yaml")
 
 
 def test_empty_group_properties_are_rejected_by_schema():
