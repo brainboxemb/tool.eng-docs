@@ -5,8 +5,8 @@
 ### Added
 
 - optional semantic-group `properties` list;
-- distinct SVG property compartment separated from the component heading by a horizontal rule;
-- equivalent editable draw.io property-compartment rendering;
+- compact SVG dash-list rendering beneath the semantic group heading;
+- equivalent editable draw.io property-list rendering;
 - schema validation, domain-neutral example and Linux/Windows regression coverage.
 
 ### Clarified
