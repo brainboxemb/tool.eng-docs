@@ -345,6 +345,10 @@
               "items": {
                 "$ref": "#/$defs/nodeItem"
               }
+            },
+            "object_id": {
+              "type": "string",
+              "minLength": 1
             }
           }
         }
