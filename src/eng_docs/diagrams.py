@@ -42,7 +42,11 @@ def validate_refs(data, theme, path: Path):
             result.extend(item_object_ids(item.get("items", [])))
         return result
 
-    object_ids = []
+    object_ids = [
+        group["object_id"]
+        for group in data["groups"]
+        if group.get("object_id")
+    ]
     for node in data["nodes"]:
         if node.get("object_id"):
             object_ids.append(node["object_id"])
@@ -481,6 +485,11 @@ def render_svg(data, theme, out: Path):
     for group in data["groups"]:
         r = group["layout"]
         s = _style(theme, group["kind"])
+        object_id = group.get("object_id")
+        if object_id:
+            parts.append(
+                f'<g data-engineering-id="{html.escape(object_id, quote=True)}">'
+            )
         if group.get("outline"):
             points = " ".join(
                 f"{x:.1f},{y:.1f}"
@@ -501,16 +510,38 @@ def render_svg(data, theme, out: Path):
         elif group.get("notation") == "packaging-component":
             _svg_packaging_component_glyph(parts, group, s["stroke"])
         label_offset = group.get("label_offset", {"x": 0, "y": 0})
+        text_x = r["x"] + 16 + label_offset["x"]
         _svg_text(
             parts,
             group["label"],
-            r["x"] + 16 + label_offset["x"],
+            text_x,
             r["y"] + 22 + label_offset["y"],
             theme["font"]["group_title_size"],
             family,
             "bold",
             "start",
         )
+        if group.get("note"):
+            note_size = theme["font"]["note_size"]
+            note_lines = str(group["note"]).splitlines() or [""]
+            note_y = (
+                r["y"]
+                + 45
+                + label_offset["y"]
+                + (len(note_lines) - 1) * note_size * 1.28 / 2
+            )
+            _svg_text(
+                parts,
+                group["note"],
+                text_x,
+                note_y,
+                note_size,
+                family,
+                "normal",
+                "start",
+            )
+        if object_id:
+            parts.append("</g>")
 
     endpoints = {g["id"]: g for g in data["groups"]}
     endpoints.update({n["id"]: n for n in data["nodes"]})
@@ -628,9 +659,18 @@ def render_drawio(data, theme, out: Path):
 
     for group in data["groups"]:
         r = group["layout"]
-        cell = ET.SubElement(
-            root, "mxCell", id=f"group-{group['id']}", value=group["label"],
-            style=_drawio_node_style(
+        value = html.escape(group["label"])
+        if group.get("note"):
+            note = "<br>".join(html.escape(line) for line in str(group["note"]).splitlines())
+            value = (
+                f"<b>{value}</b><br>"
+                f'<span style="font-size:{theme["font"]["note_size"]}px;font-weight:normal;">'
+                f"{note}</span>"
+            )
+        attrs = {
+            "id": f"group-{group['id']}",
+            "value": value,
+            "style": _drawio_node_style(
                 theme,
                 group["kind"],
                 True,
@@ -638,9 +678,12 @@ def render_drawio(data, theme, out: Path):
                 group.get("outline"),
                 group.get("label_offset"),
             ),
-            vertex="1",
-            parent="1"
-        )
+            "vertex": "1",
+            "parent": "1",
+        }
+        if group.get("object_id"):
+            attrs["data-engineering-id"] = group["object_id"]
+        cell = ET.SubElement(root, "mxCell", **attrs)
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
     for node in data["nodes"]:
