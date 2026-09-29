@@ -5,8 +5,8 @@
 ### Added
 
 - optional semantic-group `properties` list;
-- compact SVG dash-list rendering beneath the semantic group heading;
-- equivalent editable draw.io property-list rendering;
+- neutral inner SVG property block with a simple dash list and no stereotype/title;
+- equivalent editable draw.io inner property block;
 - schema validation, domain-neutral example and Linux/Windows regression coverage.
 
 ### Clarified
