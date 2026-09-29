@@ -549,17 +549,11 @@ def render_svg(data, theme, out: Path):
                 "node_subtitle_size",
                 max(9, theme["font"]["node_size"] - 3),
             )
-            separator_y = note_bottom + 10
-            parts.append(
-                f'<line x1="{r["x"]}" y1="{separator_y:.1f}" '
-                f'x2="{r["x"] + r["w"]}" y2="{separator_y:.1f}" '
-                f'stroke="{s["stroke"]}" stroke-width="1"/>'
-            )
-            cursor = separator_y + 15
+            cursor = note_bottom + 12
             for property_label in properties:
                 _svg_text(
                     parts,
-                    property_label,
+                    "- " + property_label,
                     text_x,
                     cursor,
                     property_size,
@@ -701,10 +695,10 @@ def render_drawio(data, theme, out: Path):
                 max(9, theme["font"]["node_size"] - 3),
             )
             properties_html = "<br>".join(
-                html.escape(str(item)) for item in group["properties"]
+                html.escape("- " + str(item)) for item in group["properties"]
             )
             value = (
-                f"{value}<hr>"
+                f"{value}<br>"
                 f'<div style="text-align:left;font-size:{property_size}px;'
                 f'font-weight:normal;margin-left:4px">{properties_html}</div>'
             )
