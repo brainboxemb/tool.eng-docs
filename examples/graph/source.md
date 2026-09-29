@@ -17,6 +17,12 @@ The example system should provide one reusable service capability.
 The system shall provide a response through the service boundary.
 ```
 
+```{arch} Service boundary
+:id: ServiceBoundary
+
+The Service boundary is the semantic component container for the example.
+```
+
 ```{arch} Service
 :id: Service
 :satisfies: REQ-1
