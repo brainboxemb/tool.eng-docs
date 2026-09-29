@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.1 — 2026-09-29
+
+### Added
+
+- optional `object_id` on object-form structured diagram items;
+- SVG `data-engineering-id` preservation for identified nested item rows;
+- matching item identity retained in editable draw.io node HTML;
+- duplicate identity validation across top-level nodes and nested items;
+- engineering-graph normalization of nested item diagram references;
+- domain-neutral examples and Linux/Windows regression coverage.
+
+### Compatibility
+
+- string items remain display-only and existing diagrams render through the same path;
+- consumers choose which structured items are engineering objects; the tool does not infer identity from labels.
+
 ## 0.4.0 — 2026-09-28
 
 ### Added
