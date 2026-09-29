@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.3 — 2026-09-29
+
+### Added
+
+- optional semantic-group `properties` list;
+- neutral inner SVG property block with a simple dash list and no stereotype/title;
+- equivalent editable draw.io inner property block;
+- schema validation, domain-neutral example and Linux/Windows regression coverage.
+
+### Clarified
+
+- group `note` remains explanatory secondary text;
+- group `properties` are compact architecture-view identity/state concepts and do not imply exact implementation fields or a UML class contract.
+
 ## 0.4.2 — 2026-09-29
 
 ### Added

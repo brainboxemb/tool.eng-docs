@@ -225,6 +225,7 @@ Optional fields:
 
 ```text
 note
+properties
 object_id
 notation
 outline
@@ -250,6 +251,27 @@ for a small amount of identity/state context that belongs to the semantic
 container itself, not for a second nested component model.
 
 Newlines are supported.
+
+### Group `properties`
+
+Use `properties` for compact identity/state concepts owned by a semantic
+component group when those concepts should read as part of the component rather
+than as commentary:
+
+```yaml
+properties:
+  - aggregateId
+  - locationId
+  - state
+```
+
+SVG renders these values in a small neutral inner box beneath the group heading,
+using a simple left-aligned dash list with no stereotype, component glyph or
+secondary title. Editable draw.io output preserves the same light inner box. The values are architecture-view properties; they do not
+declare exact implementation fields or turn the group into a UML class.
+
+Use `note` for explanatory secondary text. Use `properties` when the text is
+part of the semantic identity/state of the enclosing component.
 
 ### Group `object_id`
 

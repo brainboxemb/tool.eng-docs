@@ -466,6 +466,32 @@ def _drawio_node_value(node, theme):
     return "<br>".join(parts)
 
 
+def _group_properties_geometry(group, theme):
+    r = group["layout"]
+    properties = group.get("properties", [])
+    if not properties:
+        return None
+
+    property_size = theme["font"].get(
+        "node_subtitle_size",
+        max(9, theme["font"]["node_size"] - 3),
+    )
+    label_offset = group.get("label_offset", {"x": 0, "y": 0})
+    note_lines = str(group.get("note", "")).splitlines() if group.get("note") else []
+    note_height = len(note_lines) * theme["font"]["note_size"] * 1.28
+    top = r["y"] + 40 + label_offset["y"] + note_height
+    longest = max(len(str(item)) for item in properties)
+    width = max(150, min(r["w"] - 40, longest * property_size * 0.62 + 34))
+    height = 14 + len(properties) * property_size * 1.45
+    return {
+        "x": r["x"] + 20 + label_offset["x"],
+        "y": top,
+        "w": width,
+        "h": height,
+        "font_size": property_size,
+    }
+
+
 def render_svg(data, theme, out: Path):
     d = data["diagram"]
     family = theme["font"]["family"]
@@ -521,6 +547,7 @@ def render_svg(data, theme, out: Path):
             "bold",
             "start",
         )
+        note_bottom = r["y"] + 35 + label_offset["y"]
         if group.get("note"):
             note_size = theme["font"]["note_size"]
             note_lines = str(group["note"]).splitlines() or [""]
@@ -540,6 +567,31 @@ def render_svg(data, theme, out: Path):
                 "normal",
                 "start",
             )
+            note_bottom = note_y + len(note_lines) * note_size * 1.28 / 2
+
+        properties = group.get("properties", [])
+        property_box = _group_properties_geometry(group, theme)
+        if property_box:
+            parts.append(
+                f'<rect data-group-properties="true" '
+                f'x="{property_box["x"]:.1f}" y="{property_box["y"]:.1f}" '
+                f'width="{property_box["w"]:.1f}" height="{property_box["h"]:.1f}" '
+                f'rx="4" ry="4" fill="{theme["canvas"]["background"]}" '
+                f'stroke="{s["stroke"]}" stroke-width="1"/>'
+            )
+            cursor = property_box["y"] + 17
+            for property_label in properties:
+                _svg_text(
+                    parts,
+                    "- " + property_label,
+                    property_box["x"] + 10,
+                    cursor,
+                    property_box["font_size"],
+                    family,
+                    "normal",
+                    "start",
+                )
+                cursor += property_box["font_size"] * 1.45
         if object_id:
             parts.append("</g>")
 
@@ -685,6 +737,36 @@ def render_drawio(data, theme, out: Path):
             attrs["data-engineering-id"] = group["object_id"]
         cell = ET.SubElement(root, "mxCell", **attrs)
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
+
+        property_box = _group_properties_geometry(group, theme)
+        if property_box:
+            property_value = "<br>".join(
+                html.escape("- " + str(item)) for item in group["properties"]
+            )
+            property_style = (
+                "rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;align=left;"
+                f"fillColor={theme['canvas']['background']};strokeColor={_style(theme, group['kind'])['stroke']};"
+                f"fontFamily=Helvetica;fontSize={property_box['font_size']};"
+                "spacingTop=6;spacingLeft=6;fontStyle=0;"
+            )
+            property_cell = ET.SubElement(
+                root,
+                "mxCell",
+                id=f"group-{group['id']}-properties",
+                value=property_value,
+                style=property_style,
+                vertex="1",
+                parent="1",
+            )
+            ET.SubElement(
+                property_cell,
+                "mxGeometry",
+                x=str(property_box["x"]),
+                y=str(property_box["y"]),
+                width=str(property_box["w"]),
+                height=str(property_box["h"]),
+                **{"as": "geometry"},
+            )
 
     for node in data["nodes"]:
         r = node["layout"]
