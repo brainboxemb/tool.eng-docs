@@ -285,7 +285,7 @@ not repeat the first point at the end; the renderer closes the polygon.
 
 SVG and draw.io use the same polygon. The draw.io representation remains a
 native editable polygon (`mxgraph.basic.polygon`), not an embedded image.
-Group titles and edge routing still use the rectangular `layout` bounding box.
+Group titles/notes and edge routing still use the rectangular `layout` bounding box.
 Keep the title area inside the polygon and use explicit edge anchors when a
 non-rectangular boundary makes the default bounding-box anchor visually
 ambiguous.
