@@ -90,7 +90,9 @@ primitives:
 - color is reserved mainly for compact state chips and small accents;
 - section rules start after the rendered heading text rather than crossing it;
 - cards grow with wrapped title/metadata instead of clipping content;
-- three cards are used per row on A4 portrait.
+- three cards are used per row on A4 portrait;
+- compact outer margins and block spacing preserve readable typography while
+  using the portrait page efficiently.
 
 The first implementation keeps one BoardView on one portrait A4 page. If the
 consumer-produced view cannot fit even after card growth, rendering fails with an
