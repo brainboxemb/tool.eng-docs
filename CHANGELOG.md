@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.1 — 2026-09-30
+
+### Changed
+
+- roadmap cards regain a calmer fixed visual hierarchy while retaining adaptive
+  height, wrapping and pagination;
+- optional compact item `marker` supports number-style step identity without
+  overloading the opaque item id;
+- the first ordered meta value occupies the stable upper metadata area, with
+  remaining values shown as secondary context;
+- optional `badge_heading` groups generic badges under a named section;
+- neutral card frames and section rules reduce visual noise while state tone
+  remains visible in the state chip.
+
+### Compatibility
+
+- existing RoadmapView inputs without `marker` or `badge_heading` remain valid;
+- no fixed-height boxes or source-text line limits are reintroduced.
+
 ## 0.5.0 — 2026-09-30
 
 ### Added
