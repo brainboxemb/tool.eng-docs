@@ -90,7 +90,7 @@ primitives:
 - white page and white cards;
 - thin neutral borders and section rules;
 - large colored background areas are avoided;
-- all section/group headings use the same neutral typography and rule styling;
+- all section/group headings use the same uppercase, neutral typography, font size and rule styling;
 - color is reserved mainly for compact state chips, document badges and small accents;
 - section rules start after the rendered heading text rather than crossing it;
 - card IDs remain bold while compact header metadata uses normal small text on the same row;
