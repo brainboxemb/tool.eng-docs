@@ -234,12 +234,6 @@ jobs:
           [Source YAML](fixtures/routing-stress.yaml) · [Editable draw.io](diagrams/routing-stress.drawio)
 
           ![Routing stress](diagrams/routing-stress.svg)
-
-          ### Sequence interaction
-
-          [Source YAML](example-diagrams/source.yaml) · [Editable draw.io](example-diagrams/sequence-flow.drawio)
-
-          ![Sequence interaction](example-diagrams/sequence-flow.svg)
           EOF
           printf '%s\n' "$SOURCE_SHA" > bld/docs/source-sha.txt
 
@@ -247,7 +241,7 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           test -f bld/docs/README.md
           test -f bld/docs/source-sha.txt
           test -s bld/docs/evidence/pytest.txt
@@ -285,9 +279,6 @@ jobs:
           test -f bld/docs/diagrams/layered-architecture.drawio
           test -f bld/docs/diagrams/routing-stress.svg
           test -f bld/docs/diagrams/routing-stress.drawio
-          test -f bld/docs/example-diagrams/sequence-flow.svg
-          test -f bld/docs/example-diagrams/sequence-flow.drawio
-          test -f bld/docs/example-diagrams/source.yaml
 
       - name: Upload prepared conformance documentation
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
