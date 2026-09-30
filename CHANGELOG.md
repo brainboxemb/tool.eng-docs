@@ -9,6 +9,11 @@
 - multiple header metadata values are presented compactly with ` | ` separators;
 - header metadata wraps within the space left by the ID and optional status chip.
 
+### Changed
+
+- render all BoardView section and group headings with the same neutral uppercase
+  typography and rule style so color remains reserved for semantic badges/status.
+
 ### Compatibility
 
 - existing card `meta` remains available for longer descriptive text below the title;
