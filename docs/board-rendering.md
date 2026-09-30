@@ -22,12 +22,17 @@ eng-docs board
 
 ```yaml
 board:
+  marker: "4"
   title: Engineering detail board
 
   meta:
     - ACTIVE
     - forecast 18 Oct
     - orig ~3d · rem ~2d
+
+  summary:
+    heading: PURPOSE
+    text: Explain the board in normal readable body text, separately from compact metadata.
 
   sections:
     - heading: END DEMO
@@ -57,6 +62,10 @@ board:
         - 2026-09-30 — narrowed the first slice.
 ```
 
+The optional `marker` is a compact visible identifier placed at the upper right.
+The optional `summary` gives descriptive prose its own heading and normal body
+typography rather than forcing it into the small metadata line.
+
 All identifiers, headings, state labels, tones and metadata are presentation data.
 The renderer does not assign semantics to concepts such as an activity, lane,
 document or planning change.
@@ -70,6 +79,7 @@ primitives:
 - thin neutral borders and section rules;
 - large colored background areas are avoided;
 - color is reserved mainly for compact state chips and small accents;
+- section rules start after the rendered heading text rather than crossing it;
 - cards grow with wrapped title/metadata instead of clipping content;
 - three cards are used per row on A4 portrait.
 
