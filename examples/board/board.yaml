@@ -8,8 +8,13 @@ board:
   summary:
     heading: PURPOSE
     text: Show one compact engineering slice with a readable descriptive summary separated from planning metadata.
+  section_columns: 2
   sections:
-    - heading: A deliberately longer section heading
+    - heading: RESULT
+      bullets:
+        - Produce one observable result through the public path.
+        - Preserve enough detail for review without expanding the metadata line.
+    - heading: END DEMO
       bullets:
         - Connect a sample client and inspect one generated result.
         - Reconnect and verify current state before live updates continue.
