@@ -13,6 +13,7 @@ from .assembly_output import assemble_output
 from .diagrams import generate
 from .engineering_graph import write_graph
 from .manifests import build_manifest
+from .roadmap import generate as generate_roadmap
 
 
 def main(argv=None):
@@ -24,6 +25,14 @@ def main(argv=None):
     diagrams.add_argument("--out", required=True, help="output directory")
     diagrams.add_argument("--schema", help="diagram JSON Schema; built-in default is used when omitted")
     diagrams.add_argument("--theme", help="theme YAML; built-in default is used when omitted")
+
+    roadmap = sub.add_parser("roadmap", help="render a generic RoadmapView")
+    roadmap.add_argument("--source", required=True, help="RoadmapView YAML file")
+    roadmap.add_argument("--out", required=True, help="output directory")
+    roadmap.add_argument(
+        "--schema",
+        help="roadmap JSON Schema; built-in default is used when omitted",
+    )
 
     manifest = sub.add_parser("manifest", help="describe already-produced assets")
     manifest.add_argument("--source", required=True, help="directory containing produced assets")
@@ -81,6 +90,16 @@ def main(argv=None):
                 print(f"diagram source directory does not exist: {source}", file=sys.stderr)
                 return 2
             generate(source, schema, theme, Path(args.out))
+            return 0
+
+        if args.command == "roadmap":
+            package_root = files("eng_docs")
+            schema = (
+                Path(args.schema)
+                if args.schema
+                else Path(str(package_root.joinpath("schemas/roadmap.schema.json")))
+            )
+            generate_roadmap(Path(args.source), schema, Path(args.out))
             return 0
 
         if args.command == "graph":

@@ -67,7 +67,21 @@ See [docs/document-assembly.md](docs/document-assembly.md) and the executable
 See [docs/engineering-graph.md](docs/engineering-graph.md) and the executable
 `examples/graph/` example.
 
-Planning/roadmap and printable PDF work is tracked separately in issue #3.
+### Roadmap rendering
+
+Development on issue #59 adds a reusable, presentation-only `RoadmapView`
+boundary:
+
+- consumers keep authoritative planning and project semantics;
+- `eng-docs roadmap` consumes domain-neutral YAML view data;
+- cards automatically select 3, 2 or 1 columns based on wrapped content;
+- rows paginate instead of imposing fixed line-count limits on source planning;
+- output includes per-page SVG, a panorama SVG and printable PDF.
+
+See [docs/roadmap-rendering.md](docs/roadmap-rendering.md) and the executable
+[examples/roadmap/roadmap.yaml](examples/roadmap/roadmap.yaml) example.
+
+Broader planning-domain extraction remains tracked separately in issue #3.
 
 ## Install
 

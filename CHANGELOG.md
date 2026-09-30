@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0 — 2026-09-30
+
+### Added
+
+- generic `RoadmapView` YAML schema and `eng-docs roadmap` CLI;
+- adaptive 3/2/1-column roadmap layout with row pagination rather than fixed
+  source-text line limits;
+- deterministic per-page SVG, panorama SVG and printable PDF output;
+- domain-neutral roadmap example and regression coverage for long text,
+  pagination, duplicate IDs, unknown tones and deterministic output.
+
+### Boundary
+
+- consumers own authoritative planning and the adapter into compact RoadmapView
+  presentation data;
+- roadmap section/state/badge labels are opaque to the renderer;
+- project planning prose is not parsed or constrained by roadmap card geometry.
+
 ## 0.4.5 — 2026-09-29
 
 ### Added
