@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.6 — 2026-09-30
+
+### Changed
+
+- remove the obsolete `baseline` term from the BoardView planning example and
+  documentation so the example matches the current `orig / act / rem / total est`
+  terminology used by consumers.
+
+### Compatibility
+
+- renderer behavior and BoardView schema are unchanged.
+
 ## 0.6.5 — 2026-09-30
 
 ### Changed
