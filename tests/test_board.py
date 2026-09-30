@@ -153,3 +153,16 @@ def test_single_line_header_meta_is_more_compact_than_bottom_meta():
     bottom = layout_board(bottom_source)["groups"][1]["rows"][0][0][0]["height"]
     assert compact < bottom
 
+def test_group_heading_tone_does_not_change_heading_color(tmp_path):
+    data = source()
+    data["board"]["groups"][0]["tone"] = "danger"
+    path = tmp_path / "neutral-group-heading.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "neutral-group-heading-out")
+    svg = (tmp_path / "neutral-group-heading-out/board.svg").read_text(encoding="utf-8")
+    heading = "Documentation / decisions"
+    pos = svg.index(heading)
+    text_start = svg.rfind("<text", 0, pos)
+    tag = svg[text_start:pos]
+    assert 'fill="#5f6368"' in tag
+
