@@ -189,3 +189,27 @@ def test_all_board_headings_render_uppercase_with_shared_heading_size(tmp_path):
         assert 'font-size="8.00"' in tag
         assert 'font-weight="bold"' in tag
 
+def test_board_marker_leads_title_and_meta_values_form_one_status_line(tmp_path):
+    data = source()
+    layout = layout_board(data)
+    assert layout["title_x_offset"] > 0
+    assert layout["meta_lines"][0] == (
+        "ACTIVE | baseline ~3d | orig ~3d · rem ~2d | forecast end 18 Oct"
+    )
+
+    path = tmp_path / "leading-marker.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "leading-marker-out")
+    svg = (tmp_path / "leading-marker-out/board.svg").read_text(encoding="utf-8")
+
+    marker_pos = svg.index(">4</text>")
+    title_pos = svg.index(">Engineering detail board</text>")
+    assert marker_pos < title_pos
+
+    marker_text_start = svg.rfind("<text", 0, marker_pos)
+    marker_tag = svg[marker_text_start:marker_pos]
+    assert 'font-size="14.00"' in marker_tag
+    assert 'font-weight="bold"' in marker_tag
+
+    assert "ACTIVE | baseline ~3d | orig ~3d · rem ~2d | forecast end 18 Oct" in svg
+
