@@ -279,6 +279,9 @@ jobs:
           test -f bld/docs/diagrams/layered-architecture.drawio
           test -f bld/docs/diagrams/routing-stress.svg
           test -f bld/docs/diagrams/routing-stress.drawio
+          test -f bld/docs/example-diagrams/sequence-flow.svg
+          test -f bld/docs/example-diagrams/sequence-flow.drawio
+          test -f bld/docs/example-diagrams/source.yaml
 
       - name: Upload prepared conformance documentation
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
