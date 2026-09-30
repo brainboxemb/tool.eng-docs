@@ -11,7 +11,7 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfgen import canvas
 
 PW, PH = landscape(A4)
-MARGIN, FOOTER, GAP, ROW_GAP, PAD = 30.0, 22.0, 14.0, 14.0, 12.0
+MARGIN, FOOTER, GAP, ROW_GAP, PAD = 18.0, 22.0, 10.0, 12.0, 9.0
 TITLE, BODY, SMALL, HEADING, LINE = 11.5, 8.5, 7.5, 8.0, 1.25
 MARKER_H, CHIP_H = 24.0, 16.0
 CARD_STROKE, RULE = "#b8c0c8", "#d9dde1"
