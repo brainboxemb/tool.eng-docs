@@ -20,6 +20,10 @@ def test_example_generates_svg_pdf_and_pages(tmp_path):
     assert len(layout.pages) == 1
     ET.parse(tmp_path / "roadmap.svg")
     ET.parse(tmp_path / "roadmap/roadmap-page-01.svg")
+    svg = (tmp_path / "roadmap/roadmap-page-01.svg").read_text(encoding="utf-8")
+    assert ">1</text>" in svg
+    assert "DOCUMENT STATUS" in svg
+    assert svg.index("completed") < svg.index("~2d")
     assert (tmp_path / "roadmap.pdf").read_bytes().startswith(b"%PDF")
 
 def test_duplicate_ids_rejected(tmp_path):
@@ -72,3 +76,12 @@ def test_long_state_label_can_force_wider_cards():
     data = source()
     data["roadmap"]["items"][0]["state"]["label"] = "A VERY LONG PRESENTATION STATE LABEL THAT NEEDS MORE CARD WIDTH"
     assert layout_roadmap(data).columns in (1, 2)
+
+def test_marker_and_badge_heading_are_optional_for_compatibility(tmp_path):
+    data = source()
+    item = data["roadmap"]["items"][0]
+    item.pop("marker", None)
+    item.pop("badge_heading", None)
+    path = tmp_path / "compat.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    assert generate(path, SCHEMA_PATH, tmp_path / "compat-out").pages

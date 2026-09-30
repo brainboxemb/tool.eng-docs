@@ -3,9 +3,10 @@ roadmap:
   subtitle: Domain-neutral RoadmapView example
   items:
     - id: phase-1
+      marker: "1"
       title: Establish the public boundary
       state: {label: DONE, tone: success}
-      meta: ["~2d", "completed"]
+      meta: ["completed", "~2d"]
       sections:
         - heading: RESULT
           bullets:
@@ -14,12 +15,14 @@ roadmap:
         - heading: DEMO
           bullets:
             - Render the same view locally and in CI.
+      badge_heading: DOCUMENT STATUS
       badges:
         - {label: SPEC, tone: mature}
     - id: phase-2
+      marker: "2"
       title: Integrate a real consumer without constraining its authoritative planning prose
       state: {label: ACTIVE, tone: active}
-      meta: ["~3d", "forecast Oct"]
+      meta: ["forecast Oct", "~3d"]
       sections:
         - heading: RESULT
           bullets:
@@ -28,10 +31,12 @@ roadmap:
         - heading: DEMO
           bullets:
             - Generate SVG and PDF from the compact view and inspect both outputs.
+      badge_heading: DOCUMENT STATUS
       badges:
         - {label: DESIGN, tone: draft}
         - {label: TEST, tone: mature}
     - id: phase-3
+      marker: "3"
       title: Qualify release behavior
       state: {label: PLANNED, tone: muted}
       sections:
