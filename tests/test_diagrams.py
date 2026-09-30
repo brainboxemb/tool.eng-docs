@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from eng_docs.diagrams import generate, load_yaml, validate_refs, validate_source
+from eng_docs.diagrams import generate, load_yaml, validate_refs, validate_sequence_refs, validate_source
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -488,3 +488,95 @@ def test_invalid_anchor_position_is_rejected():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     with pytest.raises(ValueError, match="invalid diagram source"):
         validate_source(data, schema, FIXTURES / "simple-flow.yaml")
+
+
+def test_sequence_example_generates_parseable_deterministic_outputs(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    example = Path(__file__).parents[1] / "examples" / "sequence-flow.yaml"
+    (source / example.name).write_text(
+        example.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    generate(source, SCHEMA, THEME, first)
+    generate(source, SCHEMA, THEME, second)
+
+    svg = first / "sequence-flow.svg"
+    drawio = first / "sequence-flow.drawio"
+    svg_root = ET.parse(svg).getroot()
+    drawio_root = ET.parse(drawio)
+
+    svg_text = svg.read_text(encoding="utf-8")
+    drawio_text = drawio.read_text(encoding="utf-8")
+
+    assert "Asynchronous work sequence" in svg_text
+    assert "submit work" in svg_text
+    assert "stored" in drawio_text
+    assert len([
+        element for element in svg_root.iter()
+        if element.attrib.get("data-sequence-lifeline")
+    ]) == 4
+    assert len([
+        element for element in svg_root.iter()
+        if element.attrib.get("data-sequence-message")
+    ]) == 5
+
+    call = drawio_root.find(".//mxCell[@id='sequence-message-3']")
+    returned = drawio_root.find(".//mxCell[@id='sequence-message-4']")
+    async_message = drawio_root.find(".//mxCell[@id='sequence-message-1']")
+    assert call is not None
+    assert returned is not None
+    assert async_message is not None
+    assert "endArrow=block" in call.attrib["style"]
+    assert "endArrow=open" in async_message.attrib["style"]
+    assert "dashed=1" in returned.attrib["style"]
+
+    assert svg.read_bytes() == (second / "sequence-flow.svg").read_bytes()
+    assert drawio.read_bytes() == (second / "sequence-flow.drawio").read_bytes()
+
+
+def test_sequence_rejects_missing_participant_reference():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "sequence-flow.yaml")
+    data["messages"][0]["to"] = "missing"
+    with pytest.raises(ValueError, match="missing participant"):
+        validate_sequence_refs(
+            data,
+            load_yaml(THEME),
+            Path("sequence-flow.yaml"),
+        )
+
+
+def test_sequence_rejects_duplicate_participant_id():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "sequence-flow.yaml")
+    data["participants"][1]["id"] = data["participants"][0]["id"]
+    with pytest.raises(ValueError, match="duplicate sequence participant id"):
+        validate_sequence_refs(
+            data,
+            load_yaml(THEME),
+            Path("sequence-flow.yaml"),
+        )
+
+
+def test_sequence_rejects_unknown_participant_kind():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "sequence-flow.yaml")
+    data["participants"][0]["kind"] = "not-a-theme-kind"
+    with pytest.raises(ValueError, match="unknown kind"):
+        validate_sequence_refs(
+            data,
+            load_yaml(THEME),
+            Path("sequence-flow.yaml"),
+        )
+
+
+def test_sequence_rejects_self_message_in_first_slice():
+    data = load_yaml(Path(__file__).parents[1] / "examples" / "sequence-flow.yaml")
+    data["messages"][0]["to"] = data["messages"][0]["from"]
+    with pytest.raises(ValueError, match="self sequence messages"):
+        validate_sequence_refs(
+            data,
+            load_yaml(THEME),
+            Path("sequence-flow.yaml"),
+        )

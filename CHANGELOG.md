@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.7.0 — 2026-09-30
+
+### Added
+
+- declarative `diagram.type: sequence` sources with ordered participants and messages;
+- first-slice message semantics for `call`, `async` and `return`;
+- deterministic participant/lifeline/message layout in SVG;
+- native editable draw.io sequence output from the same YAML source;
+- domain-neutral sequence example, schema/semantic validation and Linux/Windows regression coverage;
+- generated conformance preview for the user-facing sequence example.
+
+### Architecture
+
+- sequence diagrams extend the existing `eng-docs diagrams` YAML → SVG + draw.io pipeline instead of introducing Mermaid, PlantUML, Node or Java rendering dependencies;
+- structural diagram sources remain valid without adding a `type` field; omitted `diagram.type` continues to mean the existing structural form;
+- the first slice deliberately defers full UML interaction fragments, activation bars, destruction markers and self messages until a real consumer requires them.
+
+### Compatibility
+
+- existing structural diagram rendering and source semantics are unchanged;
+- engineering-graph normalization safely ignores sequence diagrams for object-reference extraction in this first slice.
+
 ## 0.6.6 — 2026-09-30
 
 ### Changed

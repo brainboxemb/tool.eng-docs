@@ -3,13 +3,12 @@
 This guide documents the current user-facing YAML contract for
 `eng-docs diagrams`.
 
-The diagram source model is intentionally small. A source file describes:
+The diagram source model is intentionally small and supports two diagram types:
 
-- the canvas;
-- optional visual groups;
-- nodes;
-- directed edges;
-- optional routing hints.
+- **structure** diagrams — groups, nodes, directed edges and optional routing hints;
+- **sequence** diagrams — ordered participants and ordered messages.
+
+Both use the same canvas metadata, theme, validation command and output pipeline.
 
 `tool.eng-docs` validates the YAML, renders an SVG for normal documentation use,
 and also writes a native editable draw.io file.
@@ -82,7 +81,9 @@ Files are processed in sorted filename order. Output filenames are based on
 
 ## Top-level structure
 
-Every source file has four required top-level keys:
+Every source has a required `diagram` block.
+
+A structural diagram uses the existing form:
 
 ```yaml
 diagram: {}
@@ -91,7 +92,17 @@ nodes: []
 edges: []
 ```
 
-All four are required even when `groups` or `edges` is empty.
+When `diagram.type` is omitted it defaults semantically to `structure`, so all
+existing sources remain valid.
+
+A sequence diagram uses:
+
+```yaml
+diagram:
+  type: sequence
+participants: []
+messages: []
+```
 
 Unknown top-level fields are rejected.
 
@@ -114,6 +125,7 @@ diagram:
 Optional fields:
 
 ```yaml
+  type: structure   # or sequence; omitted means structure
   description: Longer machine/human description of the diagram.
   note: Short note rendered below the title in the SVG.
 ```
@@ -160,6 +172,100 @@ it on the SVG canvas.
 ### `note`
 
 Optional short note rendered under the SVG title.
+
+---
+
+## Sequence diagrams
+
+Use `type: sequence` when interaction order over time is the primary concern.
+Sequence diagrams use automatic horizontal participant placement and automatic
+vertical message placement; authors specify semantic order rather than canvas
+coordinates for every message.
+
+Example:
+
+```yaml
+diagram:
+  id: request-flow
+  type: sequence
+  title: Request flow
+  width: 1000
+  height: 620
+
+participants:
+  - id: client
+    label: Client
+    kind: external
+  - id: queue
+    label: Queue
+    kind: integration
+  - id: worker
+    label: Worker
+    kind: service
+
+messages:
+  - from: client
+    to: queue
+    label: submit
+    kind: async
+  - from: queue
+    to: worker
+    label: next item
+    kind: async
+  - from: worker
+    to: client
+    label: result
+    kind: return
+```
+
+The renderer creates participant headers, dashed lifelines and messages in source
+order from top to bottom. The same source produces deterministic SVG and native
+editable draw.io output.
+
+### `participants`
+
+A sequence diagram requires at least two participants.
+
+Each participant has:
+
+```yaml
+- id: worker
+  label: Worker
+  kind: service
+```
+
+`id` is local diagram identity and must be unique. `kind` selects a normal
+theme style, so sequence diagrams use the same visual vocabulary as structural
+diagrams.
+
+### `messages`
+
+A sequence diagram requires at least one message.
+
+```yaml
+- from: client
+  to: worker
+  label: request
+  kind: call
+```
+
+Supported first-slice message kinds are:
+
+```text
+call    synchronous/normal call; solid line + filled arrow
+async   asynchronous hand-off; solid line + open arrow
+return  return/result; dashed line + open arrow
+```
+
+`kind` defaults semantically to `call` when omitted.
+
+Both `from` and `to` must reference existing participants. Self messages are
+deliberately deferred in the first slice. UML fragments such as `alt`, `loop`
+and `par`, activation bars and destruction markers are also deferred until a
+real consumer requires them.
+
+Sequence diagrams are intended for interaction/process views. Use the structural
+source model for component/layer topology and routing-heavy architecture views.
 
 ---
 

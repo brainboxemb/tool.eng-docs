@@ -1,0 +1,44 @@
+diagram:
+  id: sequence-flow
+  type: sequence
+  title: Asynchronous work sequence
+  width: 1200
+  height: 700
+  description: Domain-neutral example of ordered call, asynchronous and return messages.
+  note: Participants are ordered left to right; messages are rendered top to bottom.
+
+participants:
+  - id: client
+    label: Client
+    kind: external
+  - id: queue
+    label: Work queue
+    kind: integration
+  - id: worker
+    label: Worker
+    kind: service
+  - id: store
+    label: Store
+    kind: storage
+
+messages:
+  - from: client
+    to: queue
+    label: submit work
+    kind: async
+  - from: queue
+    to: worker
+    label: next item
+    kind: async
+  - from: worker
+    to: store
+    label: persist
+    kind: call
+  - from: store
+    to: worker
+    label: stored
+    kind: return
+  - from: worker
+    to: client
+    label: result ready
+    kind: async
