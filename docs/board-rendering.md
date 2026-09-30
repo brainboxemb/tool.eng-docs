@@ -57,14 +57,17 @@ board:
         - id: A01
           title: Implement one deterministic path
           state: {label: ACTIVE, tone: active}
-          meta:
-            - ~1d · after D02
+          header_meta:
+            - ~1d
+            - after D02
 
   trailing_sections:
     - heading: PLANNING CHANGES
       bullets:
         - 2026-09-30 — narrowed the first slice.
 ```
+
+Card `header_meta` is optional compact metadata rendered inline after the bold card ID. Multiple values are joined with ` | `; the status chip remains right-aligned. Longer descriptive `meta` remains a separate block below the title.
 
 The optional `marker` is a compact visible identifier placed at the upper right.
 The optional `summary` gives descriptive prose its own heading and normal body
@@ -75,7 +78,7 @@ should share one row. Each section still wraps independently; the taller section
 sets the row height. This is presentation-only and assigns no meaning to the
 section headings.
 
-All identifiers, headings, state labels, tones and metadata are presentation data.
+All identifiers, headings, state labels, tones and metadata are presentation data. Group tones are retained as compatible source metadata but do not color group headings.
 The renderer does not assign semantics to concepts such as an activity, lane,
 document or planning change.
 
@@ -87,8 +90,10 @@ primitives:
 - white page and white cards;
 - thin neutral borders and section rules;
 - large colored background areas are avoided;
-- color is reserved mainly for compact state chips and small accents;
+- all section/group headings use the same uppercase, neutral typography, font size and rule styling;
+- color is reserved mainly for compact state chips, document badges and small accents;
 - section rules start after the rendered heading text rather than crossing it;
+- card IDs remain bold while compact header metadata uses normal small text on the same row;
 - cards grow with wrapped title/metadata instead of clipping content;
 - three cards are used per row on A4 portrait;
 - compact outer margins and block spacing preserve readable typography while

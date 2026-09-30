@@ -85,7 +85,7 @@ def test_heading_rule_starts_after_heading_text(tmp_path):
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     generate(path, SCHEMA, tmp_path / "heading-out")
     svg = (tmp_path / "heading-out/board.svg").read_text(encoding="utf-8")
-    heading_index = svg.index("A deliberately longer section heading")
+    heading_index = svg.index("A DELIBERATELY LONGER SECTION HEADING")
     line_index = svg.index("<line", heading_index)
     line = svg[line_index:svg.index("/>", line_index)]
     x1 = float(line.split('x1="')[1].split('"')[0])
@@ -123,3 +123,69 @@ def test_section_columns_default_to_one():
 def test_board_uses_compact_outer_margin():
     layout = layout_board(source())
     assert layout["required_height"] < 700
+
+def test_header_meta_shares_card_header_without_making_id_non_bold(tmp_path):
+    data = source()
+    card = data["board"]["groups"][0]["cards"][1]
+    assert card["header_meta"] == ["~1d · after D01"]
+    layout = layout_board(data)
+    rendered = layout["groups"][0]["rows"][0][0][1]
+    assert rendered["header_meta"] == ("~1d · after D01",)
+
+    path = tmp_path / "header.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "header-out")
+    svg = (tmp_path / "header-out/board.svg").read_text(encoding="utf-8")
+    id_pos = svg.index(">D02</text>")
+    header_pos = svg.index(">~1d · after D01</text>")
+    assert 'font-weight="bold"' in svg[svg.rfind("<text", 0, id_pos):id_pos]
+    assert 'font-weight="normal"' in svg[svg.rfind("<text", 0, header_pos):header_pos]
+
+
+def test_single_line_header_meta_is_more_compact_than_bottom_meta():
+    data = source()
+    card = data["board"]["groups"][1]["cards"][0]
+    compact = layout_board(data)["groups"][1]["rows"][0][0][0]["height"]
+
+    bottom_source = copy.deepcopy(data)
+    bottom_card = bottom_source["board"]["groups"][1]["cards"][0]
+    bottom_card["meta"] = list(bottom_card.pop("header_meta"))
+    bottom = layout_board(bottom_source)["groups"][1]["rows"][0][0][0]["height"]
+    assert compact < bottom
+
+def test_group_heading_tone_does_not_change_heading_color(tmp_path):
+    data = source()
+    data["board"]["groups"][0]["tone"] = "danger"
+    path = tmp_path / "neutral-group-heading.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "neutral-group-heading-out")
+    svg = (tmp_path / "neutral-group-heading-out/board.svg").read_text(encoding="utf-8")
+    heading = "DOCUMENTATION / DECISIONS"
+    pos = svg.index(heading)
+    text_start = svg.rfind("<text", 0, pos)
+    tag = svg[text_start:pos]
+    assert 'fill="#626a72"' in tag
+
+def test_all_board_headings_render_uppercase_with_shared_heading_size(tmp_path):
+    data = source()
+    path = tmp_path / "uppercase-headings.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "uppercase-headings-out")
+    svg = (tmp_path / "uppercase-headings-out/board.svg").read_text(encoding="utf-8")
+
+    for heading in (
+        "PURPOSE",
+        "RESULT",
+        "END DEMO",
+        "DOCUMENTATION",
+        "DOCUMENTATION / DECISIONS",
+        "APPLICATION / PRODUCT",
+        "VERIFICATION / TEST",
+        "PLANNING CHANGES",
+    ):
+        pos = svg.index(f">{heading}</text>")
+        text_start = svg.rfind("<text", 0, pos)
+        tag = svg[text_start:pos]
+        assert 'font-size="8.00"' in tag
+        assert 'font-weight="bold"' in tag
+
