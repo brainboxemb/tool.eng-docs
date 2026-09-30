@@ -53,6 +53,13 @@
         },
         "summary": {
           "$ref": "#/$defs/summary"
+        },
+        "section_columns": {
+          "type": "integer",
+          "enum": [
+            1,
+            2
+          ]
         }
       }
     }
