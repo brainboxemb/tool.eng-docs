@@ -3,8 +3,9 @@ board:
   title: Engineering detail board
   meta:
     - ACTIVE
-    - forecast 18 Oct
+    - baseline ~3d
     - orig ~3d · rem ~2d
+    - forecast end 18 Oct
   summary:
     heading: PURPOSE
     text: Show one compact engineering slice with a readable descriptive summary separated from planning metadata.

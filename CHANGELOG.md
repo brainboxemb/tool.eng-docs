@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.5 — 2026-09-30
+
+### Changed
+
+- move the optional BoardView marker to the leading left edge of the title row and
+  render it larger/bolder for faster left-to-right scanning;
+- join board-level metadata values with ` | ` into one continuous status line
+  beneath the title row, wrapping only when necessary.
+
+### Compatibility
+
+- the BoardView source schema is unchanged; existing marker and meta data render
+  with the refined hierarchy.
+
 ## 0.6.4 — 2026-09-30
 
 ### Added

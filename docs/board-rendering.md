@@ -27,8 +27,9 @@ board:
 
   meta:
     - ACTIVE
-    - forecast 18 Oct
+    - baseline ~3d
     - orig ~3d · rem ~2d
+    - forecast end 18 Oct
 
   summary:
     heading: PURPOSE
@@ -69,7 +70,7 @@ board:
 
 Card `header_meta` is optional compact metadata rendered inline after the bold card ID. Multiple values are joined with ` | `; the status chip remains right-aligned. Longer descriptive `meta` remains a separate block below the title.
 
-The optional `marker` is a compact visible identifier placed at the upper right.
+The optional `marker` is a prominent compact identifier placed at the leading left edge of the title row, before the title. Board-level `meta` values are joined with ` | ` and wrap as one continuous status line beneath the title row.
 The optional `summary` gives descriptive prose its own heading and normal body
 typography rather than forcing it into the small metadata line.
 

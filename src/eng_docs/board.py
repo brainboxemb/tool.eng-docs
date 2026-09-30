@@ -30,7 +30,7 @@ BLOCK_GAP, GROUP_GAP = 7.0, 9.0
 COLS = 3
 TITLE, BODY, SMALL, HEADING, CARD_TITLE, LINE = 16.0, 8.0, 7.0, 8.0, 9.5, 1.25
 CHIP_H = 15.0
-MARKER_H = 24.0
+MARKER_SIZE, MARKER_H = 14.0, 24.0
 
 
 def load_schema(path: Path):
@@ -82,7 +82,7 @@ def _chip_width(label):
 
 
 def _marker_width(label):
-    return max(MARKER_H, 10.0 + len(label) * 7.0)
+    return max(MARKER_H, 12.0 + stringWidth(str(label), "Helvetica-Bold", MARKER_SIZE))
 
 
 def _heading_rule_start(x, width, heading):
@@ -178,13 +178,13 @@ def layout_board(data):
     usable = PW - 2 * MARGIN
     marker = board.get("marker")
     marker_w = _marker_width(marker) if marker else 0.0
-    title_width = usable - (marker_w + 12.0 if marker else 0.0)
+    title_x_offset = marker_w + 10.0 if marker else 0.0
+    title_width = usable - title_x_offset
     if title_width < 120.0:
         raise ValueError("board marker leaves insufficient width for title")
     title_lines = _wrap(board["title"], title_width, TITLE, True)
-    meta_lines = tuple(
-        line for value in board.get("meta", []) for line in _wrap(value, usable, SMALL)
-    )
+    meta_text = " | ".join(board.get("meta", []))
+    meta_lines = _wrap(meta_text, usable, SMALL) if meta_text else ()
 
     cursor = MARGIN + max(
         len(title_lines) * _lh(TITLE),
@@ -259,6 +259,7 @@ def layout_board(data):
     return {
         "marker": marker,
         "marker_width": marker_w,
+        "title_x_offset": title_x_offset,
         "title_lines": title_lines,
         "meta_lines": meta_lines,
         "summary": summary,
@@ -381,18 +382,24 @@ def render_svg(layout, path: Path):
     ]
     usable = PW - 2 * MARGIN
     y = MARGIN
-    _svg_text(parts, MARGIN, y + TITLE, layout["title_lines"], TITLE, "bold")
     if layout["marker"]:
         mw = layout["marker_width"]
-        mx = PW - MARGIN - mw
         parts.append(
-            f'<rect x="{mx:.2f}" y="{y:.2f}" width="{mw:.2f}" '
+            f'<rect x="{MARGIN:.2f}" y="{y:.2f}" width="{mw:.2f}" '
             f'height="{MARKER_H:.2f}" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>'
         )
         _svg_text(
-            parts, mx + mw / 2, y + 16.2, [layout["marker"]],
-            10.5, "bold", TEXT, "middle",
+            parts, MARGIN + mw / 2, y + 16.8, [layout["marker"]],
+            MARKER_SIZE, "bold", TEXT, "middle",
         )
+    _svg_text(
+        parts,
+        MARGIN + layout["title_x_offset"],
+        y + TITLE,
+        layout["title_lines"],
+        TITLE,
+        "bold",
+    )
     y += max(
         len(layout["title_lines"]) * _lh(TITLE),
         MARKER_H if layout["marker"] else 0.0,
@@ -543,17 +550,23 @@ def render_pdf(layout, path: Path):
     c = canvas.Canvas(str(path), pagesize=(PW, PH))
     usable = PW - 2 * MARGIN
     y = MARGIN
-    _pdf_text(c, MARGIN, y + TITLE, layout["title_lines"], TITLE, True)
     if layout["marker"]:
         mw = layout["marker_width"]
-        mx = PW - MARGIN - mw
         c.setFillColorRGB(*hex_rgb("#f3f5f7"))
         c.setStrokeColorRGB(*hex_rgb("#8b96a1"))
-        c.roundRect(mx, PH-y-MARKER_H, mw, MARKER_H, 5, stroke=1, fill=1)
+        c.roundRect(MARGIN, PH-y-MARKER_H, mw, MARKER_H, 5, stroke=1, fill=1)
         _pdf_text(
-            c, mx + mw / 2, y + 16.2, [layout["marker"]],
-            10.5, True, align="center",
+            c, MARGIN + mw / 2, y + 16.8, [layout["marker"]],
+            MARKER_SIZE, True, align="center",
         )
+    _pdf_text(
+        c,
+        MARGIN + layout["title_x_offset"],
+        y + TITLE,
+        layout["title_lines"],
+        TITLE,
+        True,
+    )
     y += max(
         len(layout["title_lines"]) * _lh(TITLE),
         MARKER_H if layout["marker"] else 0.0,
