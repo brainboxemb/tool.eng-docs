@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.2 — 2026-09-30
+
+### Added
+
+- BoardView supports optional one- or two-column section rows;
+- two-column sections wrap independently and share the taller row height;
+- compact side-by-side summaries reduce vertical page usage without shrinking
+  typography or clipping content.
+
+### Compatibility
+
+- `section_columns` defaults to 1;
+- section headings and content remain opaque presentation data.
+
 ## 0.6.1 — 2026-09-30
 
 ### Changed
