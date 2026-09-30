@@ -25,7 +25,8 @@ from .presentation_style import (
 )
 
 PW, PH = portrait(A4)
-MARGIN, FOOTER, GAP, PAD = 18.0, 18.0, 8.0, 8.0
+MARGIN, FOOTER, GAP, PAD = 16.0, 18.0, 8.0, 8.0
+BLOCK_GAP, GROUP_GAP = 7.0, 9.0
 COLS = 3
 TITLE, BODY, SMALL, HEADING, CARD_TITLE, LINE = 16.0, 8.0, 7.0, 8.0, 9.5, 1.25
 CHIP_H = 15.0
@@ -174,12 +175,12 @@ def layout_board(data):
     )
     if meta_lines:
         cursor += 5.0 + len(meta_lines) * _lh(SMALL)
-    cursor += 9.0
+    cursor += BLOCK_GAP
 
     summary = None
     if board.get("summary"):
         summary = _summary_layout(board["summary"], usable)
-        cursor += summary["height"] + 9.0
+        cursor += summary["height"] + BLOCK_GAP
 
     section_columns = int(board.get("section_columns", 1))
     section_width = (usable - (section_columns - 1) * GAP) / section_columns
@@ -192,7 +193,7 @@ def layout_board(data):
         )
         row_h = max(section["height"] for section in row)
         section_rows.append((row, row_h))
-        cursor += row_h + 9.0
+        cursor += row_h + BLOCK_GAP
 
     badge_section = None
     if board.get("badge_section"):
@@ -203,7 +204,7 @@ def layout_board(data):
             "rows": rows,
             "height": _lh(HEADING) + 7.0 + len(rows) * 19.0,
         }
-        cursor += badge_section["height"] + 9.0
+        cursor += badge_section["height"] + BLOCK_GAP
 
     card_width = (usable - (COLS - 1) * GAP) / COLS
     groups = []
@@ -223,13 +224,13 @@ def layout_board(data):
             "rows": tuple(rows),
             "height": height,
         })
-        cursor += height + 10.0
+        cursor += height + GROUP_GAP
 
     trailing = []
     for section in board.get("trailing_sections", []):
         layout = _section_layout(section, usable)
         trailing.append(layout)
-        cursor += layout["height"] + 9.0
+        cursor += layout["height"] + BLOCK_GAP
 
     required = cursor + FOOTER
     if required > PH - MARGIN:
@@ -372,32 +373,34 @@ def render_svg(layout, path: Path):
         y += 5.0
         _svg_text(parts, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=TEXT_MUTED)
         y += len(layout["meta_lines"]) * _lh(SMALL)
-    y += 9.0
+    y += BLOCK_GAP
 
     if layout["summary"]:
-        y = _svg_summary(parts, MARGIN, y, usable, layout["summary"]) + 9.0
+        y = _svg_summary(parts, MARGIN, y, usable, layout["summary"]) + BLOCK_GAP
 
     for row, row_h in layout["section_rows"]:
         for col, section in enumerate(row):
             x = MARGIN + col * (layout["section_width"] + GAP)
             _svg_section(parts, x, y, layout["section_width"], section)
-        y += row_h + 9.0
+        y += row_h + BLOCK_GAP
 
     if layout["badge_section"]:
-        y = _svg_badges(parts, MARGIN, y, usable, layout["badge_section"]) + 9.0
+        y = _svg_badges(parts, MARGIN, y, usable, layout["badge_section"]) + BLOCK_GAP
 
     for group in layout["groups"]:
         _svg_heading(parts, MARGIN, y, usable, group["heading"], group["tone"])
         y += _lh(HEADING) + 8.0
-        for row, row_h in group["rows"]:
+        for row_index, (row, row_h) in enumerate(group["rows"]):
             for col, card in enumerate(row):
                 x = MARGIN + col * (layout["card_width"] + GAP)
                 _svg_card(parts, x, y, layout["card_width"], row_h, card)
-            y += row_h + GAP
-        y += 2.0
+            y += row_h
+            if row_index + 1 < len(group["rows"]):
+                y += GAP
+        y += GROUP_GAP
 
     for section in layout["trailing_sections"]:
-        y = _svg_section(parts, MARGIN, y, usable, section) + 9.0
+        y = _svg_section(parts, MARGIN, y, usable, section) + BLOCK_GAP
 
     parts.append("</svg>")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -520,32 +523,34 @@ def render_pdf(layout, path: Path):
         y += 5.0
         _pdf_text(c, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=hex_rgb(TEXT_MUTED))
         y += len(layout["meta_lines"]) * _lh(SMALL)
-    y += 9.0
+    y += BLOCK_GAP
 
     if layout["summary"]:
-        y = _pdf_summary(c, MARGIN, y, usable, layout["summary"]) + 9.0
+        y = _pdf_summary(c, MARGIN, y, usable, layout["summary"]) + BLOCK_GAP
 
     for row, row_h in layout["section_rows"]:
         for col, section in enumerate(row):
             x = MARGIN + col * (layout["section_width"] + GAP)
             _pdf_section(c, x, y, layout["section_width"], section)
-        y += row_h + 9.0
+        y += row_h + BLOCK_GAP
 
     if layout["badge_section"]:
-        y = _pdf_badges(c, MARGIN, y, usable, layout["badge_section"]) + 9.0
+        y = _pdf_badges(c, MARGIN, y, usable, layout["badge_section"]) + BLOCK_GAP
 
     for group in layout["groups"]:
         _pdf_heading(c, MARGIN, y, usable, group["heading"], group["tone"])
         y += _lh(HEADING) + 8.0
-        for row, row_h in group["rows"]:
+        for row_index, (row, row_h) in enumerate(group["rows"]):
             for col, card in enumerate(row):
                 x = MARGIN + col * (layout["card_width"] + GAP)
                 _pdf_card(c, x, y, layout["card_width"], row_h, card)
-            y += row_h + GAP
-        y += 2.0
+            y += row_h
+            if row_index + 1 < len(group["rows"]):
+                y += GAP
+        y += GROUP_GAP
 
     for section in layout["trailing_sections"]:
-        y = _pdf_section(c, MARGIN, y, usable, section) + 9.0
+        y = _pdf_section(c, MARGIN, y, usable, section) + BLOCK_GAP
 
     c.showPage()
     c.save()
