@@ -119,3 +119,7 @@ def test_section_columns_default_to_one():
     data["board"].pop("section_columns", None)
     layout = layout_board(data)
     assert layout["section_columns"] == 1
+
+def test_board_uses_compact_outer_margin():
+    layout = layout_board(source())
+    assert layout["required_height"] < 700
