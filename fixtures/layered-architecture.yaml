@@ -1,0 +1,65 @@
+diagram:
+  id: layered-architecture
+  title: Layered architecture fixture
+  width: 1000
+  height: 620
+  note: Domain-neutral grouped architecture conformance fixture.
+groups:
+  - id: interface-layer
+    label: Interface layer
+    kind: group-primary
+    layout: {x: 80, y: 90, w: 840, h: 140}
+  - id: service-layer
+    label: Service layer
+    kind: group-secondary
+    layout: {x: 80, y: 270, w: 840, h: 150}
+  - id: external-layer
+    label: External resources
+    kind: group-neutral
+    layout: {x: 80, y: 460, w: 840, h: 110}
+nodes:
+  - id: api
+    group: interface-layer
+    label: Public API
+    kind: component
+    layout: {x: 150, y: 140, w: 220, h: 60}
+  - id: console
+    group: interface-layer
+    label: Operator console
+    kind: component
+    layout: {x: 610, y: 140, w: 220, h: 60}
+  - id: coordinator
+    group: service-layer
+    label: Application coordinator
+    kind: runtime
+    layout: {x: 150, y: 325, w: 260, h: 65}
+  - id: service
+    group: service-layer
+    label: Domain service
+    kind: service
+    layout: {x: 590, y: 325, w: 240, h: 65}
+  - id: datastore
+    group: external-layer
+    label: Storage adapter
+    kind: storage
+    layout: {x: 150, y: 495, w: 260, h: 55}
+  - id: external
+    group: external-layer
+    label: External system
+    kind: external
+    layout: {x: 590, y: 495, w: 240, h: 55}
+edges:
+  - from: api
+    to: coordinator
+  - from: console
+    to: coordinator
+  - from: coordinator
+    to: service
+    label: invoke
+  - from: coordinator
+    to: datastore
+    label: persist
+  - from: service
+    to: external
+    dashed: true
+    label: port
