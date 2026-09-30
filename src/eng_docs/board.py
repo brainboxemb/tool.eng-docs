@@ -415,7 +415,7 @@ def render_svg(layout, path: Path):
         y = _svg_badges(parts, MARGIN, y, usable, layout["badge_section"]) + BLOCK_GAP
 
     for group in layout["groups"]:
-        _svg_heading(parts, MARGIN, y, usable, group["heading"], group["tone"])
+        _svg_heading(parts, MARGIN, y, usable, group["heading"])
         y += _lh(HEADING) + 8.0
         for row_index, (row, row_h) in enumerate(group["rows"]):
             for col, card in enumerate(row):
@@ -575,7 +575,7 @@ def render_pdf(layout, path: Path):
         y = _pdf_badges(c, MARGIN, y, usable, layout["badge_section"]) + BLOCK_GAP
 
     for group in layout["groups"]:
-        _pdf_heading(c, MARGIN, y, usable, group["heading"], group["tone"])
+        _pdf_heading(c, MARGIN, y, usable, group["heading"])
         y += _lh(HEADING) + 8.0
         for row_index, (row, row_h) in enumerate(group["rows"]):
             for col, card in enumerate(row):
