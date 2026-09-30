@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 595.28 841.89">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16.00" y="32.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="16.00" font-weight="bold" fill="#2f3337">Engineering detail board</text>
+<rect x="555.28" y="16.00" width="24.00" height="24.00" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>
+<text x="567.28" y="32.20" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.50" font-weight="bold" fill="#2f3337">4</text>
+<text x="16.00" y="52.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">ACTIVE</text>
+<text x="16.00" y="60.75" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">forecast 18 Oct</text>
+<text x="16.00" y="69.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">orig ~3d · rem ~2d</text>
+<text x="16.00" y="86.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">PURPOSE</text>
+<line x1="65.12" y1="83.25" x2="579.28" y2="83.25" stroke="#d9dde1" stroke-width="1"/>
+<text x="16.00" y="103.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">Show one compact engineering slice with a readable descriptive summary separated from planning metadata.</text>
+<text x="16.00" y="120.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">RESULT</text>
+<line x1="58.00" y1="117.25" x2="293.64" y2="117.25" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="19.00" cy="133.15" r="1.45" fill="#6a8bb0"/>
+<text x="26.00" y="137.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">Produce one observable result through the public path.</text>
+<circle cx="19.00" cy="146.15" r="1.45" fill="#6a8bb0"/>
+<text x="26.00" y="150.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">Preserve enough detail for review without expanding the</text>
+<text x="26.00" y="160.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">metadata line.</text>
+<text x="301.64" y="120.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">END DEMO</text>
+<line x1="354.75" y1="117.25" x2="579.28" y2="117.25" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="304.64" cy="133.15" r="1.45" fill="#6a8bb0"/>
+<text x="311.64" y="137.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">Connect a sample client and inspect one generated result.</text>
+<circle cx="304.64" cy="146.15" r="1.45" fill="#6a8bb0"/>
+<text x="311.64" y="150.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">Reconnect and verify current state before live updates</text>
+<text x="311.64" y="160.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">continue.</text>
+<text x="16.00" y="180.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">DOCUMENTATION</text>
+<line x1="97.10" y1="177.25" x2="579.28" y2="177.25" stroke="#d9dde1" stroke-width="1"/>
+<rect x="16.00" y="189.25" width="46.65" height="15.00" rx="5" fill="#fff4d6" stroke="#a77a19"/>
+<text x="39.33" y="200.05" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#6a4b00">SPEC R-70</text>
+<rect x="68.65" y="189.25" width="46.65" height="15.00" rx="5" fill="#e8f1fb" stroke="#4b78a8"/>
+<text x="91.98" y="200.05" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#244b73">TEST W-60</text>
+<text x="16.00" y="223.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">DOCUMENTATION / DECISIONS</text>
+<line x1="147.78" y1="220.25" x2="579.28" y2="220.25" stroke="#d9dde1" stroke-width="1"/>
+<rect x="16.00" y="233.25" width="182.43" height="70.38" rx="5" fill="#ffffff" stroke="#b8c0c8" stroke-width="1"/>
+<text x="24.00" y="248.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#626a72">D01</text>
+<text x="44.84" y="248.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">~0.5d</text>
+<rect x="163.03" y="238.25" width="27.40" height="15.00" rx="7" fill="#eaf5e7" stroke="#5a8750"/>
+<text x="176.73" y="249.05" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#31582b">DONE</text>
+<text x="24.00" y="270.75" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">Establish public boundary</text>
+<text x="24.00" y="285.12" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">Decision recorded in the public design</text>
+<text x="24.00" y="293.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">documentation.</text>
+<rect x="206.43" y="233.25" width="182.43" height="70.38" rx="5" fill="#ffffff" stroke="#b8c0c8" stroke-width="1"/>
+<text x="214.43" y="248.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#626a72">D02</text>
+<text x="235.26" y="248.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">~1d · after D01</text>
+<rect x="345.75" y="238.25" width="35.10" height="15.00" rx="7" fill="#e8f1fb" stroke="#4b78a8"/>
+<text x="363.30" y="249.05" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#244b73">ACTIVE</text>
+<text x="214.43" y="270.75" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">Review consumer behavior</text>
+<text x="16.00" y="320.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">APPLICATION / PRODUCT</text>
+<line x1="126.45" y1="317.62" x2="579.28" y2="317.62" stroke="#d9dde1" stroke-width="1"/>
+<rect x="16.00" y="330.62" width="182.43" height="59.75" rx="5" fill="#ffffff" stroke="#b8c0c8" stroke-width="1"/>
+<text x="24.00" y="345.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#626a72">A01</text>
+<text x="44.84" y="345.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">~1d · after D02</text>
+<rect x="151.48" y="335.62" width="38.95" height="15.00" rx="7" fill="#f1f1f1" stroke="#888888"/>
+<text x="170.95" y="346.43" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#555555">PLANNED</text>
+<text x="24.00" y="368.12" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">Implement one deterministic</text>
+<text x="24.00" y="380.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">path</text>
+<rect x="206.43" y="330.62" width="182.43" height="59.75" rx="5" fill="#ffffff" stroke="#b8c0c8" stroke-width="1"/>
+<text x="214.43" y="345.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#626a72">A02</text>
+<text x="235.26" y="345.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">~0.5d · after A01</text>
+<rect x="341.90" y="335.62" width="38.95" height="15.00" rx="7" fill="#f1f1f1" stroke="#888888"/>
+<text x="361.38" y="346.43" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#555555">PLANNED</text>
+<text x="214.43" y="368.12" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">Expose observable state</text>
+<text x="214.43" y="380.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">through the public interface</text>
+<text x="16.00" y="407.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">VERIFICATION / TEST</text>
+<line x1="109.57" y1="404.38" x2="579.28" y2="404.38" stroke="#d9dde1" stroke-width="1"/>
+<rect x="16.00" y="417.38" width="182.43" height="52.00" rx="5" fill="#ffffff" stroke="#b8c0c8" stroke-width="1"/>
+<text x="24.00" y="432.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#626a72">V01</text>
+<text x="44.45" y="432.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="normal" fill="#626a72">after A02</text>
+<rect x="151.48" y="422.38" width="38.95" height="15.00" rx="7" fill="#f1f1f1" stroke="#888888"/>
+<text x="170.95" y="433.18" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.00" font-weight="bold" fill="#555555">PLANNED</text>
+<text x="24.00" y="454.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.50" font-weight="bold" fill="#2f3337">Run black-box verification</text>
+<text x="16.00" y="486.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#626a72">PLANNING CHANGES</text>
+<line x1="110.00" y1="483.38" x2="579.28" y2="483.38" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="19.00" cy="499.27" r="1.45" fill="#6a8bb0"/>
+<text x="26.00" y="503.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="normal" fill="#2f3337">2026-09-30 — narrowed the first slice to one deterministic public path.</text>
+</svg>

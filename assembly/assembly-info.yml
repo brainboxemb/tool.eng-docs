@@ -1,0 +1,17 @@
+schema_version: 1
+assembler:
+  name: tool.eng-docs
+  version: 0.6.4
+source:
+  repository: brainboxemb/tool.eng-docs
+  revision: 83a573032317519f119e8c3765dfcf8fdd9a3e4e
+configuration:
+  path: assembly.yml
+  sha256: 56aea7b7854bb137c93ddb79f2feed16f05e00c11546a5452854cad8a4ddb00e
+input_manifests:
+- path: produced/assets.yml
+  sha256: 3383ab661d5152ad1995be93b8548f479f0409e8fe5face660f1f50049a568fc
+  producer:
+    name: tool.eng-docs.example-diagrams
+    version: 0.6.4
+    source_revision: 83a573032317519f119e8c3765dfcf8fdd9a3e4e
