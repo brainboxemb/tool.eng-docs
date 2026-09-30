@@ -83,6 +83,16 @@ See [docs/roadmap-rendering.md](docs/roadmap-rendering.md) and the executable
 
 Broader planning-domain extraction remains tracked separately in issue #3.
 
+### Detail-board rendering
+
+`eng-docs board` renders domain-neutral A4 portrait detail boards using the same
+print-friendly visual language as RoadmapView: white cards, neutral borders,
+compact status accents, adaptive card height and three-card rows.
+
+Consumers retain all lane/group/activity semantics and map them into BoardView.
+See [docs/board-rendering.md](docs/board-rendering.md) and the executable
+[examples/board/board.yaml](examples/board/board.yaml) example.
+
 ## Install
 
 Pin the released version from GitHub:

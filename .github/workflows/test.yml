@@ -147,6 +147,14 @@ jobs:
             --out bld/docs/roadmap-example
           cp examples/roadmap/roadmap.yaml bld/docs/roadmap-example/source.yaml
 
+      - name: Generate detail-board conformance example
+        run: |
+          set -euo pipefail
+          eng-docs board \
+            --source examples/board/board.yaml \
+            --out bld/docs/board-example
+          cp examples/board/board.yaml bld/docs/board-example/source.yaml
+
       - name: Build generated documentation index
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -194,6 +202,16 @@ jobs:
           - [printable PDF](roadmap-example/roadmap.pdf)
 
           ![Roadmap example](roadmap-example/roadmap.svg)
+
+          ## Detail-board rendering example
+
+          BoardView keeps project semantics in the consumer while reusing the same print-friendly presentation style.
+
+          - [source YAML](board-example/source.yaml)
+          - [SVG](board-example/board.svg)
+          - [printable PDF](board-example/board.pdf)
+
+          ![Board example](board-example/board.svg)
 
           ## Diagram conformance
 
@@ -252,6 +270,9 @@ jobs:
           test -f bld/docs/roadmap-example/roadmap.svg
           test -f bld/docs/roadmap-example/roadmap.pdf
           test -f bld/docs/roadmap-example/roadmap/roadmap-page-01.svg
+          test -f bld/docs/board-example/source.yaml
+          test -f bld/docs/board-example/board.svg
+          test -f bld/docs/board-example/board.pdf
           test -f bld/docs/diagrams/simple-flow.svg
           test -f bld/docs/diagrams/simple-flow.drawio
           test -f bld/docs/diagrams/layered-architecture.svg

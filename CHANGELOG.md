@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0 — 2026-09-30
+
+### Added
+
+- generic print-friendly `BoardView` schema and `eng-docs board` CLI;
+- deterministic A4 portrait SVG/PDF rendering for sections, badge groups,
+  named card groups and trailing notes;
+- adaptive three-column detail cards whose height grows with wrapped content;
+- shared presentation-style primitives used by RoadmapView and BoardView;
+- domain-neutral BoardView example, documentation and Linux/Windows tests.
+
+### Boundary
+
+- consumers own lane/group/activity/document/planning semantics and adapt them
+  into BoardView presentation data;
+- large colored background panels are deliberately avoided; color is used mainly
+  for compact status/accent information;
+- BoardView never parses SIP or event-timing planning sources.
+
 ## 0.5.2 — 2026-09-30
 
 ### Changed

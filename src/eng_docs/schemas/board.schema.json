@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["board"],
+  "properties": {
+    "board": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "groups"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "meta": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "sections": {"type": "array", "items": {"$ref": "#/$defs/section"}},
+        "badge_section": {"$ref": "#/$defs/badge_section"},
+        "groups": {"type": "array", "items": {"$ref": "#/$defs/group"}},
+        "trailing_sections": {"type": "array", "items": {"$ref": "#/$defs/section"}}
+      }
+    }
+  },
+  "$defs": {
+    "tone": {"type": "string", "minLength": 1},
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "tone": {"$ref": "#/$defs/tone"}
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading", "bullets"],
+      "properties": {
+        "heading": {"type": "string", "minLength": 1},
+        "bullets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "badge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "tone": {"$ref": "#/$defs/tone"}
+      }
+    },
+    "badge_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading", "badges"],
+      "properties": {
+        "heading": {"type": "string", "minLength": 1},
+        "badges": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/badge"}
+        }
+      }
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "state": {"$ref": "#/$defs/state"},
+        "meta": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading", "cards"],
+      "properties": {
+        "heading": {"type": "string", "minLength": 1},
+        "tone": {"$ref": "#/$defs/tone"},
+        "cards": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/card"}
+        }
+      }
+    }
+  }
+}
