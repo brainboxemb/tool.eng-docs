@@ -130,7 +130,10 @@ The command writes:
 ```
 
 The renderer first tries three columns, then two, then one when wrapped card
-content requires more width or height. Rows paginate across A4 landscape pages.
+content requires more width or height. The default A4-landscape grid deliberately
+uses a compact outer margin, inter-column gap and card inset so usable page width
+is not consumed twice by decorative whitespace. Rows paginate across A4 landscape
+pages.
 A presentation item fails only if it cannot fit on one full-width page; that
 error applies to the compact RoadmapView, not to the consumer's authoritative
 planning source.
