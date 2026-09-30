@@ -33,6 +33,7 @@ roadmap:
 
   items:
     - id: phase-2
+      marker: "2"
       title: Integrate service
 
       state:
@@ -40,8 +41,8 @@ roadmap:
         tone: active
 
       meta:
-        - "~3d"
         - "forecast Oct"
+        - "~3d"
 
       sections:
         - heading: RESULT
@@ -54,14 +55,21 @@ roadmap:
             - Connect a sample client.
             - Inspect one generated result.
 
+      badge_heading: DOCUMENT STATUS
       badges:
         - label: SPEC
           tone: mature
 ```
 
-The renderer treats identifiers, headings and labels as opaque presentation data.
-It does not assign semantics to values such as `ACTIVE`, `RESULT`, `DEMO`
-or `SPEC`.
+The renderer treats identifiers, markers, headings and labels as opaque presentation
+data. It does not assign semantics to values such as `ACTIVE`, `RESULT`,
+`DEMO`, `DOCUMENT STATUS` or `SPEC`.
+
+An optional short `marker` gives the consumer a compact visible item identifier
+without forcing the opaque `id` into the presentation. Ordered `meta` values are
+presentation data: the first value is shown in the fixed upper metadata area and
+remaining values are secondary context below the title. `badge_heading` optionally
+groups badges under a named section while the badges themselves remain generic.
 
 ## Layout contract
 
@@ -70,7 +78,10 @@ The renderer must:
 - wrap text predictably;
 - never silently clip or ellipsize supplied content;
 - expand card height and/or paginate when content grows;
-- keep all supplied item sections and badges visible;
+- keep the item marker/state/primary-meta area in a predictable place;
+- keep supplied item sections and optional badge headings/badges visible;
+- use a neutral card frame so status tone remains informative without dominating
+  the page;
 - fail only for structurally invalid RoadmapView input or an unsupported
   presentation shape, not because authoritative project prose happened to grow.
 
