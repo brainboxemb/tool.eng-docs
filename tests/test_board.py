@@ -85,7 +85,7 @@ def test_heading_rule_starts_after_heading_text(tmp_path):
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     generate(path, SCHEMA, tmp_path / "heading-out")
     svg = (tmp_path / "heading-out/board.svg").read_text(encoding="utf-8")
-    heading_index = svg.index("A deliberately longer section heading")
+    heading_index = svg.index("A DELIBERATELY LONGER SECTION HEADING")
     line_index = svg.index("<line", heading_index)
     line = svg[line_index:svg.index("/>", line_index)]
     x1 = float(line.split('x1="')[1].split('"')[0])
@@ -164,7 +164,7 @@ def test_group_heading_tone_does_not_change_heading_color(tmp_path):
     pos = svg.index(heading)
     text_start = svg.rfind("<text", 0, pos)
     tag = svg[text_start:pos]
-    assert 'fill="#5f6368"' in tag
+    assert 'fill="#626a72"' in tag
 
 def test_all_board_headings_render_uppercase_with_shared_heading_size(tmp_path):
     data = source()
