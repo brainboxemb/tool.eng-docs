@@ -133,22 +133,39 @@ def _summary_layout(summary, width):
 def _card_layout(card, width):
     inner = width - 2 * PAD
     state = card.get("state")
-    if state and _chip_width(state["label"]) > inner * 0.55:
+    state_width = _chip_width(state["label"]) if state else 0.0
+    if state and state_width > inner * 0.55:
         raise ValueError(
             f"board card state label too wide for card {card['id']!r}: "
             f"{state['label']!r}"
         )
+
+    id_width = stringWidth(str(card["id"]), "Helvetica-Bold", SMALL)
+    header_text = " | ".join(card.get("header_meta", []))
+    header_width = inner - id_width - 8.0
+    if state:
+        header_width -= state_width + 8.0
+    if header_text and header_width < 24.0:
+        raise ValueError(
+            f"board card header metadata has insufficient width for card {card['id']!r}"
+        )
+    header_meta = _wrap(header_text, header_width, SMALL) if header_text else ()
+    header_height = max(CHIP_H, len(header_meta) * _lh(SMALL))
+
     title = _wrap(card["title"], inner, CARD_TITLE, True)
     meta = tuple(
         line
         for value in card.get("meta", [])
         for line in _wrap(value, inner, SMALL)
     )
-    height = 2 * PAD + CHIP_H + 5.0 + len(title) * _lh(CARD_TITLE)
+    height = 2 * PAD + header_height + 5.0 + len(title) * _lh(CARD_TITLE)
     if meta:
         height += 5.0 + len(meta) * _lh(SMALL)
     return {
         "id": card["id"],
+        "id_width": id_width,
+        "header_meta": header_meta,
+        "header_height": header_height,
         "title": title,
         "state": state,
         "meta": meta,
@@ -322,7 +339,17 @@ def _svg_card(parts, x, y, width, height, card):
         f'<rect x="{x:.2f}" y="{y:.2f}" width="{width:.2f}" height="{height:.2f}" '
         f'rx="5" fill="{CARD_BACKGROUND}" stroke="{CARD_STROKE}" stroke-width="1"/>'
     )
-    _svg_text(parts, x + PAD, y + PAD + SMALL, [card["id"]], SMALL, "bold", TEXT_MUTED)
+    header_y = y + PAD + SMALL
+    _svg_text(parts, x + PAD, header_y, [card["id"]], SMALL, "bold", TEXT_MUTED)
+    if card["header_meta"]:
+        _svg_text(
+            parts,
+            x + PAD + card["id_width"] + 8.0,
+            header_y,
+            card["header_meta"],
+            SMALL,
+            fill=TEXT_MUTED,
+        )
 
     state = card["state"]
     if state:
@@ -337,7 +364,7 @@ def _svg_card(parts, x, y, width, height, card):
             [state["label"]], SMALL, "bold", text_fill, "middle",
         )
 
-    cursor = y + PAD + CHIP_H + 5.0
+    cursor = y + PAD + card["header_height"] + 5.0
     _svg_text(parts, x + PAD, cursor + CARD_TITLE, card["title"], CARD_TITLE, "bold")
     cursor += len(card["title"]) * _lh(CARD_TITLE)
     if card["meta"]:
@@ -474,7 +501,17 @@ def _pdf_card(c, x, top, width, height, card):
     c.setFillColorRGB(*hex_rgb(CARD_BACKGROUND))
     c.setStrokeColorRGB(*hex_rgb(CARD_STROKE))
     c.roundRect(x, PH-top-height, width, height, 5, stroke=1, fill=1)
-    _pdf_text(c, x + PAD, top + PAD + SMALL, [card["id"]], SMALL, True, hex_rgb(TEXT_MUTED))
+    header_top = top + PAD + SMALL
+    _pdf_text(c, x + PAD, header_top, [card["id"]], SMALL, True, hex_rgb(TEXT_MUTED))
+    if card["header_meta"]:
+        _pdf_text(
+            c,
+            x + PAD + card["id_width"] + 8.0,
+            header_top,
+            card["header_meta"],
+            SMALL,
+            fill=hex_rgb(TEXT_MUTED),
+        )
 
     state = card["state"]
     if state:
@@ -491,7 +528,7 @@ def _pdf_card(c, x, top, width, height, card):
             [state["label"]], SMALL, True, hex_rgb(text_fill), "center",
         )
 
-    cursor = top + PAD + CHIP_H + 5.0
+    cursor = top + PAD + card["header_height"] + 5.0
     _pdf_text(c, x + PAD, cursor + CARD_TITLE, card["title"], CARD_TITLE, True)
     cursor += len(card["title"]) * _lh(CARD_TITLE)
     if card["meta"]:
