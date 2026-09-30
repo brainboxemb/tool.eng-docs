@@ -18,6 +18,8 @@ def test_example_generates_svg_pdf_and_pages(tmp_path):
     layout = generate(EXAMPLE, SCHEMA_PATH, tmp_path)
     assert layout.columns == 3
     assert len(layout.pages) == 1
+    assert layout.pages[0].cards[0].x == pytest.approx(18.0)
+    assert layout.pages[0].cards[0].width > 260.0
     ET.parse(tmp_path / "roadmap.svg")
     ET.parse(tmp_path / "roadmap/roadmap-page-01.svg")
     svg = (tmp_path / "roadmap/roadmap-page-01.svg").read_text(encoding="utf-8")
@@ -70,7 +72,7 @@ def test_long_title_wraps_and_increases_header_without_clipping():
     layout = layout_roadmap(data)
     assert len(layout.title_lines) > 1
     assert layout.header_height > 58
-    assert min(card.y for card in layout.pages[0].cards) >= 30 + layout.header_height
+    assert min(card.y for card in layout.pages[0].cards) >= 18 + layout.header_height
 
 def test_long_state_label_can_force_wider_cards():
     data = source()
