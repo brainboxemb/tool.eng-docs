@@ -230,7 +230,7 @@ def layout_board(data):
     for section in board.get("trailing_sections", []):
         layout = _section_layout(section, usable)
         trailing.append(layout)
-        cursor += layout["height"] + 9.0
+        cursor += layout["height"] + BLOCK_GAP
 
     required = cursor + FOOTER
     if required > PH - MARGIN:
@@ -373,7 +373,7 @@ def render_svg(layout, path: Path):
         y += 5.0
         _svg_text(parts, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=TEXT_MUTED)
         y += len(layout["meta_lines"]) * _lh(SMALL)
-    y += 9.0
+    y += BLOCK_GAP
 
     if layout["summary"]:
         y = _svg_summary(parts, MARGIN, y, usable, layout["summary"]) + BLOCK_GAP
@@ -400,7 +400,7 @@ def render_svg(layout, path: Path):
         y += GROUP_GAP
 
     for section in layout["trailing_sections"]:
-        y = _svg_section(parts, MARGIN, y, usable, section) + 9.0
+        y = _svg_section(parts, MARGIN, y, usable, section) + BLOCK_GAP
 
     parts.append("</svg>")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -523,7 +523,7 @@ def render_pdf(layout, path: Path):
         y += 5.0
         _pdf_text(c, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=hex_rgb(TEXT_MUTED))
         y += len(layout["meta_lines"]) * _lh(SMALL)
-    y += 9.0
+    y += BLOCK_GAP
 
     if layout["summary"]:
         y = _pdf_summary(c, MARGIN, y, usable, layout["summary"]) + BLOCK_GAP
@@ -550,7 +550,7 @@ def render_pdf(layout, path: Path):
         y += GROUP_GAP
 
     for section in layout["trailing_sections"]:
-        y = _pdf_section(c, MARGIN, y, usable, section) + 9.0
+        y = _pdf_section(c, MARGIN, y, usable, section) + BLOCK_GAP
 
     c.showPage()
     c.save()
