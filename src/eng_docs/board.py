@@ -181,11 +181,18 @@ def layout_board(data):
         summary = _summary_layout(board["summary"], usable)
         cursor += summary["height"] + 9.0
 
-    sections = []
-    for section in board.get("sections", []):
-        layout = _section_layout(section, usable)
-        sections.append(layout)
-        cursor += layout["height"] + 9.0
+    section_columns = int(board.get("section_columns", 1))
+    section_width = (usable - (section_columns - 1) * GAP) / section_columns
+    section_rows = []
+    source_sections = board.get("sections", [])
+    for start in range(0, len(source_sections), section_columns):
+        row = tuple(
+            _section_layout(section, section_width)
+            for section in source_sections[start:start + section_columns]
+        )
+        row_h = max(section["height"] for section in row)
+        section_rows.append((row, row_h))
+        cursor += row_h + 9.0
 
     badge_section = None
     if board.get("badge_section"):
@@ -237,7 +244,9 @@ def layout_board(data):
         "title_lines": title_lines,
         "meta_lines": meta_lines,
         "summary": summary,
-        "sections": tuple(sections),
+        "section_columns": section_columns,
+        "section_width": section_width,
+        "section_rows": tuple(section_rows),
         "badge_section": badge_section,
         "groups": tuple(groups),
         "trailing_sections": tuple(trailing),
@@ -368,8 +377,11 @@ def render_svg(layout, path: Path):
     if layout["summary"]:
         y = _svg_summary(parts, MARGIN, y, usable, layout["summary"]) + 9.0
 
-    for section in layout["sections"]:
-        y = _svg_section(parts, MARGIN, y, usable, section) + 9.0
+    for row, row_h in layout["section_rows"]:
+        for col, section in enumerate(row):
+            x = MARGIN + col * (layout["section_width"] + GAP)
+            _svg_section(parts, x, y, layout["section_width"], section)
+        y += row_h + 9.0
 
     if layout["badge_section"]:
         y = _svg_badges(parts, MARGIN, y, usable, layout["badge_section"]) + 9.0
@@ -513,8 +525,11 @@ def render_pdf(layout, path: Path):
     if layout["summary"]:
         y = _pdf_summary(c, MARGIN, y, usable, layout["summary"]) + 9.0
 
-    for section in layout["sections"]:
-        y = _pdf_section(c, MARGIN, y, usable, section) + 9.0
+    for row, row_h in layout["section_rows"]:
+        for col, section in enumerate(row):
+            x = MARGIN + col * (layout["section_width"] + GAP)
+            _pdf_section(c, x, y, layout["section_width"], section)
+        y += row_h + 9.0
 
     if layout["badge_section"]:
         y = _pdf_badges(c, MARGIN, y, usable, layout["badge_section"]) + 9.0

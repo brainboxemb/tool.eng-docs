@@ -34,7 +34,11 @@ board:
     heading: PURPOSE
     text: Explain the board in normal readable body text, separately from compact metadata.
 
+  section_columns: 2
   sections:
+    - heading: RESULT
+      bullets:
+        - Produce one observable result.
     - heading: END DEMO
       bullets:
         - Connect a sample client.
@@ -65,6 +69,11 @@ board:
 The optional `marker` is a compact visible identifier placed at the upper right.
 The optional `summary` gives descriptive prose its own heading and normal body
 typography rather than forcing it into the small metadata line.
+
+`section_columns` defaults to 1 and may be set to 2 when two related sections
+should share one row. Each section still wraps independently; the taller section
+sets the row height. This is presentation-only and assigns no meaning to the
+section headings.
 
 All identifiers, headings, state labels, tones and metadata are presentation data.
 The renderer does not assign semantics to concepts such as an activity, lane,

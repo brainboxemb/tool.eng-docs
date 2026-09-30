@@ -25,7 +25,8 @@ def test_example_generates_print_friendly_svg_and_pdf(tmp_path):
     assert ">4</text>" in svg
     assert "PURPOSE" in svg
     assert "readable descriptive summary" in svg
-    assert "A deliberately longer section heading" in svg
+    assert "RESULT" in svg
+    assert "END DEMO" in svg
     assert "PLANNING CHANGES" in svg
     assert 'fill="#ffffff"' in svg
     assert (tmp_path / "board.pdf").read_bytes().startswith(b"%PDF")
@@ -78,8 +79,12 @@ def test_output_is_deterministic(tmp_path):
     assert (first / "board.svg").read_bytes() == (second / "board.svg").read_bytes()
 
 def test_heading_rule_starts_after_heading_text(tmp_path):
-    generate(EXAMPLE, SCHEMA, tmp_path)
-    svg = (tmp_path / "board.svg").read_text(encoding="utf-8")
+    data = source()
+    data["board"]["sections"][0]["heading"] = "A deliberately longer section heading"
+    path = tmp_path / "heading.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "heading-out")
+    svg = (tmp_path / "heading-out/board.svg").read_text(encoding="utf-8")
     heading_index = svg.index("A deliberately longer section heading")
     line_index = svg.index("<line", heading_index)
     line = svg[line_index:svg.index("/>", line_index)]
@@ -94,3 +99,23 @@ def test_marker_and_summary_are_optional(tmp_path):
     path = tmp_path / "compat.yaml"
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     assert generate(path, SCHEMA, tmp_path / "compat-out")["groups"]
+
+def test_two_column_sections_share_row_and_save_vertical_space():
+    data = source()
+    two_col = layout_board(data)
+    assert two_col["section_columns"] == 2
+    assert len(two_col["section_rows"]) == 1
+    assert len(two_col["section_rows"][0][0]) == 2
+
+    one_col_source = copy.deepcopy(data)
+    one_col_source["board"]["section_columns"] = 1
+    one_col = layout_board(one_col_source)
+    assert len(one_col["section_rows"]) == 2
+    assert two_col["required_height"] < one_col["required_height"]
+
+
+def test_section_columns_default_to_one():
+    data = source()
+    data["board"].pop("section_columns", None)
+    layout = layout_board(data)
+    assert layout["section_columns"] == 1
