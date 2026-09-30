@@ -10,6 +10,7 @@ import textwrap
 import yaml
 from jsonschema import Draft202012Validator
 from reportlab.lib.pagesizes import A4, portrait
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
 from .presentation_style import (
@@ -28,6 +29,7 @@ MARGIN, FOOTER, GAP, PAD = 18.0, 18.0, 8.0, 8.0
 COLS = 3
 TITLE, BODY, SMALL, HEADING, CARD_TITLE, LINE = 16.0, 8.0, 7.0, 8.0, 9.5, 1.25
 CHIP_H = 15.0
+MARKER_H = 24.0
 
 
 def load_schema(path: Path):
@@ -78,6 +80,16 @@ def _chip_width(label):
     return 12.0 + len(label) * SMALL * 0.55
 
 
+def _marker_width(label):
+    return max(MARKER_H, 10.0 + len(label) * 7.0)
+
+
+def _heading_rule_start(x, width, heading):
+    text_width = stringWidth(str(heading), "Helvetica-Bold", HEADING)
+    start = x + text_width + 10.0
+    return start if start < x + width - 20.0 else None
+
+
 def _badge_rows(badges, width):
     rows, row, used = [], [], 0.0
     for badge in badges:
@@ -105,6 +117,15 @@ def _section_layout(section, width):
         "heading": section["heading"],
         "bullets": bullets,
         "height": height,
+    }
+
+
+def _summary_layout(summary, width):
+    lines = _wrap(summary["text"], width, BODY)
+    return {
+        "heading": summary["heading"],
+        "lines": lines,
+        "height": _lh(HEADING) + 7.0 + len(lines) * _lh(BODY),
     }
 
 
@@ -137,15 +158,28 @@ def _card_layout(card, width):
 def layout_board(data):
     board = data["board"]
     usable = PW - 2 * MARGIN
-    title_lines = _wrap(board["title"], usable, TITLE, True)
+    marker = board.get("marker")
+    marker_w = _marker_width(marker) if marker else 0.0
+    title_width = usable - (marker_w + 12.0 if marker else 0.0)
+    if title_width < 120.0:
+        raise ValueError("board marker leaves insufficient width for title")
+    title_lines = _wrap(board["title"], title_width, TITLE, True)
     meta_lines = tuple(
         line for value in board.get("meta", []) for line in _wrap(value, usable, SMALL)
     )
 
-    cursor = MARGIN + len(title_lines) * _lh(TITLE)
+    cursor = MARGIN + max(
+        len(title_lines) * _lh(TITLE),
+        MARKER_H if marker else 0.0,
+    )
     if meta_lines:
         cursor += 5.0 + len(meta_lines) * _lh(SMALL)
     cursor += 9.0
+
+    summary = None
+    if board.get("summary"):
+        summary = _summary_layout(board["summary"], usable)
+        cursor += summary["height"] + 9.0
 
     sections = []
     for section in board.get("sections", []):
@@ -198,8 +232,11 @@ def layout_board(data):
         )
 
     return {
+        "marker": marker,
+        "marker_width": marker_w,
         "title_lines": title_lines,
         "meta_lines": meta_lines,
+        "summary": summary,
         "sections": tuple(sections),
         "badge_section": badge_section,
         "groups": tuple(groups),
@@ -221,12 +258,20 @@ def _svg_text(parts, x, y, lines, size, weight="normal", fill=TEXT, anchor="star
 def _svg_heading(parts, x, y, width, heading, tone=None):
     color = palette(tone)[1] if tone else TEXT_MUTED
     _svg_text(parts, x, y + HEADING, [heading], HEADING, "bold", color)
-    rule_x = x + min(width * 0.42, 100.0)
-    parts.append(
-        f'<line x1="{rule_x:.2f}" y1="{y+5.0:.2f}" '
-        f'x2="{x+width:.2f}" y2="{y+5.0:.2f}" '
-        f'stroke="{RULE}" stroke-width="1"/>'
-    )
+    rule_x = _heading_rule_start(x, width, heading)
+    if rule_x is not None:
+        parts.append(
+            f'<line x1="{rule_x:.2f}" y1="{y+5.0:.2f}" '
+            f'x2="{x+width:.2f}" y2="{y+5.0:.2f}" '
+            f'stroke="{RULE}" stroke-width="1"/>'
+        )
+
+
+def _svg_summary(parts, x, y, width, summary):
+    _svg_heading(parts, x, y, width, summary["heading"])
+    cursor = y + _lh(HEADING) + 7.0
+    _svg_text(parts, x, cursor + BODY, summary["lines"], BODY)
+    return y + summary["height"]
 
 
 def _svg_section(parts, x, y, width, section):
@@ -299,12 +344,29 @@ def render_svg(layout, path: Path):
     usable = PW - 2 * MARGIN
     y = MARGIN
     _svg_text(parts, MARGIN, y + TITLE, layout["title_lines"], TITLE, "bold")
-    y += len(layout["title_lines"]) * _lh(TITLE)
+    if layout["marker"]:
+        mw = layout["marker_width"]
+        mx = PW - MARGIN - mw
+        parts.append(
+            f'<rect x="{mx:.2f}" y="{y:.2f}" width="{mw:.2f}" '
+            f'height="{MARKER_H:.2f}" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>'
+        )
+        _svg_text(
+            parts, mx + mw / 2, y + 16.2, [layout["marker"]],
+            10.5, "bold", TEXT, "middle",
+        )
+    y += max(
+        len(layout["title_lines"]) * _lh(TITLE),
+        MARKER_H if layout["marker"] else 0.0,
+    )
     if layout["meta_lines"]:
         y += 5.0
         _svg_text(parts, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=TEXT_MUTED)
         y += len(layout["meta_lines"]) * _lh(SMALL)
     y += 9.0
+
+    if layout["summary"]:
+        y = _svg_summary(parts, MARGIN, y, usable, layout["summary"]) + 9.0
 
     for section in layout["sections"]:
         y = _svg_section(parts, MARGIN, y, usable, section) + 9.0
@@ -348,10 +410,18 @@ def _pdf_text(c, x, top, lines, size, bold=False, fill=None, align="left"):
 def _pdf_heading(c, x, top, width, heading, tone=None):
     color = hex_rgb(palette(tone)[1] if tone else TEXT_MUTED)
     _pdf_text(c, x, top + HEADING, [heading], HEADING, True, color)
-    rule_x = x + min(width * 0.42, 100.0)
-    c.setStrokeColorRGB(*hex_rgb(RULE))
-    c.setLineWidth(1.0)
-    c.line(rule_x, PH - (top + 5.0), x + width, PH - (top + 5.0))
+    rule_x = _heading_rule_start(x, width, heading)
+    if rule_x is not None:
+        c.setStrokeColorRGB(*hex_rgb(RULE))
+        c.setLineWidth(1.0)
+        c.line(rule_x, PH - (top + 5.0), x + width, PH - (top + 5.0))
+
+
+def _pdf_summary(c, x, top, width, summary):
+    _pdf_heading(c, x, top, width, summary["heading"])
+    cursor = top + _lh(HEADING) + 7.0
+    _pdf_text(c, x, cursor + BODY, summary["lines"], BODY)
+    return top + summary["height"]
 
 
 def _pdf_section(c, x, top, width, section):
@@ -420,12 +490,28 @@ def render_pdf(layout, path: Path):
     usable = PW - 2 * MARGIN
     y = MARGIN
     _pdf_text(c, MARGIN, y + TITLE, layout["title_lines"], TITLE, True)
-    y += len(layout["title_lines"]) * _lh(TITLE)
+    if layout["marker"]:
+        mw = layout["marker_width"]
+        mx = PW - MARGIN - mw
+        c.setFillColorRGB(*hex_rgb("#f3f5f7"))
+        c.setStrokeColorRGB(*hex_rgb("#8b96a1"))
+        c.roundRect(mx, PH-y-MARKER_H, mw, MARKER_H, 5, stroke=1, fill=1)
+        _pdf_text(
+            c, mx + mw / 2, y + 16.2, [layout["marker"]],
+            10.5, True, align="center",
+        )
+    y += max(
+        len(layout["title_lines"]) * _lh(TITLE),
+        MARKER_H if layout["marker"] else 0.0,
+    )
     if layout["meta_lines"]:
         y += 5.0
         _pdf_text(c, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=hex_rgb(TEXT_MUTED))
         y += len(layout["meta_lines"]) * _lh(SMALL)
     y += 9.0
+
+    if layout["summary"]:
+        y = _pdf_summary(c, MARGIN, y, usable, layout["summary"]) + 9.0
 
     for section in layout["sections"]:
         y = _pdf_section(c, MARGIN, y, usable, section) + 9.0
