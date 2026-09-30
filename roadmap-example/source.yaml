@@ -1,0 +1,43 @@
+roadmap:
+  title: Engineering roadmap
+  subtitle: Domain-neutral RoadmapView example
+  items:
+    - id: phase-1
+      title: Establish the public boundary
+      state: {label: DONE, tone: success}
+      meta: ["~2d", "completed"]
+      sections:
+        - heading: RESULT
+          bullets:
+            - A reusable boundary is documented and testable.
+            - Consumers retain ownership of project meaning.
+        - heading: DEMO
+          bullets:
+            - Render the same view locally and in CI.
+      badges:
+        - {label: SPEC, tone: mature}
+    - id: phase-2
+      title: Integrate a real consumer without constraining its authoritative planning prose
+      state: {label: ACTIVE, tone: active}
+      meta: ["~3d", "forecast Oct"]
+      sections:
+        - heading: RESULT
+          bullets:
+            - The consumer maps its planning model into compact RoadmapView data while keeping the original planning text complete and readable.
+            - Renderer layout adapts to wrapped content instead of imposing a fixed line-count contract on the consumer source.
+        - heading: DEMO
+          bullets:
+            - Generate SVG and PDF from the compact view and inspect both outputs.
+      badges:
+        - {label: DESIGN, tone: draft}
+        - {label: TEST, tone: mature}
+    - id: phase-3
+      title: Qualify release behavior
+      state: {label: PLANNED, tone: muted}
+      sections:
+        - heading: RESULT
+          bullets:
+            - Owner and consumer verification are green.
+        - heading: DEMO
+          bullets:
+            - Rebuild the published roadmap from a clean checkout.
