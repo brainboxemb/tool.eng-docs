@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.3 — 2026-09-30
+
+### Changed
+
+- reduce BoardView outer margin and generic vertical block spacing slightly;
+- reduce inter-group separation while retaining existing typography, card
+  padding and wrapping;
+- keep one-page overflow detection explicit rather than clipping dense content.
+
+### Compatibility
+
+- BoardView source schema and consumer semantics are unchanged.
+
 ## 0.6.2 — 2026-09-30
 
 ### Added
