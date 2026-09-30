@@ -12,7 +12,9 @@ from reportlab.pdfgen import canvas
 
 PW, PH = landscape(A4)
 MARGIN, FOOTER, GAP, ROW_GAP, PAD = 30.0, 22.0, 14.0, 14.0, 12.0
-TITLE, BODY, SMALL, HEADING, LINE = 12.0, 8.5, 7.5, 8.0, 1.25
+TITLE, BODY, SMALL, HEADING, LINE = 11.5, 8.5, 7.5, 8.0, 1.25
+MARKER_H, CHIP_H = 24.0, 16.0
+CARD_STROKE, RULE = "#b8c0c8", "#d9dde1"
 PALETTES = {
     "neutral": ("#f6f7f8", "#697077", "#2f3337"),
     "active": ("#e8f1fb", "#4b78a8", "#244b73"),
@@ -27,8 +29,9 @@ PALETTES = {
 @dataclass(frozen=True)
 class Card:
     item: dict; x: float; y: float; width: float; height: float
-    title_lines: tuple[str, ...]; meta_lines: tuple[str, ...]
-    sections: tuple; badge_rows: tuple
+    title_lines: tuple[str, ...]; primary_meta_lines: tuple[str, ...]
+    secondary_meta_lines: tuple[str, ...]; sections: tuple
+    badge_heading: str | None; badge_rows: tuple
 
 @dataclass(frozen=True)
 class Page:
@@ -68,6 +71,8 @@ def _wrap(text, width, size, bold=False):
 
 def _chip_width(label): return 12.0 + len(label) * SMALL * 0.55
 
+def _marker_width(label): return max(MARKER_H, 10.0 + len(label) * 7.0)
+
 def _palette(tone): return PALETTES.get(tone or "neutral", PALETTES["neutral"])
 
 def _hex(value):
@@ -87,21 +92,55 @@ def _badge_rows(badges, width):
 
 
 def _measure(item, width):
-    inner, state, badges = width - 2 * PAD, item.get("state"), item.get("badges", [])
-    if state and _chip_width(state["label"]) > inner: return (math.inf, (), (), (), ())
-    if any(_chip_width(b["label"]) > inner for b in badges): return (math.inf, (), (), (), ())
+    inner = width - 2 * PAD
+    state, marker = item.get("state"), item.get("marker")
+    badges, badge_heading = item.get("badges", []), item.get("badge_heading")
+
+    state_w = max(38.0, _chip_width(state["label"])) if state else 0.0
+    marker_w = _marker_width(marker) if marker else 0.0
+    if state_w > inner or marker_w > inner:
+        return (math.inf, (), (), (), (), (), None)
+    if marker and state and marker_w + state_w + 10.0 > inner:
+        return (math.inf, (), (), (), (), (), None)
+    if any(_chip_width(b["label"]) > inner for b in badges):
+        return (math.inf, (), (), (), (), (), None)
+
+    meta = item.get("meta", [])
+    primary = _wrap(meta[0], max(72.0, inner * 0.48), SMALL, True) if meta else ()
+    secondary = tuple(
+        line for value in meta[1:] for line in _wrap(value, inner, SMALL)
+    )
+
+    header_present = bool(marker or state or primary)
+    h = 2 * PAD
+    if header_present:
+        header_h = MARKER_H
+        if state:
+            header_h = max(header_h, CHIP_H)
+        if primary:
+            header_h = max(header_h, CHIP_H + 3.0 + len(primary) * _lh(SMALL))
+        h += header_h + 7.0
+
     titles = _wrap(item["title"], inner, TITLE, True)
-    h = 2 * PAD + len(titles) * _lh(TITLE) + (23.0 if state else 0.0)
-    meta = tuple(line for value in item.get("meta", []) for line in _wrap(value, inner, SMALL))
-    if meta: h += 5.0 + len(meta) * _lh(SMALL)
+    h += len(titles) * _lh(TITLE)
+    if secondary:
+        h += 5.0 + len(secondary) * _lh(SMALL)
+
     sections = []
     for section in item.get("sections", []):
         bullets = tuple(_wrap(b, inner - 12.0, BODY) for b in section["bullets"])
-        sections.append((section["heading"], bullets)); h += 10.0 + _lh(HEADING)
+        sections.append((section["heading"], bullets))
+        h += 11.0 + _lh(HEADING) + 4.0
         h += sum(len(lines) * _lh(BODY) + 3.0 for lines in bullets)
+
     rows = _badge_rows(badges, width)
-    if rows: h += 8.0 + len(rows) * 20.0
-    return h, titles, meta, tuple(sections), rows
+    if rows:
+        h += 11.0
+        if badge_heading:
+            h += _lh(HEADING) + 4.0
+        h += len(rows) * 20.0
+
+    return h, titles, primary, secondary, tuple(sections), rows, badge_heading
 
 
 def _header(roadmap):
@@ -127,70 +166,176 @@ def choose_columns(items, header_height=58.0):
 def layout_roadmap(data):
     road, items = data["roadmap"], data["roadmap"]["items"]
     title_lines, subtitle_lines, header = _header(road)
-    cols, width = choose_columns(items, header), None
-    width = _width(cols); first_y = MARGIN + header; bottom = PH - MARGIN - FOOTER
+    cols = choose_columns(items, header)
+    width = _width(cols)
+    first_y, bottom = MARGIN + header, PH - MARGIN - FOOTER
     pages, cards, y, number = [], [], first_y, 1
     for start in range(0, len(items), cols):
-        row_items = items[start:start+cols]; measured = [_measure(i, width) for i in row_items]
+        row_items = items[start:start+cols]
+        measured = [_measure(i, width) for i in row_items]
         row_h = max(m[0] for m in measured)
         if cards and y + row_h > bottom:
-            pages.append(Page(number, tuple(cards))); number += 1; cards, y = [], first_y
+            pages.append(Page(number, tuple(cards)))
+            number += 1
+            cards, y = [], first_y
         for col, (item, m) in enumerate(zip(row_items, measured)):
-            h, titles, meta, sections, rows = m
-            cards.append(Card(item, MARGIN + col * (width + GAP), y, width, h,
-                              titles, meta, sections, rows))
+            h, titles, primary, secondary, sections, rows, badge_heading = m
+            cards.append(Card(
+                item, MARGIN + col * (width + GAP), y, width, h,
+                titles, primary, secondary, sections, badge_heading, rows
+            ))
         y += row_h + ROW_GAP
-    if cards: pages.append(Page(number, tuple(cards)))
-    return Layout(road["title"], road.get("subtitle"), title_lines, subtitle_lines,
-                  header, PW, PH, cols, tuple(pages))
+    if cards:
+        pages.append(Page(number, tuple(cards)))
+    return Layout(
+        road["title"], road.get("subtitle"), title_lines, subtitle_lines,
+        header, PW, PH, cols, tuple(pages)
+    )
 
 
-def _svg_text(parts, x, y, lines, size, weight="normal", fill="#2f3337"):
+def _svg_text(parts, x, y, lines, size, weight="normal",
+              fill="#2f3337", anchor="start"):
     for n, line in enumerate(lines):
-        parts.append(f'<text x="{x:.2f}" y="{y+n*_lh(size):.2f}" '
-                     f'font-family="Arial,Helvetica,sans-serif" font-size="{size:.2f}" '
-                     f'font-weight="{weight}" fill="{fill}">{html.escape(str(line))}</text>')
+        parts.append(
+            f'<text x="{x:.2f}" y="{y+n*_lh(size):.2f}" '
+            f'text-anchor="{anchor}" '
+            f'font-family="Arial,Helvetica,sans-serif" font-size="{size:.2f}" '
+            f'font-weight="{weight}" fill="{fill}">{html.escape(str(line))}</text>'
+        )
+
+
+def _svg_section_heading(parts, x, y, width, heading):
+    _svg_text(parts, x, y + HEADING, [heading], HEADING, "bold", "#4b5b6b")
+    rule_x = x + min(width * 0.45, 92.0)
+    parts.append(
+        f'<line x1="{rule_x:.2f}" y1="{y+5.0:.2f}" '
+        f'x2="{x+width:.2f}" y2="{y+5.0:.2f}" '
+        f'stroke="{RULE}" stroke-width="1"/>'
+    )
 
 
 def _svg_page(layout, page):
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" '
-             f'viewBox="0 0 {PW:.2f} {PH:.2f}">', '<rect width="100%" height="100%" fill="white"/>']
-    title_y = MARGIN + 17.0; _svg_text(parts, MARGIN, title_y, layout.title_lines, 17.0, "bold")
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" '
+        f'viewBox="0 0 {PW:.2f} {PH:.2f}">',
+        '<rect width="100%" height="100%" fill="white"/>'
+    ]
+    title_y = MARGIN + 17.0
+    _svg_text(parts, MARGIN, title_y, layout.title_lines, 17.0, "bold")
     if layout.subtitle_lines:
-        _svg_text(parts, MARGIN, title_y + len(layout.title_lines)*_lh(17.0) + 5.0,
-                  layout.subtitle_lines, 9.0, fill="#666666")
+        _svg_text(
+            parts, MARGIN,
+            title_y + len(layout.title_lines) * _lh(17.0) + 5.0,
+            layout.subtitle_lines, 9.0, fill="#666666"
+        )
+
     for card in page.cards:
-        state = card.item.get("state") or {}; fill, stroke, text_fill = _palette(state.get("tone"))
-        parts.append(f'<rect x="{card.x:.2f}" y="{card.y:.2f}" width="{card.width:.2f}" '
-                     f'height="{card.height:.2f}" rx="7" fill="#fff" stroke="{stroke}"/>')
-        cursor = card.y + PAD + TITLE; _svg_text(parts, card.x+PAD, cursor, card.title_lines, TITLE, "bold")
-        cursor += len(card.title_lines)*_lh(TITLE)
+        item = card.item
+        state, marker = item.get("state"), item.get("marker")
+        parts.append(
+            f'<rect x="{card.x:.2f}" y="{card.y:.2f}" width="{card.width:.2f}" '
+            f'height="{card.height:.2f}" rx="6" fill="#fff" '
+            f'stroke="{CARD_STROKE}" stroke-width="1"/>'
+        )
+        cursor = card.y + PAD
+        header_bottom = cursor
+
+        if marker:
+            mw = _marker_width(marker)
+            parts.append(
+                f'<rect x="{card.x+PAD:.2f}" y="{cursor:.2f}" width="{mw:.2f}" '
+                f'height="{MARKER_H:.2f}" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>'
+            )
+            _svg_text(
+                parts, card.x + PAD + mw / 2, cursor + 16.2, [marker],
+                10.5, "bold", "#2f3337", "middle"
+            )
+            header_bottom = max(header_bottom, cursor + MARKER_H)
+
+        right = card.x + card.width - PAD
         if state:
-            label, bw = state["label"], max(38.0, _chip_width(state["label"])); cursor += 4.0
-            parts.append(f'<rect x="{card.x+PAD:.2f}" y="{cursor:.2f}" width="{bw:.2f}" height="16" '
-                         f'rx="8" fill="{fill}" stroke="{stroke}"/>')
-            _svg_text(parts, card.x+PAD+7, cursor+11.5, [label], SMALL, "bold", text_fill); cursor += 18.0
-        if card.meta_lines:
-            cursor += 4.0; _svg_text(parts, card.x+PAD, cursor+SMALL, card.meta_lines, SMALL, fill="#666")
-            cursor += len(card.meta_lines)*_lh(SMALL)
+            fill, stroke, text_fill = _palette(state.get("tone"))
+            bw = max(38.0, _chip_width(state["label"]))
+            parts.append(
+                f'<rect x="{right-bw:.2f}" y="{cursor:.2f}" width="{bw:.2f}" '
+                f'height="{CHIP_H:.2f}" rx="8" fill="{fill}" stroke="{stroke}"/>'
+            )
+            _svg_text(
+                parts, right - bw / 2, cursor + 11.4, [state["label"]],
+                SMALL, "bold", text_fill, "middle"
+            )
+            header_bottom = max(header_bottom, cursor + CHIP_H)
+
+        if card.primary_meta_lines:
+            primary_y = cursor + (CHIP_H + 3.0 if state else 0.0) + SMALL
+            _svg_text(
+                parts, right, primary_y, card.primary_meta_lines,
+                SMALL, "bold", "#555f68", "end"
+            )
+            header_bottom = max(
+                header_bottom,
+                primary_y + (len(card.primary_meta_lines) - 1) * _lh(SMALL)
+            )
+
+        if marker or state or card.primary_meta_lines:
+            cursor = header_bottom + 7.0
+
+        _svg_text(
+            parts, card.x + PAD, cursor + TITLE,
+            card.title_lines, TITLE, "bold"
+        )
+        cursor += len(card.title_lines) * _lh(TITLE)
+
+        if card.secondary_meta_lines:
+            cursor += 5.0
+            _svg_text(
+                parts, card.x + PAD, cursor + SMALL,
+                card.secondary_meta_lines, SMALL, fill="#6a7279"
+            )
+            cursor += len(card.secondary_meta_lines) * _lh(SMALL)
+
+        inner = card.width - 2 * PAD
         for heading, bullets in card.sections:
-            cursor += 9.0; _svg_text(parts, card.x+PAD, cursor+HEADING, [heading], HEADING, "bold", "#4b5b6b")
-            cursor += _lh(HEADING)+2.0
+            cursor += 11.0
+            _svg_section_heading(parts, card.x + PAD, cursor, inner, heading)
+            cursor += _lh(HEADING) + 4.0
             for lines in bullets:
-                parts.append(f'<circle cx="{card.x+PAD+3:.2f}" cy="{cursor+4.1:.2f}" r="1.6" fill="#4b78a8"/>')
-                _svg_text(parts, card.x+PAD+10, cursor+BODY, lines, BODY); cursor += len(lines)*_lh(BODY)+3.0
+                parts.append(
+                    f'<circle cx="{card.x+PAD+3:.2f}" cy="{cursor+4.1:.2f}" '
+                    f'r="1.55" fill="#6a8bb0"/>'
+                )
+                _svg_text(parts, card.x + PAD + 10, cursor + BODY, lines, BODY)
+                cursor += len(lines) * _lh(BODY) + 3.0
+
         if card.badge_rows:
-            cursor += 7.0
+            cursor += 11.0
+            if card.badge_heading:
+                _svg_section_heading(
+                    parts, card.x + PAD, cursor, inner, card.badge_heading
+                )
+                cursor += _lh(HEADING) + 4.0
             for row in card.badge_rows:
-                bx = card.x+PAD
+                bx = card.x + PAD
                 for badge in row:
-                    bf, bs, bt = _palette(badge.get("tone")); bw = _chip_width(badge["label"])
-                    parts.append(f'<rect x="{bx:.2f}" y="{cursor:.2f}" width="{bw:.2f}" height="16" '
-                                 f'rx="5" fill="{bf}" stroke="{bs}"/>')
-                    _svg_text(parts, bx+6, cursor+11.5, [badge["label"]], SMALL, "bold", bt); bx += bw+6
+                    bf, bs, bt = _palette(badge.get("tone"))
+                    bw = _chip_width(badge["label"])
+                    parts.append(
+                        f'<rect x="{bx:.2f}" y="{cursor:.2f}" width="{bw:.2f}" '
+                        f'height="{CHIP_H:.2f}" rx="5" fill="{bf}" stroke="{bs}"/>'
+                    )
+                    _svg_text(
+                        parts, bx + bw / 2, cursor + 11.4, [badge["label"]],
+                        SMALL, "bold", bt, "middle"
+                    )
+                    bx += bw + 6
                 cursor += 20.0
-    _svg_text(parts, PW-MARGIN-48, PH-14, [f"Page {page.number}/{len(layout.pages)}"], SMALL, fill="#777")
+
+    _svg_text(
+        parts, PW-MARGIN-48, PH-14,
+        [f"Page {page.number}/{len(layout.pages)}"], SMALL, fill="#777"
+    )
     return "\n".join(parts + ["</svg>"]) + "\n"
+
 
 
 def render_svg(layout, out_dir: Path):
@@ -206,41 +351,163 @@ def render_svg(layout, out_dir: Path):
     (out_dir/"roadmap.svg").write_text("\n".join(parts+["</svg>"])+"\n", encoding="utf-8")
 
 
-def _pdf_text(c, x, top, lines, size, bold=False, fill=(.18,.20,.22)):
-    c.setFont("Helvetica-Bold" if bold else "Helvetica", size); c.setFillColorRGB(*fill); y = PH-top
-    for line in lines: c.drawString(x, y, str(line)); y -= _lh(size)
+def _pdf_text(c, x, top, lines, size, bold=False,
+              fill=(.18,.20,.22), align="left"):
+    c.setFont("Helvetica-Bold" if bold else "Helvetica", size)
+    c.setFillColorRGB(*fill)
+    y = PH - top
+    for line in lines:
+        if align == "right":
+            c.drawRightString(x, y, str(line))
+        elif align == "center":
+            c.drawCentredString(x, y, str(line))
+        else:
+            c.drawString(x, y, str(line))
+        y -= _lh(size)
+
+
+def _pdf_section_heading(c, x, top, width, heading):
+    _pdf_text(c, x, top + HEADING, [heading], HEADING, True, (.29,.36,.42))
+    rule_x = x + min(width * 0.45, 92.0)
+    c.setStrokeColorRGB(*_hex(RULE))
+    c.setLineWidth(1.0)
+    c.line(rule_x, PH - (top + 5.0), x + width, PH - (top + 5.0))
 
 
 def render_pdf(layout, path: Path):
-    path.parent.mkdir(parents=True, exist_ok=True); c = canvas.Canvas(str(path), pagesize=(PW,PH))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    c = canvas.Canvas(str(path), pagesize=(PW,PH))
     for page in layout.pages:
-        title_y=MARGIN+17; _pdf_text(c,MARGIN,title_y,layout.title_lines,17,True)
-        if layout.subtitle_lines: _pdf_text(c,MARGIN,title_y+len(layout.title_lines)*_lh(17)+5,layout.subtitle_lines,9,fill=(.4,.4,.4))
+        title_y = MARGIN + 17
+        _pdf_text(c, MARGIN, title_y, layout.title_lines, 17, True)
+        if layout.subtitle_lines:
+            _pdf_text(
+                c, MARGIN,
+                title_y + len(layout.title_lines) * _lh(17) + 5,
+                layout.subtitle_lines, 9, fill=(.4,.4,.4)
+            )
+
         for card in page.cards:
-            state=card.item.get("state") or {}; _,stroke,_=_palette(state.get("tone")); c.setStrokeColorRGB(*_hex(stroke)); c.setFillColorRGB(1,1,1)
-            c.roundRect(card.x,PH-card.y-card.height,card.width,card.height,7,stroke=1,fill=1)
-            cursor=card.y+PAD+TITLE; _pdf_text(c,card.x+PAD,cursor,card.title_lines,TITLE,True); cursor+=len(card.title_lines)*_lh(TITLE)
+            item = card.item
+            state, marker = item.get("state"), item.get("marker")
+            c.setStrokeColorRGB(*_hex(CARD_STROKE))
+            c.setFillColorRGB(1,1,1)
+            c.roundRect(
+                card.x, PH-card.y-card.height, card.width, card.height,
+                6, stroke=1, fill=1
+            )
+
+            cursor = card.y + PAD
+            header_bottom = cursor
+            if marker:
+                mw = _marker_width(marker)
+                c.setFillColorRGB(*_hex("#f3f5f7"))
+                c.setStrokeColorRGB(*_hex("#8b96a1"))
+                c.roundRect(
+                    card.x + PAD, PH-cursor-MARKER_H, mw, MARKER_H,
+                    5, stroke=1, fill=1
+                )
+                _pdf_text(
+                    c, card.x + PAD + mw / 2, cursor + 16.2, [marker],
+                    10.5, True, align="center"
+                )
+                header_bottom = max(header_bottom, cursor + MARKER_H)
+
+            right = card.x + card.width - PAD
             if state:
-                label=state["label"]; fill,stroke,text=_palette(state.get("tone")); bw=max(38,_chip_width(label)); cursor+=4
-                c.setFillColorRGB(*_hex(fill)); c.setStrokeColorRGB(*_hex(stroke)); c.roundRect(card.x+PAD,PH-cursor-16,bw,16,8,stroke=1,fill=1)
-                _pdf_text(c,card.x+PAD+7,cursor+11.5,[label],SMALL,True,_hex(text)); cursor+=18
-            if card.meta_lines:
-                cursor+=4; _pdf_text(c,card.x+PAD,cursor+SMALL,card.meta_lines,SMALL,fill=(.4,.4,.4)); cursor+=len(card.meta_lines)*_lh(SMALL)
-            for heading,bullets in card.sections:
-                cursor+=9; _pdf_text(c,card.x+PAD,cursor+HEADING,[heading],HEADING,True,(.29,.36,.42)); cursor+=_lh(HEADING)+2
+                fill, stroke, text_fill = _palette(state.get("tone"))
+                bw = max(38.0, _chip_width(state["label"]))
+                c.setFillColorRGB(*_hex(fill))
+                c.setStrokeColorRGB(*_hex(stroke))
+                c.roundRect(
+                    right-bw, PH-cursor-CHIP_H, bw, CHIP_H,
+                    8, stroke=1, fill=1
+                )
+                _pdf_text(
+                    c, right - bw / 2, cursor + 11.4, [state["label"]],
+                    SMALL, True, _hex(text_fill), "center"
+                )
+                header_bottom = max(header_bottom, cursor + CHIP_H)
+
+            if card.primary_meta_lines:
+                primary_y = cursor + (CHIP_H + 3.0 if state else 0.0) + SMALL
+                _pdf_text(
+                    c, right, primary_y, card.primary_meta_lines,
+                    SMALL, True, (.33,.37,.41), "right"
+                )
+                header_bottom = max(
+                    header_bottom,
+                    primary_y + (len(card.primary_meta_lines) - 1) * _lh(SMALL)
+                )
+
+            if marker or state or card.primary_meta_lines:
+                cursor = header_bottom + 7.0
+
+            _pdf_text(
+                c, card.x + PAD, cursor + TITLE,
+                card.title_lines, TITLE, True
+            )
+            cursor += len(card.title_lines) * _lh(TITLE)
+
+            if card.secondary_meta_lines:
+                cursor += 5.0
+                _pdf_text(
+                    c, card.x + PAD, cursor + SMALL,
+                    card.secondary_meta_lines, SMALL, fill=(.42,.45,.48)
+                )
+                cursor += len(card.secondary_meta_lines) * _lh(SMALL)
+
+            inner = card.width - 2 * PAD
+            for heading, bullets in card.sections:
+                cursor += 11.0
+                _pdf_section_heading(c, card.x + PAD, cursor, inner, heading)
+                cursor += _lh(HEADING) + 4.0
                 for lines in bullets:
-                    c.setFillColorRGB(.29,.47,.66); c.circle(card.x+PAD+3,PH-(cursor+4.1),1.6,stroke=0,fill=1)
-                    _pdf_text(c,card.x+PAD+10,cursor+BODY,lines,BODY); cursor+=len(lines)*_lh(BODY)+3
+                    c.setFillColorRGB(*_hex("#6a8bb0"))
+                    c.circle(
+                        card.x + PAD + 3, PH-(cursor+4.1),
+                        1.55, stroke=0, fill=1
+                    )
+                    _pdf_text(
+                        c, card.x + PAD + 10,
+                        cursor + BODY, lines, BODY
+                    )
+                    cursor += len(lines) * _lh(BODY) + 3.0
+
             if card.badge_rows:
-                cursor+=7
+                cursor += 11.0
+                if card.badge_heading:
+                    _pdf_section_heading(
+                        c, card.x + PAD, cursor, inner, card.badge_heading
+                    )
+                    cursor += _lh(HEADING) + 4.0
                 for row in card.badge_rows:
-                    bx=card.x+PAD
+                    bx = card.x + PAD
                     for badge in row:
-                        bf,bs,bt=_palette(badge.get("tone")); bw=_chip_width(badge["label"]); c.setFillColorRGB(*_hex(bf)); c.setStrokeColorRGB(*_hex(bs))
-                        c.roundRect(bx,PH-cursor-16,bw,16,5,stroke=1,fill=1); _pdf_text(c,bx+6,cursor+11.5,[badge["label"]],SMALL,True,_hex(bt)); bx+=bw+6
-                    cursor+=20
-        _pdf_text(c,PW-MARGIN-48,PH-14,[f"Page {page.number}/{len(layout.pages)}"],SMALL,fill=(.47,.47,.47)); c.showPage()
+                        bf, bs, bt = _palette(badge.get("tone"))
+                        bw = _chip_width(badge["label"])
+                        c.setFillColorRGB(*_hex(bf))
+                        c.setStrokeColorRGB(*_hex(bs))
+                        c.roundRect(
+                            bx, PH-cursor-CHIP_H, bw, CHIP_H,
+                            5, stroke=1, fill=1
+                        )
+                        _pdf_text(
+                            c, bx + bw / 2, cursor + 11.4,
+                            [badge["label"]], SMALL, True,
+                            _hex(bt), "center"
+                        )
+                        bx += bw + 6
+                    cursor += 20
+
+        _pdf_text(
+            c, PW-MARGIN-48, PH-14,
+            [f"Page {page.number}/{len(layout.pages)}"],
+            SMALL, fill=(.47,.47,.47)
+        )
+        c.showPage()
     c.save()
+
 
 
 def generate(source: Path, schema_path: Path, out_dir: Path):
