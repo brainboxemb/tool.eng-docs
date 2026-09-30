@@ -283,9 +283,10 @@ def _svg_text(parts, x, y, lines, size, weight="normal", fill=TEXT, anchor="star
 
 
 def _svg_heading(parts, x, y, width, heading, tone=None):
+    display_heading = str(heading).upper()
     color = palette(tone)[1] if tone else TEXT_MUTED
-    _svg_text(parts, x, y + HEADING, [heading], HEADING, "bold", color)
-    rule_x = _heading_rule_start(x, width, heading)
+    _svg_text(parts, x, y + HEADING, [display_heading], HEADING, "bold", color)
+    rule_x = _heading_rule_start(x, width, display_heading)
     if rule_x is not None:
         parts.append(
             f'<line x1="{rule_x:.2f}" y1="{y+5.0:.2f}" '
@@ -450,9 +451,10 @@ def _pdf_text(c, x, top, lines, size, bold=False, fill=None, align="left"):
 
 
 def _pdf_heading(c, x, top, width, heading, tone=None):
+    display_heading = str(heading).upper()
     color = hex_rgb(palette(tone)[1] if tone else TEXT_MUTED)
-    _pdf_text(c, x, top + HEADING, [heading], HEADING, True, color)
-    rule_x = _heading_rule_start(x, width, heading)
+    _pdf_text(c, x, top + HEADING, [display_heading], HEADING, True, color)
+    rule_x = _heading_rule_start(x, width, display_heading)
     if rule_x is not None:
         c.setStrokeColorRGB(*hex_rgb(RULE))
         c.setLineWidth(1.0)
