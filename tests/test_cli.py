@@ -62,3 +62,30 @@ def test_cli_builds_engineering_graph_example(tmp_path):
     assert '"kind": "sphinx-needs"' in out.read_text(encoding="utf-8")
     assert "Generated incoming" in review.read_text(encoding="utf-8")
     assert "Diagram references" in review.read_text(encoding="utf-8")
+
+
+def test_cli_renders_roadmap_example(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    out = tmp_path / "roadmap"
+
+    result = main([
+        "roadmap",
+        "--source", str(root / "examples/roadmap.yaml"),
+        "--out", str(out),
+    ])
+
+    assert result == 0
+    assert (out / "roadmap.svg").is_file()
+    assert (out / "roadmap.pdf").is_file()
+    assert (out / "roadmap/roadmap-page-01.svg").is_file()
+
+
+def test_cli_reports_missing_roadmap_source(tmp_path, capsys):
+    result = main([
+        "roadmap",
+        "--source", str(tmp_path / "missing.yaml"),
+        "--out", str(tmp_path / "out"),
+    ])
+
+    assert result == 2
+    assert "roadmap source file does not exist" in capsys.readouterr().err

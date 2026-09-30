@@ -139,6 +139,14 @@ jobs:
           cp examples/graph/source.md bld/docs/graph/input/source.md
           cp examples/graph/diagrams/system.yaml bld/docs/graph/input/system.yaml
 
+      - name: Generate roadmap conformance example
+        run: |
+          set -euo pipefail
+          eng-docs roadmap \
+            --source examples/roadmap.yaml \
+            --out bld/docs/roadmap-example
+          cp examples/roadmap.yaml bld/docs/roadmap-example/source.yaml
+
       - name: Build generated documentation index
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -148,7 +156,7 @@ jobs:
 
           Generated from source commit \`${SOURCE_SHA}\`.
 
-          This branch is review evidence for both reusable capabilities: declarative diagram generation and document assembly around already-produced assets. The generated files are intentionally inspectable without opening an Actions log.
+          This branch is review evidence for the reusable documentation capabilities. The generated files are intentionally inspectable without opening an Actions log.
 
           ## Owner test evidence
 
@@ -176,6 +184,16 @@ jobs:
           - [native MyST source](graph/input/source.md)
           - [Sphinx-Needs export](graph/input/needs.json)
           - [diagram identity source](graph/input/system.yaml)
+
+          ## Roadmap rendering example
+
+          The RoadmapView example is presentation data rather than a planning source model. The same local CLI path produces SVG and PDF.
+
+          - [source YAML](roadmap-example/source.yaml)
+          - [panorama SVG](roadmap-example/roadmap.svg)
+          - [printable PDF](roadmap-example/roadmap.pdf)
+
+          ![Roadmap example](roadmap-example/roadmap.svg)
 
           ## Diagram conformance
 
@@ -230,6 +248,10 @@ jobs:
           grep -Fq 'repository: brainboxemb/tool.eng-docs' bld/docs/assembly/assembly-info.yml
           grep -Fq '../assets/architecture/system.svg' bld/docs/assembly/documents/overview.md
           grep -Fq '../../../raw/prod/docs/assets/architecture/system.svg' bld/docs/assembly/_input/overview.md
+          test -f bld/docs/roadmap-example/source.yaml
+          test -f bld/docs/roadmap-example/roadmap.svg
+          test -f bld/docs/roadmap-example/roadmap.pdf
+          test -f bld/docs/roadmap-example/roadmap/roadmap-page-01.svg
           test -f bld/docs/diagrams/simple-flow.svg
           test -f bld/docs/diagrams/simple-flow.drawio
           test -f bld/docs/diagrams/layered-architecture.svg

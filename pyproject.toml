@@ -11,6 +11,7 @@ requires-python = ">=3.10"
 dependencies = [
   "PyYAML>=6,<7",
   "jsonschema>=4.20,<5",
+  "reportlab>=4,<5",
 ]
 
 [project.optional-dependencies]
