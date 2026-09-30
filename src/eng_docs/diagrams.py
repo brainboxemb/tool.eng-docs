@@ -867,6 +867,315 @@ def render_drawio(data, theme, out: Path):
     out.write_text(ET.tostring(mxfile, encoding="unicode") + "\n", encoding="utf-8")
 
 
+
+def validate_sequence_refs(data, theme, path: Path):
+    participants = data["participants"]
+    participant_ids = [participant["id"] for participant in participants]
+    if len(set(participant_ids)) != len(participant_ids):
+        raise ValueError(f"{path}: duplicate sequence participant id")
+
+    kinds = theme.get("kinds", {})
+    for participant in participants:
+        if participant["kind"] not in kinds:
+            raise ValueError(
+                f"{path}: unknown kind {participant['kind']!r} "
+                f"on sequence participant {participant['id']}"
+            )
+
+    known = set(participant_ids)
+    for message in data["messages"]:
+        if message["from"] not in known or message["to"] not in known:
+            raise ValueError(
+                f"{path}: sequence message references missing participant: "
+                f"{message['from']} -> {message['to']}"
+            )
+        if message["from"] == message["to"]:
+            raise ValueError(
+                f"{path}: self sequence messages are not supported in the first slice"
+            )
+
+
+def _sequence_layout(data):
+    d = data["diagram"]
+    participants = data["participants"]
+    messages = data["messages"]
+
+    left = 95.0
+    right = float(d["width"]) - 95.0
+    count = len(participants)
+    spacing = (right - left) / (count - 1)
+    header_width = min(190.0, max(120.0, spacing * 0.72))
+    header_height = 58.0
+    header_y = 100.0
+    message_start_y = 235.0
+    message_gap = 70.0
+    lifeline_bottom = message_start_y + max(1, len(messages)) * message_gap + 20.0
+
+    if lifeline_bottom > float(d["height"]) - 25.0:
+        raise ValueError(
+            f"{d['id']}: sequence content exceeds diagram height "
+            f"({lifeline_bottom:.0f} > {d['height'] - 25})"
+        )
+
+    positions = {}
+    headers = []
+    for index, participant in enumerate(participants):
+        center_x = left + index * spacing
+        positions[participant["id"]] = center_x
+        headers.append(
+            {
+                "participant": participant,
+                "x": center_x - header_width / 2,
+                "y": header_y,
+                "w": header_width,
+                "h": header_height,
+                "center_x": center_x,
+            }
+        )
+
+    message_rows = []
+    for index, message in enumerate(messages):
+        message_rows.append(
+            {
+                "message": message,
+                "y": message_start_y + index * message_gap,
+                "from_x": positions[message["from"]],
+                "to_x": positions[message["to"]],
+            }
+        )
+
+    return {
+        "headers": headers,
+        "messages": message_rows,
+        "header_bottom": header_y + header_height,
+        "lifeline_bottom": lifeline_bottom,
+    }
+
+
+def render_sequence_svg(data, theme, out: Path):
+    d = data["diagram"]
+    family = theme["font"]["family"]
+    edge = theme["canvas"]["edge"]
+    layout = _sequence_layout(data)
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{d["width"]}" '
+        f'height="{d["height"]}" viewBox="0 0 {d["width"]} {d["height"]}">',
+        "<defs>",
+        '<marker id="seq-filled-arrow" markerWidth="10" markerHeight="10" '
+        'refX="9" refY="3" orient="auto" markerUnits="strokeWidth">',
+        f'<path d="M0,0 L0,6 L9,3 z" fill="{edge}"/>',
+        "</marker>",
+        '<marker id="seq-open-arrow" markerWidth="10" markerHeight="10" '
+        'refX="9" refY="3" orient="auto" markerUnits="strokeWidth">',
+        f'<path d="M0,0 L9,3 L0,6" fill="none" stroke="{edge}" stroke-width="1.5"/>',
+        "</marker>",
+        "</defs>",
+        f'<rect width="100%" height="100%" fill="{theme["canvas"]["background"]}"/>',
+    ]
+    _svg_text(
+        parts,
+        d["title"],
+        30,
+        38,
+        theme["font"]["title_size"],
+        family,
+        "bold",
+        "start",
+    )
+    if d.get("note"):
+        _svg_text(
+            parts,
+            d["note"],
+            30,
+            68,
+            theme["font"]["note_size"],
+            family,
+            "normal",
+            "start",
+        )
+
+    for header in layout["headers"]:
+        participant = header["participant"]
+        style = _style(theme, participant["kind"])
+        parts.append(
+            f'<rect x="{header["x"]:.1f}" y="{header["y"]:.1f}" '
+            f'width="{header["w"]:.1f}" height="{header["h"]:.1f}" '
+            f'rx="8" ry="8" fill="{style["fill"]}" '
+            f'stroke="{style["stroke"]}" stroke-width="2"/>'
+        )
+        _svg_text(
+            parts,
+            participant["label"],
+            header["center_x"],
+            header["y"] + header["h"] / 2,
+            theme["font"]["node_size"],
+            family,
+        )
+        parts.append(
+            f'<line data-sequence-lifeline="{html.escape(participant["id"], quote=True)}" '
+            f'x1="{header["center_x"]:.1f}" y1="{layout["header_bottom"]:.1f}" '
+            f'x2="{header["center_x"]:.1f}" y2="{layout["lifeline_bottom"]:.1f}" '
+            f'stroke="{edge}" stroke-width="1.5" stroke-dasharray="6 5"/>'
+        )
+
+    for index, row in enumerate(layout["messages"], 1):
+        message = row["message"]
+        kind = message.get("kind", "call")
+        dashed = ' stroke-dasharray="7 5"' if kind == "return" else ""
+        marker = "seq-filled-arrow" if kind == "call" else "seq-open-arrow"
+        parts.append(
+            f'<line data-sequence-message="{index}" '
+            f'x1="{row["from_x"]:.1f}" y1="{row["y"]:.1f}" '
+            f'x2="{row["to_x"]:.1f}" y2="{row["y"]:.1f}" '
+            f'stroke="{edge}" stroke-width="2"{dashed} '
+            f'marker-end="url(#{marker})"/>'
+        )
+        mid_x = (row["from_x"] + row["to_x"]) / 2
+        _svg_text(
+            parts,
+            message["label"],
+            mid_x,
+            row["y"] - 13,
+            12,
+            family,
+        )
+
+    parts.append("</svg>")
+    out.write_text("\n".join(parts) + "\n", encoding="utf-8")
+
+
+def _drawio_sequence_edge(root, cell_id, value, style, x1, y1, x2, y2):
+    cell = ET.SubElement(
+        root,
+        "mxCell",
+        id=cell_id,
+        value=value,
+        style=style,
+        edge="1",
+        parent="1",
+    )
+    geometry = ET.SubElement(
+        cell,
+        "mxGeometry",
+        relative="1",
+        **{"as": "geometry"},
+    )
+    ET.SubElement(
+        geometry,
+        "mxPoint",
+        x=f"{x1:.1f}",
+        y=f"{y1:.1f}",
+        **{"as": "sourcePoint"},
+    )
+    ET.SubElement(
+        geometry,
+        "mxPoint",
+        x=f"{x2:.1f}",
+        y=f"{y2:.1f}",
+        **{"as": "targetPoint"},
+    )
+
+
+def render_sequence_drawio(data, theme, out: Path):
+    d = data["diagram"]
+    layout = _sequence_layout(data)
+    edge_color = theme["canvas"]["edge"]
+
+    mxfile = ET.Element("mxfile", host="app.diagrams.net", compressed="false")
+    diagram = ET.SubElement(mxfile, "diagram", id=d["id"], name=d["title"])
+    model = ET.SubElement(
+        diagram,
+        "mxGraphModel",
+        dx="1200",
+        dy="800",
+        grid="1",
+        gridSize="10",
+        guides="1",
+        tooltips="1",
+        connect="1",
+        arrows="1",
+        fold="1",
+        page="1",
+        pageScale="1",
+        pageWidth=str(d["width"]),
+        pageHeight=str(d["height"]),
+        math="0",
+        shadow="0",
+    )
+    root = ET.SubElement(model, "root")
+    ET.SubElement(root, "mxCell", id="0")
+    ET.SubElement(root, "mxCell", id="1", parent="0")
+
+    for header in layout["headers"]:
+        participant = header["participant"]
+        style = _style(theme, participant["kind"])
+        cell = ET.SubElement(
+            root,
+            "mxCell",
+            id=f"sequence-participant-{participant['id']}",
+            value=html.escape(participant["label"]).replace("\n", "<br>"),
+            style=(
+                "rounded=1;whiteSpace=wrap;html=1;"
+                f"fillColor={style['fill']};strokeColor={style['stroke']};"
+                "fontFamily=Helvetica;fontSize=14;"
+            ),
+            vertex="1",
+            parent="1",
+        )
+        ET.SubElement(
+            cell,
+            "mxGeometry",
+            x=f"{header['x']:.1f}",
+            y=f"{header['y']:.1f}",
+            width=f"{header['w']:.1f}",
+            height=f"{header['h']:.1f}",
+            **{"as": "geometry"},
+        )
+        _drawio_sequence_edge(
+            root,
+            f"sequence-lifeline-{participant['id']}",
+            "",
+            (
+                "edgeStyle=none;rounded=0;html=1;endArrow=none;"
+                f"strokeColor={edge_color};dashed=1;"
+            ),
+            header["center_x"],
+            layout["header_bottom"],
+            header["center_x"],
+            layout["lifeline_bottom"],
+        )
+
+    for index, row in enumerate(layout["messages"], 1):
+        message = row["message"]
+        kind = message.get("kind", "call")
+        if kind == "call":
+            arrow = "endArrow=block;endFill=1;"
+            dashed = ""
+        elif kind == "async":
+            arrow = "endArrow=open;endFill=0;"
+            dashed = ""
+        else:
+            arrow = "endArrow=open;endFill=0;"
+            dashed = "dashed=1;"
+        _drawio_sequence_edge(
+            root,
+            f"sequence-message-{index}",
+            message["label"],
+            (
+                "edgeStyle=none;rounded=0;html=1;"
+                f"strokeColor={edge_color};{arrow}{dashed}"
+            ),
+            row["from_x"],
+            row["y"],
+            row["to_x"],
+            row["y"],
+        )
+
+    ET.indent(mxfile, space="  ")
+    out.write_text(ET.tostring(mxfile, encoding="unicode") + "\n", encoding="utf-8")
+
+
 def generate(source_dir: Path, schema_path: Path, theme_path: Path, out_dir: Path):
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     theme = load_yaml(theme_path)
@@ -876,10 +1185,18 @@ def generate(source_dir: Path, schema_path: Path, theme_path: Path, out_dir: Pat
     for path in sorted(source_dir.glob("*.yaml")):
         data = load_yaml(path)
         validate_source(data, schema, path)
-        validate_refs(data, theme, path)
+        diagram_type = data["diagram"].get("type", "structure")
         diagram_id = data["diagram"]["id"]
-        render_svg(data, theme, out_dir / f"{diagram_id}.svg")
-        render_drawio(data, theme, out_dir / f"{diagram_id}.drawio")
+
+        if diagram_type == "sequence":
+            validate_sequence_refs(data, theme, path)
+            render_sequence_svg(data, theme, out_dir / f"{diagram_id}.svg")
+            render_sequence_drawio(data, theme, out_dir / f"{diagram_id}.drawio")
+        else:
+            validate_refs(data, theme, path)
+            render_svg(data, theme, out_dir / f"{diagram_id}.svg")
+            render_drawio(data, theme, out_dir / f"{diagram_id}.drawio")
+
         generated.append(data["diagram"])
 
     return generated
