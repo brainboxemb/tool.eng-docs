@@ -14,6 +14,7 @@ from .diagrams import generate
 from .engineering_graph import write_graph
 from .manifests import build_manifest
 from .roadmap import generate as generate_roadmap
+from .board import generate as generate_board
 
 
 def main(argv=None):
@@ -32,6 +33,14 @@ def main(argv=None):
     roadmap.add_argument(
         "--schema",
         help="roadmap JSON Schema; built-in default is used when omitted",
+    )
+
+    board = sub.add_parser("board", help="render a generic BoardView")
+    board.add_argument("--source", required=True, help="BoardView YAML file")
+    board.add_argument("--out", required=True, help="output directory")
+    board.add_argument(
+        "--schema",
+        help="board JSON Schema; built-in default is used when omitted",
     )
 
     manifest = sub.add_parser("manifest", help="describe already-produced assets")
@@ -100,6 +109,16 @@ def main(argv=None):
                 else Path(str(package_root.joinpath("schemas/roadmap.schema.json")))
             )
             generate_roadmap(Path(args.source), schema, Path(args.out))
+            return 0
+
+        if args.command == "board":
+            package_root = files("eng_docs")
+            schema = (
+                Path(args.schema)
+                if args.schema
+                else Path(str(package_root.joinpath("schemas/board.schema.json")))
+            )
+            generate_board(Path(args.source), schema, Path(args.out))
             return 0
 
         if args.command == "graph":
