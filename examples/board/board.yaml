@@ -30,13 +30,14 @@ board:
         - id: D01
           title: Establish public boundary
           state: {label: DONE, tone: success}
-          meta:
+          header_meta:
             - ~0.5d
+          meta:
             - Decision recorded in the public design documentation.
         - id: D02
           title: Review consumer behavior
           state: {label: ACTIVE, tone: active}
-          meta:
+          header_meta:
             - ~1d · after D01
     - heading: Application / product
       tone: success
@@ -44,12 +45,12 @@ board:
         - id: A01
           title: Implement one deterministic path
           state: {label: PLANNED, tone: muted}
-          meta:
+          header_meta:
             - ~1d · after D02
         - id: A02
           title: Expose observable state through the public interface
           state: {label: PLANNED, tone: muted}
-          meta:
+          header_meta:
             - ~0.5d · after A01
     - heading: Verification / test
       tone: draft
@@ -57,7 +58,7 @@ board:
         - id: V01
           title: Run black-box verification
           state: {label: PLANNED, tone: muted}
-          meta:
+          header_meta:
             - after A02
   trailing_sections:
     - heading: PLANNING CHANGES
