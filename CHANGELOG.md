@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.1 — 2026-09-30
+
+### Changed
+
+- BoardView supports an optional compact board-level `marker` in the upper
+  right so consumers do not need to repeat identity in the title;
+- BoardView supports an optional headed `summary` using normal body typography,
+  keeping descriptive prose separate from compact planning metadata;
+- section rules now begin after the rendered heading width and no longer cross
+  longer headings.
+
+### Compatibility
+
+- existing BoardView sources without `marker` or `summary` remain valid;
+- no domain-specific Step, Goal or Demo semantics are added to the renderer.
+
 ## 0.6.0 — 2026-09-30
 
 ### Added
