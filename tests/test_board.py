@@ -160,9 +160,32 @@ def test_group_heading_tone_does_not_change_heading_color(tmp_path):
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     generate(path, SCHEMA, tmp_path / "neutral-group-heading-out")
     svg = (tmp_path / "neutral-group-heading-out/board.svg").read_text(encoding="utf-8")
-    heading = "Documentation / decisions"
+    heading = "DOCUMENTATION / DECISIONS"
     pos = svg.index(heading)
     text_start = svg.rfind("<text", 0, pos)
     tag = svg[text_start:pos]
     assert 'fill="#5f6368"' in tag
+
+def test_all_board_headings_render_uppercase_with_shared_heading_size(tmp_path):
+    data = source()
+    path = tmp_path / "uppercase-headings.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    generate(path, SCHEMA, tmp_path / "uppercase-headings-out")
+    svg = (tmp_path / "uppercase-headings-out/board.svg").read_text(encoding="utf-8")
+
+    for heading in (
+        "PURPOSE",
+        "RESULT",
+        "END DEMO",
+        "DOCUMENTATION",
+        "DOCUMENTATION / DECISIONS",
+        "APPLICATION / PRODUCT",
+        "VERIFICATION / TEST",
+        "PLANNING CHANGES",
+    ):
+        pos = svg.index(f">{heading}</text>")
+        text_start = svg.rfind("<text", 0, pos)
+        tag = svg[text_start:pos]
+        assert 'font-size="8.00"' in tag
+        assert 'font-weight="bold"' in tag
 
