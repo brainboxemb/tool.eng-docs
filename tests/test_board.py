@@ -194,7 +194,7 @@ def test_board_marker_leads_title_and_meta_values_form_one_status_line(tmp_path)
     layout = layout_board(data)
     assert layout["title_x_offset"] > 0
     assert layout["meta_lines"][0] == (
-        "ACTIVE | baseline ~3d | orig ~3d · rem ~2d | forecast end 18 Oct"
+        "ACTIVE | orig ~3d · rem ~2d | forecast end 18 Oct"
     )
 
     path = tmp_path / "leading-marker.yaml"
@@ -211,5 +211,5 @@ def test_board_marker_leads_title_and_meta_values_form_one_status_line(tmp_path)
     assert 'font-size="14.00"' in marker_tag
     assert 'font-weight="bold"' in marker_tag
 
-    assert "ACTIVE | baseline ~3d | orig ~3d · rem ~2d | forecast end 18 Oct" in svg
+    assert "ACTIVE | orig ~3d · rem ~2d | forecast end 18 Oct" in svg
 
