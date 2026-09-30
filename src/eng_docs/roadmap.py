@@ -10,22 +10,18 @@ from jsonschema import Draft202012Validator
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfgen import canvas
 
+from .presentation_style import (
+    PALETTES,
+    CARD_STROKE,
+    RULE,
+    hex_rgb as _hex,
+    palette as _palette,
+)
+
 PW, PH = landscape(A4)
 MARGIN, FOOTER, GAP, ROW_GAP, PAD = 18.0, 22.0, 10.0, 12.0, 9.0
 TITLE, BODY, SMALL, HEADING, LINE = 11.5, 8.5, 7.5, 8.0, 1.25
 MARKER_H, CHIP_H = 24.0, 16.0
-CARD_STROKE, RULE = "#b8c0c8", "#d9dde1"
-PALETTES = {
-    "neutral": ("#f6f7f8", "#697077", "#2f3337"),
-    "active": ("#e8f1fb", "#4b78a8", "#244b73"),
-    "success": ("#eaf5e7", "#5a8750", "#31582b"),
-    "warning": ("#fff4d6", "#a77a19", "#6a4b00"),
-    "danger": ("#fdeaea", "#b14c4c", "#7a2929"),
-    "muted": ("#f1f1f1", "#888888", "#555555"),
-    "mature": ("#eaf5e7", "#5a8750", "#31582b"),
-    "draft": ("#fff4d6", "#a77a19", "#6a4b00"),
-}
-
 @dataclass(frozen=True)
 class Card:
     item: dict; x: float; y: float; width: float; height: float
@@ -72,13 +68,6 @@ def _wrap(text, width, size, bold=False):
 def _chip_width(label): return 12.0 + len(label) * SMALL * 0.55
 
 def _marker_width(label): return max(MARKER_H, 10.0 + len(label) * 7.0)
-
-def _palette(tone): return PALETTES.get(tone or "neutral", PALETTES["neutral"])
-
-def _hex(value):
-    value = value.lstrip("#")
-    return tuple(int(value[i:i+2], 16) / 255.0 for i in (0, 2, 4))
-
 
 def _badge_rows(badges, width):
     usable, rows, row, used = width - 2 * PAD, [], [], 0.0
