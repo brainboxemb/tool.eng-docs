@@ -27,7 +27,6 @@ board:
 
   meta:
     - ACTIVE
-    - baseline ~3d
     - orig ~3d · rem ~2d
     - forecast end 18 Oct
 
