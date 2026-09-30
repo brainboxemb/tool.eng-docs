@@ -1,11 +1,15 @@
 board:
+  marker: "4"
   title: Engineering detail board
   meta:
     - ACTIVE
     - forecast 18 Oct
     - orig ~3d · rem ~2d
+  summary:
+    heading: PURPOSE
+    text: Show one compact engineering slice with a readable descriptive summary separated from planning metadata.
   sections:
-    - heading: END DEMO
+    - heading: A deliberately longer section heading
       bullets:
         - Connect a sample client and inspect one generated result.
         - Reconnect and verify current state before live updates continue.
