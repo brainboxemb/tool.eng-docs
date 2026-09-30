@@ -13,7 +13,8 @@ capabilities.
 
 ### Declarative diagrams
 
-- declarative YAML diagram sources, including optional smaller node subtitles, structured node list/tree items and optional engineering identity on nodes or selected structured items;
+- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items and optional engineering identity on nodes or selected structured items;
+- declarative YAML sequence diagrams with ordered participants plus call/async/return messages;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
 - reusable YAML themes;
@@ -162,6 +163,8 @@ The complete authoring contract is documented in
 
 That guide covers:
 
+- structural versus sequence diagram sources;
+- sequence participants and call/async/return messages;
 - canvas and coordinate system;
 - groups and nodes;
 - built-in theme `kind` values;
@@ -195,13 +198,16 @@ examples/minimal-flow.yaml
 examples/routed-flow.yaml
 examples/structured-layer.yaml
 examples/polygon-group.yaml
+examples/sequence-flow.yaml
 ```
 
-The first demonstrates the minimal model and automatic routing. The second shows
-visual grouping, explicit edge anchors, a dashed edge and manual waypoints. The
-third demonstrates structured node items and a high-level edge that terminates on
-a group/layer boundary. The fourth demonstrates native stepped polygon outlines
-for groups while retaining a rectangular layout box for labels and routing.
+The first demonstrates the minimal structural model and automatic routing. The
+second shows visual grouping, explicit edge anchors, a dashed edge and manual
+waypoints. The third demonstrates structured node items and a high-level edge
+that terminates on a group/layer boundary. The fourth demonstrates native stepped
+polygon outlines for groups while retaining a rectangular layout box for labels
+and routing. The sequence example demonstrates ordered participants and
+call/async/return interactions without introducing a separate rendering engine.
 
 Document-assembly example:
 
