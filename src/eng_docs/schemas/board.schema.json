@@ -168,6 +168,13 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "header_meta": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
