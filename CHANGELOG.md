@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.2 — 2026-09-30
+
+### Changed
+
+- reduce the default roadmap outer margin, inter-column gap and card padding so
+  A4 landscape width is used more efficiently;
+- keep three-column layout viable for denser real-consumer cards before falling
+  back to two or one column;
+- retain current typography, adaptive card height, wrapping and pagination.
+
+### Compatibility
+
+- RoadmapView source data and semantics are unchanged;
+- no content clipping, fixed-height cards or source-text limits are introduced.
+
 ## 0.5.1 — 2026-09-30
 
 ### Changed
