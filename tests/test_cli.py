@@ -70,7 +70,7 @@ def test_cli_renders_roadmap_example(tmp_path):
 
     result = main([
         "roadmap",
-        "--source", str(root / "examples/roadmap.yaml"),
+        "--source", str(root / "examples/roadmap/roadmap.yaml"),
         "--out", str(out),
     ])
 

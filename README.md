@@ -79,7 +79,7 @@ boundary:
 - output includes per-page SVG, a panorama SVG and printable PDF.
 
 See [docs/roadmap-rendering.md](docs/roadmap-rendering.md) and the executable
-[examples/roadmap.yaml](examples/roadmap.yaml) example.
+[examples/roadmap/roadmap.yaml](examples/roadmap/roadmap.yaml) example.
 
 Broader planning-domain extraction remains tracked separately in issue #3.
 

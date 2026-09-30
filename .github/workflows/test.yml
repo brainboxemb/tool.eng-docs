@@ -143,9 +143,9 @@ jobs:
         run: |
           set -euo pipefail
           eng-docs roadmap \
-            --source examples/roadmap.yaml \
+            --source examples/roadmap/roadmap.yaml \
             --out bld/docs/roadmap-example
-          cp examples/roadmap.yaml bld/docs/roadmap-example/source.yaml
+          cp examples/roadmap/roadmap.yaml bld/docs/roadmap-example/source.yaml
 
       - name: Build generated documentation index
         env:

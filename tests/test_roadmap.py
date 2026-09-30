@@ -8,7 +8,7 @@ import yaml
 from eng_docs.roadmap import generate, layout_roadmap, load_schema, validate_source
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE = ROOT / "examples/roadmap.yaml"
+EXAMPLE = ROOT / "examples/roadmap/roadmap.yaml"
 SCHEMA_PATH = ROOT / "src/eng_docs/schemas/roadmap.schema.json"
 
 def source():
@@ -32,7 +32,7 @@ def test_duplicate_ids_rejected(tmp_path):
 
 def test_longer_compact_text_reduces_columns_instead_of_rejecting():
     data = source()
-    text = " ".join(["Compact roadmap text may wrap without changing authoritative planning."] * 12)
+    text = " ".join(["Compact roadmap text may wrap without changing authoritative planning."] * 20)
     data["roadmap"]["items"][0]["sections"][0]["bullets"] = [text]
     assert layout_roadmap(data).columns in (1, 2)
 
