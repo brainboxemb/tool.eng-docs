@@ -179,3 +179,31 @@ def test_repeated_relation_field_fails():
             NEEDS,
             relation_types=["derived_from", "derived_from"],
         )
+
+
+def test_sequence_diagram_is_ignored_by_engineering_object_reference_scan(tmp_path):
+    diagrams = tmp_path / "diagrams"
+    diagrams.mkdir()
+    (diagrams / "sequence.yaml").write_text(
+        "diagram:\n"
+        "  id: sequence-example\n"
+        "  type: sequence\n"
+        "  title: Sequence example\n"
+        "  width: 900\n"
+        "  height: 520\n"
+        "participants:\n"
+        "  - id: client\n"
+        "    label: Client\n"
+        "    kind: external\n"
+        "  - id: service\n"
+        "    label: Service\n"
+        "    kind: service\n"
+        "messages:\n"
+        "  - from: client\n"
+        "    to: service\n"
+        "    label: request\n",
+        encoding="utf-8",
+    )
+
+    graph = build_graph(NEEDS, diagrams_root=diagrams)
+    assert all(not item["diagram_refs"] for item in graph["objects"])
