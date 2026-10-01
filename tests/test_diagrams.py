@@ -513,8 +513,8 @@ def test_sequence_example_generates_native_uml_deterministic_outputs(tmp_path):
     drawio_text = drawio.read_text(encoding="utf-8")
 
     assert "Asynchronous work sequence" in svg_text
-    assert "process queued work using" in svg_text
-    assert "current state" in svg_text
+    assert ">process queued work</text>" in svg_text
+    assert ">using current state</text>" in svg_text
     assert 'font-size="13"' in svg_text
     assert "stored" in drawio_text
     assert len([
@@ -573,8 +573,8 @@ def test_sequence_example_generates_native_uml_deterministic_outputs(tmp_path):
         for element in svg_root.iter()
         if element.tag.endswith("text")
     ]
-    assert "persist validated immutable work item" in wrapped_text
-    assert "to durable store" in wrapped_text
+    assert "persist validated immutable" in wrapped_text
+    assert "work item to durable store" in wrapped_text
 
     assert svg.read_bytes() == (second / "sequence-flow.svg").read_bytes()
     assert drawio.read_bytes() == (second / "sequence-flow.drawio").read_bytes()

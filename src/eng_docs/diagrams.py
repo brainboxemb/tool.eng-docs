@@ -897,19 +897,37 @@ _SEQUENCE_MESSAGE_BASE_GAP = 52.0
 _SEQUENCE_MESSAGE_LINE_HEIGHT = _SEQUENCE_MESSAGE_FONT_SIZE * 1.28
 
 
+def _wrap_sequence_source_line(source_line, max_chars):
+    if len(source_line) <= max_chars:
+        return [source_line]
+
+    words = source_line.split()
+    balanced = []
+    for split in range(1, len(words)):
+        left = " ".join(words[:split])
+        right = " ".join(words[split:])
+        if len(left) <= max_chars and len(right) <= max_chars:
+            balanced.append((abs(len(left) - len(right)), split, left, right))
+
+    if balanced:
+        _, _, left, right = min(balanced)
+        return [left, right]
+
+    return textwrap.wrap(
+        source_line,
+        width=max_chars,
+        break_long_words=False,
+        break_on_hyphens=False,
+    ) or [""]
+
+
 def _wrap_sequence_message_label(label, max_width):
     """Wrap a sequence-message label using a deterministic width estimate."""
     average_char_width = _SEQUENCE_MESSAGE_FONT_SIZE * 0.56
     max_chars = max(12, int(max_width / average_char_width))
     wrapped = []
     for source_line in str(label).splitlines() or [""]:
-        parts = textwrap.wrap(
-            source_line,
-            width=max_chars,
-            break_long_words=False,
-            break_on_hyphens=False,
-        )
-        wrapped.extend(parts or [""])
+        wrapped.extend(_wrap_sequence_source_line(source_line, max_chars))
     return wrapped
 
 
