@@ -434,6 +434,9 @@ def _svg_wireframe_node(parts, node, theme, family):
         tabs = [item.strip() for item in label.split("|") if item.strip()]
         if not tabs:
             tabs = [label]
+        selected_tab = str(subtitle).strip() if subtitle else tabs[0]
+        if selected_tab not in tabs:
+            selected_tab = tabs[0]
         tab_width = r["w"] / len(tabs)
         for index, tab in enumerate(tabs):
             if index:
@@ -447,7 +450,7 @@ def _svg_wireframe_node(parts, node, theme, family):
                 r["x"] + (index + 0.5) * tab_width,
                 r["y"] + r["h"] / 2,
                 detail_size, family,
-                "bold" if index == 0 else "normal",
+                "bold" if tab == selected_tab else "normal",
             )
         return
 
@@ -587,10 +590,17 @@ def _drawio_node_value(node, theme):
             f'border:1px solid #777777;background:#ffffff">{value}</div>'
         )
     if notation == "wireframe-tabs":
-        tabs = [html.escape(item.strip()) for item in str(node["label"]).split("|") if item.strip()]
-        return " &nbsp; | &nbsp; ".join(
-            [f"<b>{tabs[0]}</b>"] + tabs[1:]
-        ) if tabs else label
+        raw_tabs = [item.strip() for item in str(node["label"]).split("|") if item.strip()]
+        selected_tab = str(node.get("subtitle", "")).strip() if node.get("subtitle") else (
+            raw_tabs[0] if raw_tabs else ""
+        )
+        if selected_tab not in raw_tabs and raw_tabs:
+            selected_tab = raw_tabs[0]
+        tabs = [
+            f"<b>{html.escape(tab)}</b>" if tab == selected_tab else html.escape(tab)
+            for tab in raw_tabs
+        ]
+        return " &nbsp; | &nbsp; ".join(tabs) if tabs else label
     if notation in ("wireframe-panel", "wireframe-table"):
         rows = _flatten_node_items(node.get("items", []))
         row_html = "<br>".join(html.escape(row_label) for _, row_label, _ in rows)
