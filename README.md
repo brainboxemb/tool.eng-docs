@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.8.1` refines the declarative sequence-diagram layout with denser message
-spacing, larger message text and balanced multiline labels while retaining the
-native UML lifelines, activation bars and self-calls introduced in v0.8.0.
+`v0.9.0` adds declarative UI wireframe controls to the existing structural
+diagram pipeline while retaining deterministic SVG output, native editable
+draw.io output and all existing structure/sequence behavior.
 
 ### Declarative diagrams
 
@@ -344,7 +344,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.8.0
+v0.9.0
 ```
 
 Consumers should pin a release rather than a feature branch.
