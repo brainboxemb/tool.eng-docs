@@ -1,0 +1,72 @@
+diagram:
+  id: ui-wireframe
+  title: Device-control UI wireframe
+  width: 980
+  height: 660
+  note: Neutral mid-fidelity controls rendered from normal structure-diagram YAML.
+
+groups: []
+
+nodes:
+  - id: app-panel
+    label: Engineering console
+    subtitle: connected to device-01
+    kind: external
+    notation: wireframe-panel
+    layout: {x: 50, y: 95, w: 880, h: 510}
+
+  - id: tabs
+    label: "Overview | Control | History | Logs"
+    kind: external
+    notation: wireframe-tabs
+    layout: {x: 80, y: 130, w: 820, h: 42}
+
+  - id: connection
+    label: LIVE
+    kind: runtime
+    notation: wireframe-status
+    layout: {x: 790, y: 190, w: 90, h: 30}
+
+  - id: location
+    label: Location
+    subtitle: "24"
+    kind: external
+    notation: wireframe-input
+    layout: {x: 90, y: 205, w: 220, h: 72}
+
+  - id: set-location
+    label: Set location
+    kind: component
+    notation: wireframe-button
+    layout: {x: 330, y: 230, w: 130, h: 38}
+
+  - id: open
+    label: Open
+    kind: component
+    notation: wireframe-button
+    layout: {x: 480, y: 230, w: 95, h: 38}
+
+  - id: identifier
+    label: Identifier
+    subtitle: sample-001
+    kind: external
+    notation: wireframe-input
+    layout: {x: 90, y: 305, w: 300, h: 72}
+
+  - id: submit
+    label: Submit
+    kind: component
+    notation: wireframe-button
+    layout: {x: 410, y: 330, w: 110, h: 38}
+
+  - id: history
+    label: History
+    kind: external
+    notation: wireframe-table
+    items:
+      - "Seq | Location | Identifier | Effective"
+      - "1 | 24 | sample-001 | 12:00:00"
+      - "2 | 24 | sample-002 | 12:00:05"
+    layout: {x: 90, y: 405, w: 790, h: 155}
+
+edges: []
