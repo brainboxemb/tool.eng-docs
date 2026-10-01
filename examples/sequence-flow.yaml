@@ -2,8 +2,8 @@ diagram:
   id: sequence-flow
   type: sequence
   title: Asynchronous work sequence
-  width: 1100
-  height: 680
+  width: 900
+  height: 520
   description: Domain-neutral example of asynchronous hand-off followed by synchronous processing and persistence.
   note: Synchronous calls infer UML activation bars; the self-call shows internal processing.
 
@@ -25,11 +25,11 @@ messages:
     kind: async
   - from: worker
     to: worker
-    label: process queued work
+    label: process queued work using current state
     kind: call
   - from: worker
     to: store
-    label: persist
+    label: persist validated immutable work item to durable store
     kind: call
   - from: store
     to: worker
