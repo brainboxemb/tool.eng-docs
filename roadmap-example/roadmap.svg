@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 841.89 595.28">
+<rect width="100%" height="100%" fill="#eee"/>
+<g transform="translate(0.00,0)"><rect width="100%" height="100%" fill="white"/>
+<text x="18.00" y="35.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="17.00" font-weight="bold" fill="#2f3337">Engineering roadmap</text>
+<text x="18.00" y="61.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="9.00" font-weight="normal" fill="#666666">Domain-neutral RoadmapView example</text>
+<rect x="18.00" y="75.50" width="261.96" height="218.00" rx="6" fill="#fff" stroke="#b8c0c8" stroke-width="1"/>
+<rect x="27.00" y="84.50" width="24.00" height="24.00" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>
+<text x="39.00" y="100.70" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.50" font-weight="bold" fill="#2f3337">1</text>
+<rect x="232.96" y="84.50" width="38.00" height="16.00" rx="8" fill="#eaf5e7" stroke="#5a8750"/>
+<text x="251.96" y="95.90" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#31582b">DONE</text>
+<text x="270.96" y="111.00" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#555f68">completed</text>
+<text x="27.00" y="129.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="11.50" font-weight="bold" fill="#2f3337">Establish the public boundary</text>
+<text x="27.00" y="144.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="normal" fill="#6a7279">~2d</text>
+<text x="27.00" y="165.75" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">RESULT</text>
+<line x1="119.00" y1="162.75" x2="270.96" y2="162.75" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="30.00" cy="175.85" r="1.55" fill="#6a8bb0"/>
+<text x="37.00" y="180.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">A reusable boundary is documented and testable.</text>
+<circle cx="30.00" cy="189.47" r="1.55" fill="#6a8bb0"/>
+<text x="37.00" y="193.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">Consumers retain ownership of project meaning.</text>
+<text x="27.00" y="218.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">DEMO</text>
+<line x1="119.00" y1="215.00" x2="270.96" y2="215.00" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="30.00" cy="228.10" r="1.55" fill="#6a8bb0"/>
+<text x="37.00" y="232.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">Render the same view locally and in CI.</text>
+<text x="27.00" y="256.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">DOCUMENT STATUS</text>
+<line x1="119.00" y1="253.62" x2="270.96" y2="253.62" stroke="#d9dde1" stroke-width="1"/>
+<rect x="27.00" y="262.62" width="28.50" height="16.00" rx="5" fill="#eaf5e7" stroke="#5a8750"/>
+<text x="41.25" y="274.02" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#31582b">SPEC</text>
+<rect x="289.96" y="75.50" width="261.96" height="299.88" rx="6" fill="#fff" stroke="#b8c0c8" stroke-width="1"/>
+<rect x="298.96" y="84.50" width="24.00" height="24.00" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>
+<text x="310.96" y="100.70" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.50" font-weight="bold" fill="#2f3337">2</text>
+<rect x="504.93" y="84.50" width="38.00" height="16.00" rx="8" fill="#e8f1fb" stroke="#4b78a8"/>
+<text x="523.93" y="95.90" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#244b73">ACTIVE</text>
+<text x="542.93" y="111.00" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#555f68">forecast Oct</text>
+<text x="298.96" y="129.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="11.50" font-weight="bold" fill="#2f3337">Integrate a real consumer without</text>
+<text x="298.96" y="143.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="11.50" font-weight="bold" fill="#2f3337">constraining its authoritative</text>
+<text x="298.96" y="158.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="11.50" font-weight="bold" fill="#2f3337">planning prose</text>
+<text x="298.96" y="173.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="normal" fill="#6a7279">~3d</text>
+<text x="298.96" y="194.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">RESULT</text>
+<line x1="390.96" y1="191.50" x2="542.93" y2="191.50" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="301.96" cy="204.60" r="1.55" fill="#6a8bb0"/>
+<text x="308.96" y="209.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">The consumer maps its planning model into compact</text>
+<text x="308.96" y="219.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">RoadmapView data while keeping the original</text>
+<text x="308.96" y="230.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">planning text complete and readable.</text>
+<circle cx="301.96" cy="239.47" r="1.55" fill="#6a8bb0"/>
+<text x="308.96" y="243.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">Renderer layout adapts to wrapped content instead</text>
+<text x="308.96" y="254.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">of imposing a fixed line-count contract on the</text>
+<text x="308.96" y="265.12" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">consumer source.</text>
+<text x="298.96" y="289.25" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">DEMO</text>
+<line x1="390.96" y1="286.25" x2="542.93" y2="286.25" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="301.96" cy="299.35" r="1.55" fill="#6a8bb0"/>
+<text x="308.96" y="303.75" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">Generate SVG and PDF from the compact view and</text>
+<text x="308.96" y="314.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">inspect both outputs.</text>
+<text x="298.96" y="338.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">DOCUMENT STATUS</text>
+<line x1="390.96" y1="335.50" x2="542.93" y2="335.50" stroke="#d9dde1" stroke-width="1"/>
+<rect x="298.96" y="344.50" width="36.75" height="16.00" rx="5" fill="#fff4d6" stroke="#a77a19"/>
+<text x="317.34" y="355.90" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#6a4b00">DESIGN</text>
+<rect x="341.71" y="344.50" width="28.50" height="16.00" rx="5" fill="#eaf5e7" stroke="#5a8750"/>
+<text x="355.96" y="355.90" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#31582b">TEST</text>
+<rect x="561.93" y="75.50" width="261.96" height="151.25" rx="6" fill="#fff" stroke="#b8c0c8" stroke-width="1"/>
+<rect x="570.93" y="84.50" width="24.00" height="24.00" rx="5" fill="#f3f5f7" stroke="#8b96a1"/>
+<text x="582.93" y="100.70" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.50" font-weight="bold" fill="#2f3337">3</text>
+<rect x="774.01" y="84.50" width="40.88" height="16.00" rx="8" fill="#f1f1f1" stroke="#888888"/>
+<text x="794.45" y="95.90" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="bold" fill="#555555">PLANNED</text>
+<text x="570.93" y="127.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="11.50" font-weight="bold" fill="#2f3337">Qualify release behavior</text>
+<text x="570.93" y="148.88" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">RESULT</text>
+<line x1="662.93" y1="145.88" x2="814.89" y2="145.88" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="573.93" cy="158.97" r="1.55" fill="#6a8bb0"/>
+<text x="580.93" y="163.38" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">Owner and consumer verification are green.</text>
+<text x="570.93" y="187.50" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.00" font-weight="bold" fill="#4b5b6b">DEMO</text>
+<line x1="662.93" y1="184.50" x2="814.89" y2="184.50" stroke="#d9dde1" stroke-width="1"/>
+<circle cx="573.93" cy="197.60" r="1.55" fill="#6a8bb0"/>
+<text x="580.93" y="202.00" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">Rebuild the published roadmap from a clean</text>
+<text x="580.93" y="212.62" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="8.50" font-weight="normal" fill="#2f3337">checkout.</text>
+<text x="775.89" y="581.28" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="7.50" font-weight="normal" fill="#777">Page 1/1</text></g>
+</svg>
