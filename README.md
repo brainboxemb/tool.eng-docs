@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.8.0"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.0"
 ```
 
 The package installs the `eng-docs` command.
