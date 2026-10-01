@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.9.1 — 2026-10-01
+
+### Changed
+
+- allow BoardView detail boards to span multiple portrait A4 pages instead of
+  forcing consumers to shorten authoritative planning content;
+- paginate at top-level board-block boundaries while preserving existing
+  typography/card sizing;
+- generate real multi-page PDF output and a continuous SVG review view with
+  visible page-break markers.
+
+### Compatibility
+
+- existing one-page BoardView sources remain valid and keep a one-page layout;
+- BoardView YAML schema is unchanged;
+- an individual top-level block is still indivisible and produces a clear error
+  only when that block itself cannot fit on one A4 page.
+
+
 ## 0.9.0 — 2026-10-01
 
 ### Added
