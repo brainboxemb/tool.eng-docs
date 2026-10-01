@@ -1315,7 +1315,7 @@ def render_sequence_drawio(data, theme, out: Path):
             id=f"sequence-activation-{activation['id']}",
             value="",
             style=(
-                "shape=mxgraph.uml.activation;points=[];html=1;"
+                "points=[];html=1;whiteSpace=wrap;"
                 f"fillColor={style['fill']};strokeColor={style['stroke']};"
             ),
             vertex="1",

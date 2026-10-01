@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.4.0` adds a third bounded capability for reusable engineering-graph
-normalization and review on top of the released diagram and document-assembly
-capabilities.
+`v0.8.0` extends the declarative sequence-diagram capability with native UML
+lifelines, activation bars and self-calls while retaining the existing structural
+diagram, assembly, engineering-graph, roadmap and board capabilities.
 
 ### Declarative diagrams
 
@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.4.0"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.8.0"
 ```
 
 The package installs the `eng-docs` command.
@@ -341,7 +341,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.4.0
+v0.8.0
 ```
 
 Consumers should pin a release rather than a feature branch.

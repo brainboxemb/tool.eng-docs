@@ -542,7 +542,8 @@ def test_sequence_example_generates_native_uml_deterministic_outputs(tmp_path):
         if element.attrib.get("id", "").startswith("sequence-activation-")
     ]
     assert len(activations) >= 2
-    assert all("shape=mxgraph.uml.activation" in item.attrib["style"] for item in activations)
+    assert all("points=[]" in item.attrib["style"] for item in activations)
+    assert all("shape=mxgraph.uml.activation" not in item.attrib["style"] for item in activations)
 
     persisted = drawio_root.find(".//mxCell[@id='sequence-message-3']")
     returned = drawio_root.find(".//mxCell[@id='sequence-message-4']")
