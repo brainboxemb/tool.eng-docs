@@ -1,0 +1,39 @@
+diagram:
+  id: sequence-conformance
+  type: sequence
+  title: Sequence diagram conformance
+  width: 1040
+  height: 620
+  description: Domain-neutral renderer conformance fixture for sequence diagrams.
+
+participants:
+  - id: source
+    label: Source
+    kind: external
+  - id: queue
+    label: Queue
+    kind: integration
+  - id: worker
+    label: Worker
+    kind: service
+  - id: store
+    label: Store
+    kind: storage
+
+messages:
+  - from: source
+    to: queue
+    label: enqueue
+    kind: async
+  - from: queue
+    to: worker
+    label: dispatch
+    kind: async
+  - from: worker
+    to: store
+    label: persist
+    kind: call
+  - from: store
+    to: worker
+    label: persisted
+    kind: return
