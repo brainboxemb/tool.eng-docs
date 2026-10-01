@@ -173,6 +173,34 @@ def _card_layout(card, width):
     }
 
 
+def _paginate_blocks(blocks, first_content_top):
+    page_bottom = PH - MARGIN - FOOTER
+    continuation_capacity = page_bottom - MARGIN
+    if first_content_top > page_bottom:
+        raise ValueError(
+            "board title/header cannot fit on one A4 portrait page"
+        )
+
+    pages = [[]]
+    cursor = first_content_top
+    for block in blocks:
+        if block["height"] > continuation_capacity:
+            raise ValueError(
+                "board block cannot fit on one A4 portrait page: "
+                f"{block['label']!r} requires {block['height']:.1f}pt, "
+                f"available {continuation_capacity:.1f}pt"
+            )
+
+        if cursor + block["height"] > page_bottom:
+            pages.append([])
+            cursor = MARGIN
+
+        pages[-1].append(block)
+        cursor += block["height"] + block["gap"]
+
+    return tuple(tuple(page) for page in pages)
+
+
 def layout_board(data):
     board = data["board"]
     usable = PW - 2 * MARGIN
@@ -193,10 +221,19 @@ def layout_board(data):
     if meta_lines:
         cursor += 5.0 + len(meta_lines) * _lh(SMALL)
     cursor += BLOCK_GAP
+    first_content_top = cursor
+    blocks = []
 
     summary = None
     if board.get("summary"):
         summary = _summary_layout(board["summary"], usable)
+        blocks.append({
+            "kind": "summary",
+            "label": summary["heading"],
+            "value": summary,
+            "height": summary["height"],
+            "gap": BLOCK_GAP,
+        })
         cursor += summary["height"] + BLOCK_GAP
 
     section_columns = int(board.get("section_columns", 1))
@@ -210,6 +247,13 @@ def layout_board(data):
         )
         row_h = max(section["height"] for section in row)
         section_rows.append((row, row_h))
+        blocks.append({
+            "kind": "section_row",
+            "label": " / ".join(section["heading"] for section in row),
+            "value": row,
+            "height": row_h,
+            "gap": BLOCK_GAP,
+        })
         cursor += row_h + BLOCK_GAP
 
     badge_section = None
@@ -221,6 +265,13 @@ def layout_board(data):
             "rows": rows,
             "height": _lh(HEADING) + 7.0 + len(rows) * 19.0,
         }
+        blocks.append({
+            "kind": "badges",
+            "label": badge_section["heading"],
+            "value": badge_section,
+            "height": badge_section["height"],
+            "gap": BLOCK_GAP,
+        })
         cursor += badge_section["height"] + BLOCK_GAP
 
     card_width = (usable - (COLS - 1) * GAP) / COLS
@@ -235,11 +286,19 @@ def layout_board(data):
         height = _lh(HEADING) + 8.0
         height += sum(row_h for _, row_h in rows)
         height += GAP * max(0, len(rows) - 1)
-        groups.append({
+        group_layout = {
             "heading": group["heading"],
             "tone": group.get("tone"),
             "rows": tuple(rows),
             "height": height,
+        }
+        groups.append(group_layout)
+        blocks.append({
+            "kind": "group",
+            "label": group_layout["heading"],
+            "value": group_layout,
+            "height": group_layout["height"],
+            "gap": GROUP_GAP,
         })
         cursor += height + GROUP_GAP
 
@@ -247,14 +306,17 @@ def layout_board(data):
     for section in board.get("trailing_sections", []):
         layout = _section_layout(section, usable)
         trailing.append(layout)
+        blocks.append({
+            "kind": "trailing",
+            "label": layout["heading"],
+            "value": layout,
+            "height": layout["height"],
+            "gap": BLOCK_GAP,
+        })
         cursor += layout["height"] + BLOCK_GAP
 
     required = cursor + FOOTER
-    if required > PH - MARGIN:
-        raise ValueError(
-            "board view cannot fit on one A4 portrait page: "
-            f"requires {required:.1f}pt, available {PH - MARGIN:.1f}pt"
-        )
+    pages = _paginate_blocks(tuple(blocks), first_content_top)
 
     return {
         "marker": marker,
@@ -270,6 +332,10 @@ def layout_board(data):
         "groups": tuple(groups),
         "trailing_sections": tuple(trailing),
         "card_width": card_width,
+        "blocks": tuple(blocks),
+        "pages": pages,
+        "page_count": len(pages),
+        "first_content_top": first_content_top,
         "required_height": required,
     }
 
