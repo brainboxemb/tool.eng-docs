@@ -1000,6 +1000,8 @@ def render_drawio(data, theme, out: Path):
         }
         if node.get("object_id"):
             attrs["data-engineering-id"] = node["object_id"]
+        if node.get("notation"):
+            attrs["data-notation"] = node["notation"]
         cell = ET.SubElement(root, "mxCell", attrs)
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
