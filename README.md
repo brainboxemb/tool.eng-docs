@@ -14,7 +14,7 @@ capabilities.
 ### Declarative diagrams
 
 - declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items and optional engineering identity on nodes or selected structured items;
-- declarative YAML sequence diagrams with ordered participants plus call/async/return messages;
+- declarative YAML sequence diagrams with native UML lifelines, inferred activation bars, self-calls and call/async/return messages;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
 - reusable YAML themes;

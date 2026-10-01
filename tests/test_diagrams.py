@@ -490,7 +490,7 @@ def test_invalid_anchor_position_is_rejected():
         validate_source(data, schema, FIXTURES / "simple-flow.yaml")
 
 
-def test_sequence_example_generates_parseable_deterministic_outputs(tmp_path):
+def test_sequence_example_generates_native_uml_deterministic_outputs(tmp_path):
     source = tmp_path / "source"
     source.mkdir()
     example = Path(__file__).parents[1] / "examples" / "sequence-flow.yaml"
@@ -513,26 +513,49 @@ def test_sequence_example_generates_parseable_deterministic_outputs(tmp_path):
     drawio_text = drawio.read_text(encoding="utf-8")
 
     assert "Asynchronous work sequence" in svg_text
-    assert "submit work" in svg_text
+    assert "process queued work" in svg_text
     assert "stored" in drawio_text
     assert len([
         element for element in svg_root.iter()
         if element.attrib.get("data-sequence-lifeline")
-    ]) == 4
+    ]) == 3
     assert len([
         element for element in svg_root.iter()
         if element.attrib.get("data-sequence-message")
     ]) == 5
+    assert len([
+        element for element in svg_root.iter()
+        if element.attrib.get("data-sequence-activation")
+    ]) >= 2
+    assert any(
+        element.attrib.get("data-sequence-self-message") == "true"
+        for element in svg_root.iter()
+    )
 
-    call = drawio_root.find(".//mxCell[@id='sequence-message-3']")
+    lifeline = drawio_root.find(".//mxCell[@id='sequence-participant-worker']")
+    assert lifeline is not None
+    assert "shape=umlLifeline" in lifeline.attrib["style"]
+    assert "perimeter=lifelinePerimeter" in lifeline.attrib["style"]
+
+    activations = [
+        element for element in drawio_root.findall(".//mxCell")
+        if element.attrib.get("id", "").startswith("sequence-activation-")
+    ]
+    assert len(activations) >= 2
+    assert all("shape=mxgraph.uml.activation" in item.attrib["style"] for item in activations)
+
+    persisted = drawio_root.find(".//mxCell[@id='sequence-message-3']")
     returned = drawio_root.find(".//mxCell[@id='sequence-message-4']")
     async_message = drawio_root.find(".//mxCell[@id='sequence-message-1']")
-    assert call is not None
+    self_message = drawio_root.find(".//mxCell[@id='sequence-message-2']")
+    assert persisted is not None
     assert returned is not None
     assert async_message is not None
-    assert "endArrow=block" in call.attrib["style"]
+    assert self_message is not None
+    assert "endArrow=block" in persisted.attrib["style"]
     assert "endArrow=open" in async_message.attrib["style"]
     assert "dashed=1" in returned.attrib["style"]
+    assert "orthogonalEdgeStyle" in self_message.attrib["style"]
 
     assert svg.read_bytes() == (second / "sequence-flow.svg").read_bytes()
     assert drawio.read_bytes() == (second / "sequence-flow.drawio").read_bytes()
@@ -571,12 +594,10 @@ def test_sequence_rejects_unknown_participant_kind():
         )
 
 
-def test_sequence_rejects_self_message_in_first_slice():
+def test_sequence_accepts_self_message():
     data = load_yaml(Path(__file__).parents[1] / "examples" / "sequence-flow.yaml")
-    data["messages"][0]["to"] = data["messages"][0]["from"]
-    with pytest.raises(ValueError, match="self sequence messages"):
-        validate_sequence_refs(
-            data,
-            load_yaml(THEME),
-            Path("sequence-flow.yaml"),
-        )
+    validate_sequence_refs(
+        data,
+        load_yaml(THEME),
+        Path("sequence-flow.yaml"),
+    )
