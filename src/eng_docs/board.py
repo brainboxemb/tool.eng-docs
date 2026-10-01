@@ -173,6 +173,34 @@ def _card_layout(card, width):
     }
 
 
+def _paginate_blocks(blocks, first_content_top):
+    page_bottom = PH - MARGIN - FOOTER
+    continuation_capacity = page_bottom - MARGIN
+    if first_content_top > page_bottom:
+        raise ValueError(
+            "board title/header cannot fit on one A4 portrait page"
+        )
+
+    pages = [[]]
+    cursor = first_content_top
+    for block in blocks:
+        if block["height"] > continuation_capacity:
+            raise ValueError(
+                "board block cannot fit on one A4 portrait page: "
+                f"{block['label']!r} requires {block['height']:.1f}pt, "
+                f"available {continuation_capacity:.1f}pt"
+            )
+
+        if cursor + block["height"] > page_bottom:
+            pages.append([])
+            cursor = MARGIN
+
+        pages[-1].append(block)
+        cursor += block["height"] + block["gap"]
+
+    return tuple(tuple(page) for page in pages)
+
+
 def layout_board(data):
     board = data["board"]
     usable = PW - 2 * MARGIN
@@ -193,10 +221,19 @@ def layout_board(data):
     if meta_lines:
         cursor += 5.0 + len(meta_lines) * _lh(SMALL)
     cursor += BLOCK_GAP
+    first_content_top = cursor
+    blocks = []
 
     summary = None
     if board.get("summary"):
         summary = _summary_layout(board["summary"], usable)
+        blocks.append({
+            "kind": "summary",
+            "label": summary["heading"],
+            "value": summary,
+            "height": summary["height"],
+            "gap": BLOCK_GAP,
+        })
         cursor += summary["height"] + BLOCK_GAP
 
     section_columns = int(board.get("section_columns", 1))
@@ -210,6 +247,13 @@ def layout_board(data):
         )
         row_h = max(section["height"] for section in row)
         section_rows.append((row, row_h))
+        blocks.append({
+            "kind": "section_row",
+            "label": " / ".join(section["heading"] for section in row),
+            "value": row,
+            "height": row_h,
+            "gap": BLOCK_GAP,
+        })
         cursor += row_h + BLOCK_GAP
 
     badge_section = None
@@ -221,6 +265,13 @@ def layout_board(data):
             "rows": rows,
             "height": _lh(HEADING) + 7.0 + len(rows) * 19.0,
         }
+        blocks.append({
+            "kind": "badges",
+            "label": badge_section["heading"],
+            "value": badge_section,
+            "height": badge_section["height"],
+            "gap": BLOCK_GAP,
+        })
         cursor += badge_section["height"] + BLOCK_GAP
 
     card_width = (usable - (COLS - 1) * GAP) / COLS
@@ -235,11 +286,19 @@ def layout_board(data):
         height = _lh(HEADING) + 8.0
         height += sum(row_h for _, row_h in rows)
         height += GAP * max(0, len(rows) - 1)
-        groups.append({
+        group_layout = {
             "heading": group["heading"],
             "tone": group.get("tone"),
             "rows": tuple(rows),
             "height": height,
+        }
+        groups.append(group_layout)
+        blocks.append({
+            "kind": "group",
+            "label": group_layout["heading"],
+            "value": group_layout,
+            "height": group_layout["height"],
+            "gap": GROUP_GAP,
         })
         cursor += height + GROUP_GAP
 
@@ -247,14 +306,17 @@ def layout_board(data):
     for section in board.get("trailing_sections", []):
         layout = _section_layout(section, usable)
         trailing.append(layout)
+        blocks.append({
+            "kind": "trailing",
+            "label": layout["heading"],
+            "value": layout,
+            "height": layout["height"],
+            "gap": BLOCK_GAP,
+        })
         cursor += layout["height"] + BLOCK_GAP
 
     required = cursor + FOOTER
-    if required > PH - MARGIN:
-        raise ValueError(
-            "board view cannot fit on one A4 portrait page: "
-            f"requires {required:.1f}pt, available {PH - MARGIN:.1f}pt"
-        )
+    pages = _paginate_blocks(tuple(blocks), first_content_top)
 
     return {
         "marker": marker,
@@ -270,6 +332,10 @@ def layout_board(data):
         "groups": tuple(groups),
         "trailing_sections": tuple(trailing),
         "card_width": card_width,
+        "blocks": tuple(blocks),
+        "pages": pages,
+        "page_count": len(pages),
+        "first_content_top": first_content_top,
         "required_height": required,
     }
 
@@ -374,14 +440,9 @@ def _svg_card(parts, x, y, width, height, card):
         _svg_text(parts, x + PAD, cursor + SMALL, card["meta"], SMALL, fill=TEXT_MUTED)
 
 
-def render_svg(layout, path: Path):
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" '
-        f'viewBox="0 0 {PW:.2f} {PH:.2f}">',
-        f'<rect width="100%" height="100%" fill="{PAGE_BACKGROUND}"/>',
-    ]
+def _svg_header(parts, layout, page_offset=0.0):
     usable = PW - 2 * MARGIN
-    y = MARGIN
+    y = page_offset + MARGIN
     if layout["marker"]:
         mw = layout["marker_width"]
         parts.append(
@@ -408,34 +469,79 @@ def render_svg(layout, path: Path):
         y += 5.0
         _svg_text(parts, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=TEXT_MUTED)
         y += len(layout["meta_lines"]) * _lh(SMALL)
-    y += BLOCK_GAP
+    return y + BLOCK_GAP
 
-    if layout["summary"]:
-        y = _svg_summary(parts, MARGIN, y, usable, layout["summary"]) + BLOCK_GAP
 
-    for row, row_h in layout["section_rows"]:
-        for col, section in enumerate(row):
+def _svg_group(parts, layout, y, group):
+    usable = PW - 2 * MARGIN
+    _svg_heading(parts, MARGIN, y, usable, group["heading"])
+    y += _lh(HEADING) + 8.0
+    for row_index, (row, row_h) in enumerate(group["rows"]):
+        for col, card in enumerate(row):
+            x = MARGIN + col * (layout["card_width"] + GAP)
+            _svg_card(parts, x, y, layout["card_width"], row_h, card)
+        y += row_h
+        if row_index + 1 < len(group["rows"]):
+            y += GAP
+    return y
+
+
+def _svg_block(parts, layout, block, y):
+    usable = PW - 2 * MARGIN
+    kind = block["kind"]
+    value = block["value"]
+    if kind == "summary":
+        y = _svg_summary(parts, MARGIN, y, usable, value)
+    elif kind == "section_row":
+        for col, section in enumerate(value):
             x = MARGIN + col * (layout["section_width"] + GAP)
             _svg_section(parts, x, y, layout["section_width"], section)
-        y += row_h + BLOCK_GAP
+        y += block["height"]
+    elif kind == "badges":
+        y = _svg_badges(parts, MARGIN, y, usable, value)
+    elif kind == "group":
+        y = _svg_group(parts, layout, y, value)
+    elif kind == "trailing":
+        y = _svg_section(parts, MARGIN, y, usable, value)
+    else:
+        raise ValueError(f"unsupported board block kind: {kind}")
+    return y + block["gap"]
 
-    if layout["badge_section"]:
-        y = _svg_badges(parts, MARGIN, y, usable, layout["badge_section"]) + BLOCK_GAP
 
-    for group in layout["groups"]:
-        _svg_heading(parts, MARGIN, y, usable, group["heading"])
-        y += _lh(HEADING) + 8.0
-        for row_index, (row, row_h) in enumerate(group["rows"]):
-            for col, card in enumerate(row):
-                x = MARGIN + col * (layout["card_width"] + GAP)
-                _svg_card(parts, x, y, layout["card_width"], row_h, card)
-            y += row_h
-            if row_index + 1 < len(group["rows"]):
-                y += GAP
-        y += GROUP_GAP
+def render_svg(layout, path: Path):
+    page_count = layout["page_count"]
+    total_height = PH * page_count
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="210mm" '
+        f'height="{297 * page_count}mm" '
+        f'viewBox="0 0 {PW:.2f} {total_height:.2f}">',
+        f'<rect width="100%" height="100%" fill="{PAGE_BACKGROUND}"/>',
+    ]
 
-    for section in layout["trailing_sections"]:
-        y = _svg_section(parts, MARGIN, y, usable, section) + BLOCK_GAP
+    for page_index, page_blocks in enumerate(layout["pages"]):
+        offset = page_index * PH
+        if page_index == 0:
+            y = _svg_header(parts, layout, offset)
+        else:
+            y = offset + MARGIN
+            parts.append(
+                f'<line x1="{MARGIN:.2f}" y1="{offset:.2f}" '
+                f'x2="{PW-MARGIN:.2f}" y2="{offset:.2f}" '
+                f'stroke="{RULE}" stroke-width="1" stroke-dasharray="4 4"/>'
+            )
+            _svg_text(
+                parts,
+                PW - MARGIN,
+                offset + 10.0,
+                [f"PAGE {page_index + 1}"],
+                SMALL,
+                "bold",
+                TEXT_MUTED,
+                "end",
+            )
+
+        for block in page_blocks:
+            y = _svg_block(parts, layout, block, y)
 
     parts.append("</svg>")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -545,10 +651,7 @@ def _pdf_card(c, x, top, width, height, card):
         _pdf_text(c, x + PAD, cursor + SMALL, card["meta"], SMALL, fill=hex_rgb(TEXT_MUTED))
 
 
-def render_pdf(layout, path: Path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    c = canvas.Canvas(str(path), pagesize=(PW, PH))
-    usable = PW - 2 * MARGIN
+def _pdf_header(c, layout):
     y = MARGIN
     if layout["marker"]:
         mw = layout["marker_width"]
@@ -575,36 +678,64 @@ def render_pdf(layout, path: Path):
         y += 5.0
         _pdf_text(c, MARGIN, y + SMALL, layout["meta_lines"], SMALL, fill=hex_rgb(TEXT_MUTED))
         y += len(layout["meta_lines"]) * _lh(SMALL)
-    y += BLOCK_GAP
+    return y + BLOCK_GAP
 
-    if layout["summary"]:
-        y = _pdf_summary(c, MARGIN, y, usable, layout["summary"]) + BLOCK_GAP
 
-    for row, row_h in layout["section_rows"]:
-        for col, section in enumerate(row):
+def _pdf_group(c, layout, top, group):
+    usable = PW - 2 * MARGIN
+    _pdf_heading(c, MARGIN, top, usable, group["heading"])
+    top += _lh(HEADING) + 8.0
+    for row_index, (row, row_h) in enumerate(group["rows"]):
+        for col, card in enumerate(row):
+            x = MARGIN + col * (layout["card_width"] + GAP)
+            _pdf_card(c, x, top, layout["card_width"], row_h, card)
+        top += row_h
+        if row_index + 1 < len(group["rows"]):
+            top += GAP
+    return top
+
+
+def _pdf_block(c, layout, block, top):
+    usable = PW - 2 * MARGIN
+    kind = block["kind"]
+    value = block["value"]
+    if kind == "summary":
+        top = _pdf_summary(c, MARGIN, top, usable, value)
+    elif kind == "section_row":
+        for col, section in enumerate(value):
             x = MARGIN + col * (layout["section_width"] + GAP)
-            _pdf_section(c, x, y, layout["section_width"], section)
-        y += row_h + BLOCK_GAP
+            _pdf_section(c, x, top, layout["section_width"], section)
+        top += block["height"]
+    elif kind == "badges":
+        top = _pdf_badges(c, MARGIN, top, usable, value)
+    elif kind == "group":
+        top = _pdf_group(c, layout, top, value)
+    elif kind == "trailing":
+        top = _pdf_section(c, MARGIN, top, usable, value)
+    else:
+        raise ValueError(f"unsupported board block kind: {kind}")
+    return top + block["gap"]
 
-    if layout["badge_section"]:
-        y = _pdf_badges(c, MARGIN, y, usable, layout["badge_section"]) + BLOCK_GAP
 
-    for group in layout["groups"]:
-        _pdf_heading(c, MARGIN, y, usable, group["heading"])
-        y += _lh(HEADING) + 8.0
-        for row_index, (row, row_h) in enumerate(group["rows"]):
-            for col, card in enumerate(row):
-                x = MARGIN + col * (layout["card_width"] + GAP)
-                _pdf_card(c, x, y, layout["card_width"], row_h, card)
-            y += row_h
-            if row_index + 1 < len(group["rows"]):
-                y += GAP
-        y += GROUP_GAP
+def render_pdf(layout, path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    c = canvas.Canvas(str(path), pagesize=(PW, PH))
 
-    for section in layout["trailing_sections"]:
-        y = _pdf_section(c, MARGIN, y, usable, section) + BLOCK_GAP
+    for page_index, page_blocks in enumerate(layout["pages"]):
+        top = _pdf_header(c, layout) if page_index == 0 else MARGIN
+        for block in page_blocks:
+            top = _pdf_block(c, layout, block, top)
 
-    c.showPage()
+        if layout["page_count"] > 1:
+            c.setFont("Helvetica", SMALL)
+            c.setFillColorRGB(*hex_rgb(TEXT_MUTED))
+            c.drawRightString(
+                PW - MARGIN,
+                MARGIN / 2,
+                f"{page_index + 1}/{layout['page_count']}",
+            )
+        c.showPage()
+
     c.save()
 
 

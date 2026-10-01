@@ -1,5 +1,6 @@
 from pathlib import Path
 import copy
+import re
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -19,6 +20,7 @@ def source():
 def test_example_generates_print_friendly_svg_and_pdf(tmp_path):
     layout = generate(EXAMPLE, SCHEMA, tmp_path)
     assert layout["card_width"] > 160
+    assert layout["page_count"] == 1
     ET.parse(tmp_path / "board.svg")
     svg = (tmp_path / "board.svg").read_text(encoding="utf-8")
     assert "Engineering detail board" in svg
@@ -53,13 +55,41 @@ def test_cards_grow_with_wrapped_meta():
     assert grown["groups"][0]["rows"][0][0][0]["height"] > base
 
 
-def test_unrepresentable_board_fails_at_page_boundary():
+def test_individual_block_that_cannot_fit_one_page_is_rejected():
     data = source()
     data["board"]["groups"][0]["cards"][0]["meta"] = [
         " ".join(["content"] * 2500)
     ]
-    with pytest.raises(ValueError, match="cannot fit on one A4 portrait page"):
+    with pytest.raises(ValueError, match="board block cannot fit on one A4 portrait page"):
         layout_board(data)
+
+
+def test_long_board_paginates_without_shrinking_or_truncating(tmp_path):
+    data = source()
+    data["board"]["trailing_sections"].extend([
+        {
+            "heading": f"Additional review section {index}",
+            "bullets": [
+                "Readable board content remains intact across page boundaries."
+                for _ in range(8)
+            ],
+        }
+        for index in range(1, 4)
+    ])
+    path = tmp_path / "multipage.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+
+    layout = generate(path, SCHEMA, tmp_path / "multipage-out")
+
+    assert layout["page_count"] >= 2
+    svg = (tmp_path / "multipage-out/board.svg").read_text(encoding="utf-8")
+    assert f'height="{297 * layout["page_count"]}mm"' in svg
+    assert "PAGE 2" in svg
+    assert "ADDITIONAL REVIEW SECTION 3" in svg
+
+    pdf = (tmp_path / "multipage-out/board.pdf").read_bytes()
+    pages = re.findall(rb"/Type\s*/Page(?!s)", pdf)
+    assert len(pages) == layout["page_count"]
 
 
 def test_unknown_tones_use_neutral_fallback(tmp_path):

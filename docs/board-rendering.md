@@ -99,9 +99,20 @@ primitives:
 - compact outer margins and block spacing preserve readable typography while
   using the portrait page efficiently.
 
-The first implementation keeps one BoardView on one portrait A4 page. If the
-consumer-produced view cannot fit even after card growth, rendering fails with an
-explicit presentation-size error instead of clipping or ellipsizing content.
+BoardView preserves the A4 portrait page model without imposing a one-page limit.
+When the complete board is taller than one page, the renderer paginates at
+top-level block boundaries (summary, section rows, badge section, groups and
+trailing sections):
+
+- `board.pdf` contains real A4 pages;
+- `board.svg` remains one continuous vertical review view with visible page
+  boundaries;
+- typography, card size and source content are not reduced merely to force a
+  board onto one page;
+- an individual top-level block remains indivisible in this slice. Rendering
+  fails only when that one block itself cannot fit on a single A4 page.
+
+Existing boards that fit on one page keep the same one-page presentation.
 
 ## CLI
 
