@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.8.0 — 2026-10-01
+
+### Added
+
+- native draw.io `umlLifeline` participant shapes for declarative sequence diagrams;
+- inferred UML activation bars for synchronous calls and matching returns;
+- self messages, including synchronous and asynchronous loopback interactions;
+- activation-aware SVG/message geometry matching the editable draw.io output.
+
+### Changed
+
+- sequence diagrams now render as conventional UML interaction views instead of
+  generic participant cards with separately drawn lifelines;
+- activation bars remain simple editable child cells so the draw.io output does
+  not depend on a separate stencil library;
+- the domain-neutral sequence example and conformance tests cover async hand-off,
+  self processing, persistence and return behaviour.
+
+### Compatibility
+
+- existing sequence sources using `call`, `async` and `return` remain valid;
+- existing structural diagram sources and rendering are unchanged;
+- UML interaction fragments such as `alt`, `loop` and `par` remain deferred.
+
+
 ## 0.7.0 — 2026-09-30
 
 ### Added

@@ -218,9 +218,11 @@ messages:
     kind: return
 ```
 
-The renderer creates participant headers, dashed lifelines and messages in source
-order from top to bottom. The same source produces deterministic SVG and native
-editable draw.io output.
+The renderer creates UML lifelines, activation bars and messages in source order
+from top to bottom. The draw.io output uses native `umlLifeline` participant
+shapes plus editable activation-bar child cells; SVG uses the same
+lifeline/activation geometry. The same source therefore remains deterministic
+while opening as an editable UML sequence diagram in draw.io.
 
 ### `participants`
 
@@ -259,10 +261,27 @@ return  return/result; dashed line + open arrow
 
 `kind` defaults semantically to `call` when omitted.
 
-Both `from` and `to` must reference existing participants. Self messages are
-deliberately deferred in the first slice. UML fragments such as `alt`, `loop`
-and `par`, activation bars and destruction markers are also deferred until a
-real consumer requires them.
+Synchronous `call` messages start an activation on the target. A matching
+`return` from that target to the caller closes the most recent matching
+activation. When a high-level diagram omits a routine return, the activation
+extends through that participant's remaining interaction.
+
+A message may also target the same participant:
+
+```yaml
+- from: worker
+  to: worker
+  label: process queued work
+  kind: call
+```
+
+That is rendered as a UML self-call and is useful for showing internal processing
+without inventing another architectural participant. Asynchronous messages use
+an open arrow and do not by themselves create an activation bar.
+
+Both `from` and `to` must reference existing participants. UML interaction
+fragments such as `alt`, `loop` and `par`, plus destruction markers, remain
+deferred until a real consumer requires them.
 
 Sequence diagrams are intended for interaction/process views. Use the structural
 source model for component/layer topology and routing-heavy architecture views.

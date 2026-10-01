@@ -2,18 +2,15 @@ diagram:
   id: sequence-flow
   type: sequence
   title: Asynchronous work sequence
-  width: 1200
-  height: 700
-  description: Domain-neutral example of ordered call, asynchronous and return messages.
-  note: Participants are ordered left to right; messages are rendered top to bottom.
+  width: 1100
+  height: 680
+  description: Domain-neutral example of asynchronous hand-off followed by synchronous processing and persistence.
+  note: Synchronous calls infer UML activation bars; the self-call shows internal processing.
 
 participants:
   - id: client
     label: Client
     kind: external
-  - id: queue
-    label: Work queue
-    kind: integration
   - id: worker
     label: Worker
     kind: service
@@ -23,13 +20,13 @@ participants:
 
 messages:
   - from: client
-    to: queue
+    to: worker
     label: submit work
     kind: async
-  - from: queue
+  - from: worker
     to: worker
-    label: next item
-    kind: async
+    label: process queued work
+    kind: call
   - from: worker
     to: store
     label: persist

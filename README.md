@@ -7,14 +7,14 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.4.0` adds a third bounded capability for reusable engineering-graph
-normalization and review on top of the released diagram and document-assembly
-capabilities.
+`v0.8.0` extends the declarative sequence-diagram capability with native UML
+lifelines, activation bars and self-calls while retaining the existing structural
+diagram, assembly, engineering-graph, roadmap and board capabilities.
 
 ### Declarative diagrams
 
 - declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items and optional engineering identity on nodes or selected structured items;
-- declarative YAML sequence diagrams with ordered participants plus call/async/return messages;
+- declarative YAML sequence diagrams with native UML lifelines, inferred activation bars, self-calls and call/async/return messages;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
 - reusable YAML themes;
@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.4.0"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.8.0"
 ```
 
 The package installs the `eng-docs` command.
@@ -341,7 +341,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.4.0
+v0.8.0
 ```
 
 Consumers should pin a release rather than a feature branch.

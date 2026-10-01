@@ -889,10 +889,6 @@ def validate_sequence_refs(data, theme, path: Path):
                 f"{path}: sequence message references missing participant: "
                 f"{message['from']} -> {message['to']}"
             )
-        if message["from"] == message["to"]:
-            raise ValueError(
-                f"{path}: self sequence messages are not supported in the first slice"
-            )
 
 
 def _sequence_layout(data):
@@ -907,9 +903,15 @@ def _sequence_layout(data):
     header_width = min(190.0, max(120.0, spacing * 0.72))
     header_height = 58.0
     header_y = 100.0
-    message_start_y = 235.0
+    message_start_y = 225.0
     message_gap = 70.0
-    lifeline_bottom = message_start_y + max(1, len(messages)) * message_gap + 20.0
+    self_message_height = 28.0
+    lifeline_bottom = (
+        message_start_y
+        + max(0, len(messages) - 1) * message_gap
+        + self_message_height
+        + 45.0
+    )
 
     if lifeline_bottom > float(d["height"]) - 25.0:
         raise ValueError(
@@ -944,12 +946,94 @@ def _sequence_layout(data):
             }
         )
 
+    # Synchronous calls create activation bars on the target. A matching return
+    # closes the most recent activation opened by that caller. Unmatched calls
+    # remain active through that participant's last interaction, which keeps the
+    # notation useful for high-level flows that omit routine returns.
+    activations = []
+    active = {participant["id"]: [] for participant in participants}
+    last_y = {
+        participant["id"]: header_y + header_height
+        for participant in participants
+    }
+    activation_index = 0
+
+    for row in message_rows:
+        message = row["message"]
+        y = row["y"]
+        for participant_id in {message["from"], message["to"]}:
+            last_y[participant_id] = max(last_y[participant_id], y)
+
+        kind = message.get("kind", "call")
+        if kind == "call":
+            participant_id = message["to"]
+            frame = {
+                "id": activation_index,
+                "participant": participant_id,
+                "caller": message["from"],
+                "start_y": y - 10.0,
+                "end_y": None,
+                "depth": len(active[participant_id]),
+            }
+            activation_index += 1
+            active[participant_id].append(frame)
+            activations.append(frame)
+        elif kind == "return":
+            participant_id = message["from"]
+            stack = active[participant_id]
+            for stack_index in range(len(stack) - 1, -1, -1):
+                if stack[stack_index]["caller"] == message["to"]:
+                    frame = stack.pop(stack_index)
+                    frame["end_y"] = y + 10.0
+                    break
+
+    for participant_id, stack in active.items():
+        for frame in stack:
+            frame["end_y"] = max(
+                frame["start_y"] + 36.0,
+                last_y[participant_id] + 18.0,
+            )
+
     return {
         "headers": headers,
         "messages": message_rows,
+        "activations": activations,
+        "positions": positions,
+        "header_width": header_width,
+        "header_height": header_height,
+        "header_y": header_y,
         "header_bottom": header_y + header_height,
         "lifeline_bottom": lifeline_bottom,
+        "self_message_height": self_message_height,
     }
+
+
+def _sequence_activation_at(layout, participant_id, y):
+    matches = [
+        activation
+        for activation in layout["activations"]
+        if activation["participant"] == participant_id
+        and activation["start_y"] <= y <= activation["end_y"]
+    ]
+    if not matches:
+        return None
+    return max(matches, key=lambda activation: activation["depth"])
+
+
+def _sequence_message_x(layout, participant_id, y, toward_x):
+    center_x = layout["positions"][participant_id]
+    activation = _sequence_activation_at(layout, participant_id, y)
+    if activation is None:
+        return center_x
+
+    width = 12.0
+    offset = activation["depth"] * 4.0
+    activation_center = center_x + offset
+    if toward_x > center_x:
+        return activation_center + width / 2
+    if toward_x < center_x:
+        return activation_center - width / 2
+    return activation_center + width / 2
 
 
 def render_sequence_svg(data, theme, out: Path):
@@ -995,14 +1079,14 @@ def render_sequence_svg(data, theme, out: Path):
             "start",
         )
 
+    # UML lifeline: rectangular participant head + dashed vertical lifeline.
     for header in layout["headers"]:
         participant = header["participant"]
         style = _style(theme, participant["kind"])
         parts.append(
             f'<rect x="{header["x"]:.1f}" y="{header["y"]:.1f}" '
             f'width="{header["w"]:.1f}" height="{header["h"]:.1f}" '
-            f'rx="8" ry="8" fill="{style["fill"]}" '
-            f'stroke="{style["stroke"]}" stroke-width="2"/>'
+            f'fill="{style["fill"]}" stroke="{style["stroke"]}" stroke-width="2"/>'
         )
         _svg_text(
             parts,
@@ -1016,7 +1100,24 @@ def render_sequence_svg(data, theme, out: Path):
             f'<line data-sequence-lifeline="{html.escape(participant["id"], quote=True)}" '
             f'x1="{header["center_x"]:.1f}" y1="{layout["header_bottom"]:.1f}" '
             f'x2="{header["center_x"]:.1f}" y2="{layout["lifeline_bottom"]:.1f}" '
-            f'stroke="{edge}" stroke-width="1.5" stroke-dasharray="6 5"/>'
+            f'stroke="{edge}" stroke-width="1.4" stroke-dasharray="5 5"/>'
+        )
+
+    for activation in layout["activations"]:
+        participant = next(
+            header["participant"]
+            for header in layout["headers"]
+            if header["participant"]["id"] == activation["participant"]
+        )
+        style = _style(theme, participant["kind"])
+        center_x = layout["positions"][activation["participant"]] + activation["depth"] * 4.0
+        x = center_x - 6.0
+        height = activation["end_y"] - activation["start_y"]
+        parts.append(
+            f'<rect data-sequence-activation="{activation["id"]}" '
+            f'x="{x:.1f}" y="{activation["start_y"]:.1f}" '
+            f'width="12.0" height="{height:.1f}" '
+            f'fill="{style["fill"]}" stroke="{style["stroke"]}" stroke-width="1.4"/>'
         )
 
     for index, row in enumerate(layout["messages"], 1):
@@ -1024,14 +1125,61 @@ def render_sequence_svg(data, theme, out: Path):
         kind = message.get("kind", "call")
         dashed = ' stroke-dasharray="7 5"' if kind == "return" else ""
         marker = "seq-filled-arrow" if kind == "call" else "seq-open-arrow"
+        is_self = message["from"] == message["to"]
+
+        if is_self:
+            x = _sequence_message_x(
+                layout,
+                message["from"],
+                row["y"],
+                row["from_x"] + 1.0,
+            )
+            loop_x = x + 42.0
+            target_y = row["y"] + layout["self_message_height"]
+            target_x = _sequence_message_x(
+                layout,
+                message["to"],
+                target_y,
+                row["to_x"] + 1.0,
+            )
+            parts.append(
+                f'<path data-sequence-message="{index}" data-sequence-self-message="true" '
+                f'd="M {x:.1f} {row["y"]:.1f} H {loop_x:.1f} '
+                f'V {target_y:.1f} H {target_x:.1f}" '
+                f'fill="none" stroke="{edge}" stroke-width="2"{dashed} '
+                f'marker-end="url(#{marker})"/>'
+            )
+            _svg_text(
+                parts,
+                message["label"],
+                x + 8.0,
+                row["y"] - 13,
+                12,
+                family,
+                anchor="start",
+            )
+            continue
+
+        from_x = _sequence_message_x(
+            layout,
+            message["from"],
+            row["y"],
+            row["to_x"],
+        )
+        to_x = _sequence_message_x(
+            layout,
+            message["to"],
+            row["y"],
+            row["from_x"],
+        )
         parts.append(
             f'<line data-sequence-message="{index}" '
-            f'x1="{row["from_x"]:.1f}" y1="{row["y"]:.1f}" '
-            f'x2="{row["to_x"]:.1f}" y2="{row["y"]:.1f}" '
+            f'x1="{from_x:.1f}" y1="{row["y"]:.1f}" '
+            f'x2="{to_x:.1f}" y2="{row["y"]:.1f}" '
             f'stroke="{edge}" stroke-width="2"{dashed} '
             f'marker-end="url(#{marker})"/>'
         )
-        mid_x = (row["from_x"] + row["to_x"]) / 2
+        mid_x = (from_x + to_x) / 2
         _svg_text(
             parts,
             message["label"],
@@ -1045,7 +1193,17 @@ def render_sequence_svg(data, theme, out: Path):
     out.write_text("\n".join(parts) + "\n", encoding="utf-8")
 
 
-def _drawio_sequence_edge(root, cell_id, value, style, x1, y1, x2, y2):
+def _drawio_sequence_edge(
+    root,
+    cell_id,
+    value,
+    style,
+    x1,
+    y1,
+    x2,
+    y2,
+    waypoints=None,
+):
     cell = ET.SubElement(
         root,
         "mxCell",
@@ -1075,6 +1233,10 @@ def _drawio_sequence_edge(root, cell_id, value, style, x1, y1, x2, y2):
         y=f"{y2:.1f}",
         **{"as": "targetPoint"},
     )
+    if waypoints:
+        points = ET.SubElement(geometry, "Array", **{"as": "points"})
+        for x, y in waypoints:
+            ET.SubElement(points, "mxPoint", x=f"{x:.1f}", y=f"{y:.1f}")
 
 
 def render_sequence_drawio(data, theme, out: Path):
@@ -1107,16 +1269,22 @@ def render_sequence_drawio(data, theme, out: Path):
     ET.SubElement(root, "mxCell", id="0")
     ET.SubElement(root, "mxCell", id="1", parent="0")
 
+    header_by_id = {}
     for header in layout["headers"]:
         participant = header["participant"]
         style = _style(theme, participant["kind"])
+        cell_id = f"sequence-participant-{participant['id']}"
+        header_by_id[participant["id"]] = header
         cell = ET.SubElement(
             root,
             "mxCell",
-            id=f"sequence-participant-{participant['id']}",
+            id=cell_id,
             value=html.escape(participant["label"]).replace("\n", "<br>"),
             style=(
-                "rounded=1;whiteSpace=wrap;html=1;"
+                "shape=umlLifeline;perimeter=lifelinePerimeter;"
+                "whiteSpace=wrap;html=1;container=1;collapsible=0;"
+                "recursiveResize=0;outlineConnect=0;portConstraint=eastwest;"
+                f"size={layout['header_height']:.0f};"
                 f"fillColor={style['fill']};strokeColor={style['stroke']};"
                 "fontFamily=Helvetica;fontSize=14;"
             ),
@@ -1129,21 +1297,38 @@ def render_sequence_drawio(data, theme, out: Path):
             x=f"{header['x']:.1f}",
             y=f"{header['y']:.1f}",
             width=f"{header['w']:.1f}",
-            height=f"{header['h']:.1f}",
+            height=f"{layout['lifeline_bottom'] - header['y']:.1f}",
             **{"as": "geometry"},
         )
-        _drawio_sequence_edge(
+
+    for activation in layout["activations"]:
+        participant_id = activation["participant"]
+        header = header_by_id[participant_id]
+        participant = header["participant"]
+        style = _style(theme, participant["kind"])
+        x = header["w"] / 2 - 6.0 + activation["depth"] * 4.0
+        y = activation["start_y"] - header["y"]
+        height = activation["end_y"] - activation["start_y"]
+        cell = ET.SubElement(
             root,
-            f"sequence-lifeline-{participant['id']}",
-            "",
-            (
-                "edgeStyle=none;rounded=0;html=1;endArrow=none;"
-                f"strokeColor={edge_color};dashed=1;"
+            "mxCell",
+            id=f"sequence-activation-{activation['id']}",
+            value="",
+            style=(
+                "points=[];html=1;whiteSpace=wrap;"
+                f"fillColor={style['fill']};strokeColor={style['stroke']};"
             ),
-            header["center_x"],
-            layout["header_bottom"],
-            header["center_x"],
-            layout["lifeline_bottom"],
+            vertex="1",
+            parent=f"sequence-participant-{participant_id}",
+        )
+        ET.SubElement(
+            cell,
+            "mxGeometry",
+            x=f"{x:.1f}",
+            y=f"{y:.1f}",
+            width="12.0",
+            height=f"{height:.1f}",
+            **{"as": "geometry"},
         )
 
     for index, row in enumerate(layout["messages"], 1):
@@ -1158,6 +1343,51 @@ def render_sequence_drawio(data, theme, out: Path):
         else:
             arrow = "endArrow=open;endFill=0;"
             dashed = "dashed=1;"
+
+        is_self = message["from"] == message["to"]
+        if is_self:
+            x1 = _sequence_message_x(
+                layout,
+                message["from"],
+                row["y"],
+                row["from_x"] + 1.0,
+            )
+            loop_x = x1 + 42.0
+            y2 = row["y"] + layout["self_message_height"]
+            x2 = _sequence_message_x(
+                layout,
+                message["to"],
+                y2,
+                row["to_x"] + 1.0,
+            )
+            _drawio_sequence_edge(
+                root,
+                f"sequence-message-{index}",
+                message["label"],
+                (
+                    "edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"
+                    f"strokeColor={edge_color};{arrow}{dashed}"
+                ),
+                x1,
+                row["y"],
+                x2,
+                y2,
+                waypoints=[(loop_x, row["y"]), (loop_x, y2)],
+            )
+            continue
+
+        from_x = _sequence_message_x(
+            layout,
+            message["from"],
+            row["y"],
+            row["to_x"],
+        )
+        to_x = _sequence_message_x(
+            layout,
+            message["to"],
+            row["y"],
+            row["from_x"],
+        )
         _drawio_sequence_edge(
             root,
             f"sequence-message-{index}",
@@ -1166,15 +1396,14 @@ def render_sequence_drawio(data, theme, out: Path):
                 "edgeStyle=none;rounded=0;html=1;"
                 f"strokeColor={edge_color};{arrow}{dashed}"
             ),
-            row["from_x"],
+            from_x,
             row["y"],
-            row["to_x"],
+            to_x,
             row["y"],
         )
 
     ET.indent(mxfile, space="  ")
     out.write_text(ET.tostring(mxfile, encoding="unicode") + "\n", encoding="utf-8")
-
 
 def generate(source_dir: Path, schema_path: Path, theme_path: Path, out_dir: Path):
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
