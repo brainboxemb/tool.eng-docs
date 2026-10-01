@@ -382,7 +382,132 @@ def _svg_class_node_text(parts, node, theme, family):
         cursor += detail_size * 1.45
 
 
+_WIREFRAME_NOTATIONS = {
+    "wireframe-panel",
+    "wireframe-tabs",
+    "wireframe-input",
+    "wireframe-button",
+    "wireframe-table",
+    "wireframe-status",
+}
+
+
+def _is_wireframe_node(node):
+    return node.get("notation") in _WIREFRAME_NOTATIONS
+
+
+def _svg_wireframe_node(parts, node, theme, family):
+    """Render one neutral UI wireframe control from the normal node model."""
+    r = node["layout"]
+    s = _style(theme, node["kind"])
+    notation = node["notation"]
+    label = str(node["label"])
+    subtitle = node.get("subtitle")
+    rows = _flatten_node_items(node.get("items", []))
+    node_size = theme["font"]["node_size"]
+    detail_size = theme["font"].get("node_subtitle_size", max(9, node_size - 3))
+
+    if notation == "wireframe-status":
+        radius = min(r["h"] / 2, 14)
+        parts.append(
+            f'<rect data-notation="{notation}" x="{r["x"]}" y="{r["y"]}" '
+            f'width="{r["w"]}" height="{r["h"]}" rx="{radius:.1f}" ry="{radius:.1f}" '
+            f'fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="1.5"/>'
+        )
+        _svg_text(parts, label, r["x"] + r["w"] / 2, r["y"] + r["h"] / 2,
+                  detail_size, family, "bold")
+        return
+
+    radius = 5 if notation == "wireframe-button" else 0
+    parts.append(
+        f'<rect data-notation="{notation}" x="{r["x"]}" y="{r["y"]}" '
+        f'width="{r["w"]}" height="{r["h"]}" rx="{radius}" ry="{radius}" '
+        f'fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="1.5"/>'
+    )
+
+    if notation == "wireframe-button":
+        _svg_text(parts, label, r["x"] + r["w"] / 2, r["y"] + r["h"] / 2,
+                  node_size, family, "bold")
+        return
+
+    if notation == "wireframe-tabs":
+        tabs = [item.strip() for item in label.split("|") if item.strip()]
+        if not tabs:
+            tabs = [label]
+        selected_tab = str(subtitle).strip() if subtitle else tabs[0]
+        if selected_tab not in tabs:
+            selected_tab = tabs[0]
+        tab_width = r["w"] / len(tabs)
+        for index, tab in enumerate(tabs):
+            if index:
+                x = r["x"] + index * tab_width
+                parts.append(
+                    f'<line x1="{x:.1f}" y1="{r["y"]:.1f}" x2="{x:.1f}" '
+                    f'y2="{r["y"] + r["h"]:.1f}" stroke="{s["stroke"]}" stroke-width="1"/>'
+                )
+            _svg_text(
+                parts, tab,
+                r["x"] + (index + 0.5) * tab_width,
+                r["y"] + r["h"] / 2,
+                detail_size, family,
+                "bold" if tab == selected_tab else "normal",
+            )
+        return
+
+    if notation == "wireframe-input":
+        _svg_text(parts, label, r["x"] + 8, r["y"] + 12,
+                  detail_size, family, "normal", "start")
+        inner_y = r["y"] + 23
+        inner_h = max(18, r["h"] - 29)
+        parts.append(
+            f'<rect x="{r["x"] + 7:.1f}" y="{inner_y:.1f}" '
+            f'width="{r["w"] - 14:.1f}" height="{inner_h:.1f}" '
+            f'fill="{theme["canvas"]["background"]}" stroke="{s["stroke"]}" stroke-width="1"/>'
+        )
+        if subtitle:
+            _svg_text(parts, subtitle, r["x"] + 15, inner_y + inner_h / 2,
+                      node_size, family, "normal", "start")
+        return
+
+    # Panels and tables are top-aligned containers.
+    _svg_text(parts, label, r["x"] + 10, r["y"] + 17,
+              node_size, family, "bold", "start")
+    separator_y = r["y"] + 31
+    parts.append(
+        f'<line x1="{r["x"]:.1f}" y1="{separator_y:.1f}" '
+        f'x2="{r["x"] + r["w"]:.1f}" y2="{separator_y:.1f}" '
+        f'stroke="{s["stroke"]}" stroke-width="1"/>'
+    )
+    if subtitle:
+        _svg_text(parts, subtitle, r["x"] + 10, separator_y + 14,
+                  detail_size, family, "normal", "start")
+        cursor = separator_y + 31
+    else:
+        cursor = separator_y + 16
+
+    if notation == "wireframe-table":
+        row_height = detail_size * 1.8
+        for _, row_label, _ in rows:
+            _svg_text(parts, row_label, r["x"] + 10, cursor,
+                      detail_size, family, "normal", "start")
+            line_y = cursor + row_height / 2
+            parts.append(
+                f'<line x1="{r["x"]:.1f}" y1="{line_y:.1f}" '
+                f'x2="{r["x"] + r["w"]:.1f}" y2="{line_y:.1f}" '
+                f'stroke="{s["stroke"]}" stroke-width="0.7"/>'
+            )
+            cursor += row_height
+    else:
+        for depth, row_label, _ in rows:
+            _svg_text(parts, row_label, r["x"] + 10 + depth * 12, cursor,
+                      detail_size, family, "normal", "start")
+            cursor += detail_size * 1.5
+
+
 def _svg_node_text(parts, node, theme, family):
+    if _is_wireframe_node(node):
+        _svg_wireframe_node(parts, node, theme, family)
+        return
     if node.get("notation") == "class":
         _svg_class_node_text(parts, node, theme, family)
         return
@@ -452,6 +577,40 @@ def _svg_node_text(parts, node, theme, family):
 
 def _drawio_node_value(node, theme):
     label = html.escape(str(node["label"])).replace("\n", "<br>")
+    notation = node.get("notation")
+    detail_size = theme["font"].get(
+        "node_subtitle_size",
+        max(9, theme["font"]["node_size"] - 3),
+    )
+    if notation == "wireframe-input":
+        value = html.escape(str(node.get("subtitle", ""))).replace("\n", "<br>")
+        return (
+            f'<div style="text-align:left;font-size:{detail_size}px">{label}</div>'
+            f'<div style="text-align:left;margin:7px 6px 0 6px;padding:5px;'
+            f'border:1px solid #777777;background:#ffffff">{value}</div>'
+        )
+    if notation == "wireframe-tabs":
+        raw_tabs = [item.strip() for item in str(node["label"]).split("|") if item.strip()]
+        selected_tab = str(node.get("subtitle", "")).strip() if node.get("subtitle") else (
+            raw_tabs[0] if raw_tabs else ""
+        )
+        if selected_tab not in raw_tabs and raw_tabs:
+            selected_tab = raw_tabs[0]
+        tabs = [
+            f"<b>{html.escape(tab)}</b>" if tab == selected_tab else html.escape(tab)
+            for tab in raw_tabs
+        ]
+        return " &nbsp; | &nbsp; ".join(tabs) if tabs else label
+    if notation in ("wireframe-panel", "wireframe-table"):
+        rows = _flatten_node_items(node.get("items", []))
+        row_html = "<br>".join(html.escape(row_label) for _, row_label, _ in rows)
+        subtitle = node.get("subtitle")
+        subtitle_html = (
+            f'<br><span style="font-size:{detail_size}px">{html.escape(str(subtitle))}</span>'
+            if subtitle else ""
+        )
+        body = f"<br>{row_html}" if row_html else ""
+        return f"<b>{label}</b>{subtitle_html}{body}"
     if node.get("notation") == "class":
         detail_size = theme["font"].get(
             "node_subtitle_size",
@@ -480,10 +639,7 @@ def _drawio_node_value(node, theme):
     if not subtitle and not items:
         return label
 
-    subtitle_size = theme["font"].get(
-        "node_subtitle_size",
-        max(9, theme["font"]["node_size"] - 3),
-    )
+    subtitle_size = detail_size
     parts = [label]
     if subtitle:
         subtitle_html = html.escape(str(subtitle)).replace("\n", "<br>")
@@ -681,10 +837,11 @@ def render_svg(data, theme, out: Path):
             parts.append(
                 f'<g data-engineering-id="{html.escape(object_id, quote=True)}">'
             )
-        parts.append(
-            f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
-            f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
-        )
+        if not _is_wireframe_node(node):
+            parts.append(
+                f'<rect x="{r["x"]}" y="{r["y"]}" width="{r["w"]}" height="{r["h"]}" '
+                f'rx="8" ry="8" fill="{s["fill"]}" stroke="{s["stroke"]}" stroke-width="2"/>'
+            )
         if node.get("notation") == "component":
             _svg_component_glyph(parts, node, s["stroke"])
         elif node.get("notation") == "packaging-component":
@@ -735,6 +892,18 @@ def _drawio_node_style(
         result += "shape=component;container=1;"
     elif notation == "class":
         result += "rounded=0;verticalAlign=top;align=center;spacingTop=3;"
+    elif notation == "wireframe-panel":
+        result += "rounded=0;verticalAlign=top;align=left;spacingTop=8;spacingLeft=8;fontStyle=0;"
+    elif notation == "wireframe-tabs":
+        result += "rounded=0;verticalAlign=middle;align=center;fontStyle=0;"
+    elif notation == "wireframe-input":
+        result += "rounded=0;verticalAlign=top;align=left;spacingTop=5;spacingLeft=6;fontStyle=0;"
+    elif notation == "wireframe-button":
+        result += "rounded=1;arcSize=18;verticalAlign=middle;align=center;fontStyle=1;"
+    elif notation == "wireframe-table":
+        result += "rounded=0;verticalAlign=top;align=left;spacingTop=8;spacingLeft=8;fontStyle=0;"
+    elif notation == "wireframe-status":
+        result += "rounded=1;arcSize=50;verticalAlign=middle;align=center;fontStyle=1;"
     return result
 
 
@@ -841,6 +1010,8 @@ def render_drawio(data, theme, out: Path):
         }
         if node.get("object_id"):
             attrs["data-engineering-id"] = node["object_id"]
+        if node.get("notation"):
+            attrs["data-notation"] = node["notation"]
         cell = ET.SubElement(root, "mxCell", attrs)
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0 — 2026-10-01
+
+### Added
+
+- declarative UI wireframe node notations for panels, tabs, inputs, buttons,
+  tables and status pills in the existing structural YAML model;
+- matching deterministic SVG rendering and native editable draw.io cells;
+- domain-neutral wireframe example, authoring documentation and regression tests.
+
+### Compatibility
+
+- existing structure/sequence YAML remains valid and renders unchanged;
+- wireframe semantics remain presentation-only; consuming repositories retain
+  application/UI state meaning through labels, layout and theme kinds.
+
 ## 0.8.1 — 2026-10-01
 
 ### Changed

@@ -207,7 +207,13 @@
           "enum": [
             "component",
             "packaging-component",
-            "class"
+            "class",
+            "wireframe-panel",
+            "wireframe-tabs",
+            "wireframe-input",
+            "wireframe-button",
+            "wireframe-table",
+            "wireframe-status"
           ]
         },
         "layout": {

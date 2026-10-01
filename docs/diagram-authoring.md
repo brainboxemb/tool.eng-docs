@@ -742,6 +742,66 @@ layer.
 `kind` continues to select theme styling. `notation` is deliberately
 orthogonal to that styling choice.
 
+### UI wireframe notation
+
+Use wireframe notation when a structural diagram is describing the intended
+layout and interaction surface of a UI rather than software topology. The same
+YAML still produces both reader-facing SVG and native editable draw.io output.
+
+Supported first-slice node notations are:
+
+```text
+wireframe-panel
+wireframe-tabs
+wireframe-input
+wireframe-button
+wireframe-table
+wireframe-status
+```
+
+Example:
+
+```yaml
+nodes:
+  - id: location
+    label: Location
+    subtitle: "24"
+    kind: external
+    notation: wireframe-input
+    layout: {x: 90, y: 205, w: 220, h: 72}
+
+  - id: apply
+    label: Apply
+    kind: component
+    notation: wireframe-button
+    layout: {x: 330, y: 230, w: 110, h: 38}
+```
+
+The notation controls the UI-control shape and text placement. `kind` still
+selects theme fill/stroke, which lets a consuming repository use its theme to
+show selected, disabled or warning states without putting application-specific
+state names into this reusable schema.
+
+Conventions:
+
+- `wireframe-panel`: a top-aligned section/container; optional `subtitle` and
+  `items` describe compact secondary content;
+- `wireframe-tabs`: use `|`-separated labels in `label`; optional
+  `subtitle` selects the matching tab, otherwise the first tab is selected;
+- `wireframe-input`: `label` is the field name and optional `subtitle` is
+  the shown value/placeholder;
+- `wireframe-button`: centered action label;
+- `wireframe-table`: `label` is the table title and `items` are plain row
+  strings; keep columns compact because this is a wireframe, not a data-grid
+  renderer;
+- `wireframe-status`: compact pill/badge for connection or UI state.
+
+Wireframe nodes are deliberately mid-fidelity. They document layout, control
+availability and state presentation without hard-coding a frontend toolkit or
+production visual design into engineering documentation.
+
+See `examples/ui-wireframe.yaml` for a complete domain-neutral example.
+
 ### Node `kind`
 
 Selects a style from the active theme.

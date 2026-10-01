@@ -7,13 +7,13 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.8.1` refines the declarative sequence-diagram layout with denser message
-spacing, larger message text and balanced multiline labels while retaining the
-native UML lifelines, activation bars and self-calls introduced in v0.8.0.
+`v0.9.0` adds declarative UI wireframe controls to the existing structural
+diagram pipeline while retaining deterministic SVG output, native editable
+draw.io output and all existing structure/sequence behavior.
 
 ### Declarative diagrams
 
-- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items and optional engineering identity on nodes or selected structured items;
+- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items, UI wireframe control notation and optional engineering identity on nodes or selected structured items;
 - declarative YAML sequence diagrams with native UML lifelines, inferred activation bars, self-calls and call/async/return messages;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
@@ -199,6 +199,7 @@ examples/routed-flow.yaml
 examples/structured-layer.yaml
 examples/polygon-group.yaml
 examples/sequence-flow.yaml
+examples/ui-wireframe.yaml
 ```
 
 The first demonstrates the minimal structural model and automatic routing. The
@@ -208,6 +209,8 @@ that terminates on a group/layer boundary. The fourth demonstrates native steppe
 polygon outlines for groups while retaining a rectangular layout box for labels
 and routing. The sequence example demonstrates ordered participants and
 call/async/return interactions without introducing a separate rendering engine.
+The UI wireframe example demonstrates editable panels, tabs, inputs, buttons,
+tables and status pills using the same structural diagram source model.
 
 Document-assembly example:
 
@@ -341,7 +344,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.8.0
+v0.9.0
 ```
 
 Consumers should pin a release rather than a feature branch.
