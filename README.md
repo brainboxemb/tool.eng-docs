@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.8.0` extends the declarative sequence-diagram capability with native UML
-lifelines, activation bars and self-calls while retaining the existing structural
-diagram, assembly, engineering-graph, roadmap and board capabilities.
+`v0.8.1` refines the declarative sequence-diagram layout with denser message
+spacing, larger message text and balanced multiline labels while retaining the
+native UML lifelines, activation bars and self-calls introduced in v0.8.0.
 
 ### Declarative diagrams
 
