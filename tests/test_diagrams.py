@@ -678,7 +678,8 @@ def test_ui_wireframe_example_generates_editable_svg_and_drawio(tmp_path):
     assert status.attrib["data-notation"] == "wireframe-status"
     assert "arcSize=50" in status.attrib["style"]
     assert tabs.attrib["data-notation"] == "wireframe-tabs"
-    assert "<b>Overview</b>" in tabs.attrib["value"]
+    assert "<b>Control</b>" in tabs.attrib["value"]
+    assert "<b>Overview</b>" not in tabs.attrib["value"]
 
     assert svg.read_bytes() == (second / "ui-wireframe.svg").read_bytes()
     assert drawio.read_bytes() == (second / "ui-wireframe.drawio").read_bytes()
