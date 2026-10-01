@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import html
 import json
+import textwrap
 import xml.etree.ElementTree as ET
 
 import yaml
@@ -891,6 +892,45 @@ def validate_sequence_refs(data, theme, path: Path):
             )
 
 
+_SEQUENCE_MESSAGE_FONT_SIZE = 13
+_SEQUENCE_MESSAGE_BASE_GAP = 52.0
+_SEQUENCE_MESSAGE_LINE_HEIGHT = _SEQUENCE_MESSAGE_FONT_SIZE * 1.28
+
+
+def _wrap_sequence_source_line(source_line, max_chars):
+    if len(source_line) <= max_chars:
+        return [source_line]
+
+    words = source_line.split()
+    balanced = []
+    for split in range(1, len(words)):
+        left = " ".join(words[:split])
+        right = " ".join(words[split:])
+        if len(left) <= max_chars and len(right) <= max_chars:
+            balanced.append((abs(len(left) - len(right)), split, left, right))
+
+    if balanced:
+        _, _, left, right = min(balanced)
+        return [left, right]
+
+    return textwrap.wrap(
+        source_line,
+        width=max_chars,
+        break_long_words=False,
+        break_on_hyphens=False,
+    ) or [""]
+
+
+def _wrap_sequence_message_label(label, max_width):
+    """Wrap a sequence-message label using a deterministic width estimate."""
+    average_char_width = _SEQUENCE_MESSAGE_FONT_SIZE * 0.56
+    max_chars = max(12, int(max_width / average_char_width))
+    wrapped = []
+    for source_line in str(label).splitlines() or [""]:
+        wrapped.extend(_wrap_sequence_source_line(source_line, max_chars))
+    return wrapped
+
+
 def _sequence_layout(data):
     d = data["diagram"]
     participants = data["participants"]
@@ -903,21 +943,8 @@ def _sequence_layout(data):
     header_width = min(190.0, max(120.0, spacing * 0.72))
     header_height = 58.0
     header_y = 100.0
-    message_start_y = 225.0
-    message_gap = 70.0
-    self_message_height = 28.0
-    lifeline_bottom = (
-        message_start_y
-        + max(0, len(messages) - 1) * message_gap
-        + self_message_height
-        + 45.0
-    )
-
-    if lifeline_bottom > float(d["height"]) - 25.0:
-        raise ValueError(
-            f"{d['id']}: sequence content exceeds diagram height "
-            f"({lifeline_bottom:.0f} > {d['height'] - 25})"
-        )
+    message_start_y = 205.0
+    self_message_height = 24.0
 
     positions = {}
     headers = []
@@ -936,14 +963,51 @@ def _sequence_layout(data):
         )
 
     message_rows = []
+    cursor_y = message_start_y
     for index, message in enumerate(messages):
+        from_x = positions[message["from"]]
+        to_x = positions[message["to"]]
+        if message["from"] == message["to"]:
+            max_label_width = min(260.0, max(140.0, spacing - 70.0))
+        else:
+            max_label_width = max(120.0, abs(to_x - from_x) - 28.0)
+
+        label_lines = _wrap_sequence_message_label(
+            message["label"],
+            max_label_width,
+        )
+        if index:
+            cursor_y += (
+                _SEQUENCE_MESSAGE_BASE_GAP
+                + max(0, len(label_lines) - 1) * _SEQUENCE_MESSAGE_LINE_HEIGHT
+            )
+
         message_rows.append(
             {
                 "message": message,
-                "y": message_start_y + index * message_gap,
-                "from_x": positions[message["from"]],
-                "to_x": positions[message["to"]],
+                "label": "\n".join(label_lines),
+                "label_lines": label_lines,
+                "y": cursor_y,
+                "from_x": from_x,
+                "to_x": to_x,
             }
+        )
+
+    if message_rows:
+        last_row = message_rows[-1]
+        last_extent = (
+            self_message_height
+            if last_row["message"]["from"] == last_row["message"]["to"]
+            else 0.0
+        )
+        lifeline_bottom = last_row["y"] + last_extent + 35.0
+    else:
+        lifeline_bottom = message_start_y + 35.0
+
+    if lifeline_bottom > float(d["height"]) - 25.0:
+        raise ValueError(
+            f"{d['id']}: sequence content exceeds diagram height "
+            f"({lifeline_bottom:.0f} > {d['height'] - 25})"
         )
 
     # Synchronous calls create activation bars on the target. A matching return
@@ -1151,10 +1215,10 @@ def render_sequence_svg(data, theme, out: Path):
             )
             _svg_text(
                 parts,
-                message["label"],
+                row["label"],
                 x + 8.0,
-                row["y"] - 13,
-                12,
+                row["y"] - 12,
+                _SEQUENCE_MESSAGE_FONT_SIZE,
                 family,
                 anchor="start",
             )
@@ -1182,10 +1246,10 @@ def render_sequence_svg(data, theme, out: Path):
         mid_x = (from_x + to_x) / 2
         _svg_text(
             parts,
-            message["label"],
+            row["label"],
             mid_x,
-            row["y"] - 13,
-            12,
+            row["y"] - 12,
+            _SEQUENCE_MESSAGE_FONT_SIZE,
             family,
         )
 
@@ -1363,9 +1427,10 @@ def render_sequence_drawio(data, theme, out: Path):
             _drawio_sequence_edge(
                 root,
                 f"sequence-message-{index}",
-                message["label"],
+                html.escape(row["label"]).replace("\n", "<br>"),
                 (
                     "edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"
+                    "whiteSpace=wrap;fontSize=13;"
                     f"strokeColor={edge_color};{arrow}{dashed}"
                 ),
                 x1,
@@ -1391,9 +1456,10 @@ def render_sequence_drawio(data, theme, out: Path):
         _drawio_sequence_edge(
             root,
             f"sequence-message-{index}",
-            message["label"],
+            html.escape(row["label"]).replace("\n", "<br>"),
             (
                 "edgeStyle=none;rounded=0;html=1;"
+                "whiteSpace=wrap;fontSize=13;"
                 f"strokeColor={edge_color};{arrow}{dashed}"
             ),
             from_x,

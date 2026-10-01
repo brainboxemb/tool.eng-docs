@@ -279,6 +279,12 @@ That is rendered as a UML self-call and is useful for showing internal processin
 without inventing another architectural participant. Asynchronous messages use
 an open arrow and do not by themselves create an activation bar.
 
+Sequence message labels use a compact 13 px text size. Long labels are wrapped
+automatically to the horizontal space available between their participants; only
+that message row grows when an extra line is needed. Explicit line breaks in the
+source label are also preserved. This keeps short interaction diagrams compact
+without forcing authors to abbreviate useful transition text.
+
 Both `from` and `to` must reference existing participants. UML interaction
 fragments such as `alt`, `loop` and `par`, plus destruction markers, remain
 deferred until a real consumer requires them.

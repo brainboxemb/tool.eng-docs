@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.8.1 — 2026-10-01
+
+### Changed
+
+- reduce default vertical spacing between sequence messages so short interaction
+  diagrams use substantially less canvas height;
+- increase sequence message-label text from 12 px to 13 px;
+- wrap long message labels automatically to the horizontal space available
+  between participants;
+- balance two-line labels around word boundaries instead of leaving very short
+  trailing lines;
+- preserve explicit source line breaks and grow only the affected message row;
+- keep SVG and native editable draw.io label layout consistent.
+
+### Compatibility
+
+- sequence source syntax and call/async/return semantics are unchanged;
+- structural diagram rendering is unchanged;
+- existing sequence sources may render more compactly without source changes.
+
 ## 0.8.0 — 2026-10-01
 
 ### Added
