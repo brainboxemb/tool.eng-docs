@@ -786,8 +786,8 @@ Conventions:
 
 - `wireframe-panel`: a top-aligned section/container; optional `subtitle` and
   `items` describe compact secondary content;
-- `wireframe-tabs`: use `|`-separated labels in `label`; the first item is
-  rendered with stronger emphasis as the selected tab;
+- `wireframe-tabs`: use `|`-separated labels in `label`; optional
+  `subtitle` selects the matching tab, otherwise the first tab is selected;
 - `wireframe-input`: `label` is the field name and optional `subtitle` is
   the shown value/placeholder;
 - `wireframe-button`: centered action label;
