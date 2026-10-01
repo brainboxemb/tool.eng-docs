@@ -13,7 +13,8 @@
 
 - existing structure/sequence YAML remains valid and renders unchanged;
 - wireframe semantics remain presentation-only; consuming repositories retain
-  application/UI state meaning through labels, layout and theme kinds.
+  application/UI state meaning through labels, layout and theme kinds;
+- the README install example now pins the prepared v0.9.0 release.
 
 ## 0.8.1 — 2026-10-01
 
