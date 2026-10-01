@@ -1,0 +1,66 @@
+board:
+  marker: "4"
+  title: Engineering detail board
+  meta:
+    - ACTIVE
+    - orig ~3d · rem ~2d
+    - forecast end 18 Oct
+  summary:
+    heading: PURPOSE
+    text: Show one compact engineering slice with a readable descriptive summary separated from planning metadata.
+  section_columns: 2
+  sections:
+    - heading: RESULT
+      bullets:
+        - Produce one observable result through the public path.
+        - Preserve enough detail for review without expanding the metadata line.
+    - heading: END DEMO
+      bullets:
+        - Connect a sample client and inspect one generated result.
+        - Reconnect and verify current state before live updates continue.
+  badge_section:
+    heading: DOCUMENTATION
+    badges:
+      - {label: SPEC R-70, tone: warning}
+      - {label: TEST W-60, tone: active}
+  groups:
+    - heading: Documentation / decisions
+      tone: warning
+      cards:
+        - id: D01
+          title: Establish public boundary
+          state: {label: DONE, tone: success}
+          header_meta:
+            - ~0.5d
+          meta:
+            - Decision recorded in the public design documentation.
+        - id: D02
+          title: Review consumer behavior
+          state: {label: ACTIVE, tone: active}
+          header_meta:
+            - ~1d · after D01
+    - heading: Application / product
+      tone: success
+      cards:
+        - id: A01
+          title: Implement one deterministic path
+          state: {label: PLANNED, tone: muted}
+          header_meta:
+            - ~1d · after D02
+        - id: A02
+          title: Expose observable state through the public interface
+          state: {label: PLANNED, tone: muted}
+          header_meta:
+            - ~0.5d · after A01
+    - heading: Verification / test
+      tone: draft
+      cards:
+        - id: V01
+          title: Run black-box verification
+          state: {label: PLANNED, tone: muted}
+          header_meta:
+            - after A02
+  trailing_sections:
+    - heading: PLANNING CHANGES
+      bullets:
+        - 2026-09-30 — narrowed the first slice to one deterministic public path.
