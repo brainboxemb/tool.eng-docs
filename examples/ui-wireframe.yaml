@@ -17,6 +17,7 @@ nodes:
 
   - id: tabs
     label: "Overview | Control | History | Logs"
+    subtitle: Control
     kind: external
     notation: wireframe-tabs
     layout: {x: 80, y: 130, w: 820, h: 42}
