@@ -1,0 +1,78 @@
+{
+  "current_version": "1.0",
+  "project": "tool.eng-docs graph example",
+  "versions": {
+    "1.0": {
+      "needs": {
+        "GOAL-1": {
+          "id": "GOAL-1",
+          "type": "goal",
+          "type_name": "Goal",
+          "title": "Provide a service",
+          "content": "The example system should provide one reusable service capability.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 5,
+          "derived_from_back": [
+            "REQ-1"
+          ]
+        },
+        "REQ-1": {
+          "id": "REQ-1",
+          "type": "req",
+          "type_name": "Requirement",
+          "title": "Service response",
+          "content": "The system shall provide a response through the service boundary.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 12,
+          "derived_from": [
+            "GOAL-1"
+          ],
+          "satisfies_back": [
+            "Service"
+          ],
+          "verifies_back": [
+            "VC-1"
+          ]
+        },
+        "Service": {
+          "id": "Service",
+          "type": "arch",
+          "type_name": "Architecture Element",
+          "title": "Service",
+          "content": "The Service owns the implementation responsibility for REQ-1.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 20,
+          "satisfies": [
+            "REQ-1"
+          ]
+        },
+        "VC-1": {
+          "id": "VC-1",
+          "type": "vc",
+          "type_name": "Verification Case",
+          "title": "Service response verification",
+          "content": "Exercise the Service and verify a valid response.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 35,
+          "verifies": [
+            "REQ-1"
+          ]
+        },
+        "Worker": {
+          "id": "Worker",
+          "type": "arch",
+          "type_name": "Architecture Element",
+          "title": "Worker",
+          "content": "The Worker is a nested architecture responsibility shown inside the Service.",
+          "docname": "source",
+          "doctype": ".md",
+          "lineno": 28
+        }
+      }
+    }
+  }
+}

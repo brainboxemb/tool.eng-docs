@@ -1,0 +1,91 @@
+{
+  "schema": "brainboxemb.engineering-graph",
+  "schema_version": 1,
+  "source_revision": "7d13ae32c5ac3ac3fea0192559a034b9778a517d",
+  "source_graph": {
+    "kind": "sphinx-needs",
+    "project": "tool.eng-docs graph example",
+    "version": "1.0"
+  },
+  "object_count": 5,
+  "relation_count": 3,
+  "objects": [
+    {
+      "id": "GOAL-1",
+      "type": "goal",
+      "type_name": "Goal",
+      "title": "Provide a service",
+      "source": "source.md:5",
+      "content": "The example system should provide one reusable service capability.",
+      "diagram_refs": []
+    },
+    {
+      "id": "REQ-1",
+      "type": "req",
+      "type_name": "Requirement",
+      "title": "Service response",
+      "source": "source.md:12",
+      "content": "The system shall provide a response through the service boundary.",
+      "diagram_refs": []
+    },
+    {
+      "id": "Service",
+      "type": "arch",
+      "type_name": "Architecture Element",
+      "title": "Service",
+      "source": "source.md:20",
+      "content": "The Service owns the implementation responsibility for REQ-1.",
+      "diagram_refs": [
+        {
+          "source": "examples/graph/diagrams/system.yaml:12",
+          "diagram_id": "graph-example",
+          "node_id": "service"
+        }
+      ]
+    },
+    {
+      "id": "VC-1",
+      "type": "vc",
+      "type_name": "Verification Case",
+      "title": "Service response verification",
+      "source": "source.md:35",
+      "content": "Exercise the Service and verify a valid response.",
+      "diagram_refs": []
+    },
+    {
+      "id": "Worker",
+      "type": "arch",
+      "type_name": "Architecture Element",
+      "title": "Worker",
+      "source": "source.md:28",
+      "content": "The Worker is a nested architecture responsibility shown inside the Service.",
+      "diagram_refs": [
+        {
+          "source": "examples/graph/diagrams/system.yaml:16",
+          "diagram_id": "graph-example",
+          "node_id": "service"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "from": "REQ-1",
+      "type": "derived_from",
+      "to": "GOAL-1",
+      "source": "source.md:12"
+    },
+    {
+      "from": "Service",
+      "type": "satisfies",
+      "to": "REQ-1",
+      "source": "source.md:20"
+    },
+    {
+      "from": "VC-1",
+      "type": "verifies",
+      "to": "REQ-1",
+      "source": "source.md:35"
+    }
+  ]
+}
