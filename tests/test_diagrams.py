@@ -620,3 +620,65 @@ def test_sequence_accepts_self_message():
         load_yaml(THEME),
         Path("sequence-flow.yaml"),
     )
+
+
+def test_ui_wireframe_example_generates_editable_svg_and_drawio(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    example = Path(__file__).parents[1] / "examples" / "ui-wireframe.yaml"
+    (source / example.name).write_text(
+        example.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    generate(source, SCHEMA, THEME, first)
+    generate(source, SCHEMA, THEME, second)
+
+    svg = first / "ui-wireframe.svg"
+    drawio = first / "ui-wireframe.drawio"
+    svg_root = ET.parse(svg).getroot()
+    drawio_root = ET.parse(drawio)
+
+    notations = {
+        element.attrib["data-notation"]
+        for element in svg_root.iter()
+        if "data-notation" in element.attrib
+        and element.attrib["data-notation"].startswith("wireframe-")
+    }
+    assert notations == {
+        "wireframe-panel",
+        "wireframe-tabs",
+        "wireframe-input",
+        "wireframe-button",
+        "wireframe-table",
+        "wireframe-status",
+    }
+
+    location = drawio_root.find(".//mxCell[@id='location']")
+    submit = drawio_root.find(".//mxCell[@id='submit']")
+    history = drawio_root.find(".//mxCell[@id='history']")
+    status = drawio_root.find(".//mxCell[@id='connection']")
+    tabs = drawio_root.find(".//mxCell[@id='tabs']")
+
+    assert location is not None
+    assert submit is not None
+    assert history is not None
+    assert status is not None
+    assert tabs is not None
+
+    assert location.attrib["data-notation"] == "wireframe-input"
+    assert "verticalAlign=top" in location.attrib["style"]
+    assert "border:1px solid" in location.attrib["value"]
+    assert submit.attrib["data-notation"] == "wireframe-button"
+    assert "arcSize=18" in submit.attrib["style"]
+    assert history.attrib["data-notation"] == "wireframe-table"
+    assert "sample-001" in history.attrib["value"]
+    assert status.attrib["data-notation"] == "wireframe-status"
+    assert "arcSize=50" in status.attrib["style"]
+    assert tabs.attrib["data-notation"] == "wireframe-tabs"
+    assert "<b>Overview</b>" in tabs.attrib["value"]
+
+    assert svg.read_bytes() == (second / "ui-wireframe.svg").read_bytes()
+    assert drawio.read_bytes() == (second / "ui-wireframe.drawio").read_bytes()
