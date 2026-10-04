@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.9.2` adds deterministic obstacle-aware node-to-node routing to the existing
-structural diagram pipeline while retaining explicit route waypoints as an escape
-hatch and preserving native editable draw.io output.
+`v0.9.3` adds deterministic whitespace-corridor preference for cross-layer
+node-to-node routing while retaining v0.9.2 obstacle avoidance, explicit route
+waypoints as the authoritative escape hatch, and native editable draw.io output.
 
 ### Declarative diagrams
 
@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.2"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.3"
 ```
 
 The package installs the `eng-docs` command.
@@ -351,7 +351,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.9.2
+v0.9.3
 ```
 
 Consumers should pin a release rather than a feature branch.
