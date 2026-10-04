@@ -257,7 +257,7 @@ nodes:
     group: lower
     label: Target
     kind: service
-    layout: {x: 250, y: 300, w: 200, h: 60}
+    layout: {x: 250, y: 330, w: 200, h: 60}
 
 edges:
   - from: source
@@ -270,14 +270,14 @@ edges:
         (650.0, 160.0),
         (650.0, 230.0),
         (450.0, 230.0),
-        (450.0, 300.0),
+        (450.0, 330.0),
     ]
 
     drawio_root = ET.parse(out / "horizontal-corridor.drawio")
     edge = drawio_root.find(".//mxCell[@id='edge-1']")
     assert edge is not None
     assert "exitX=0.5;exitY=1" in edge.attrib["style"]
-    assert "entryX=1;entryY=0" in edge.attrib["style"]
+    assert "entryX=1.0;entryY=0" in edge.attrib["style"]
     waypoints = edge.findall("./mxGeometry/Array[@as='points']/mxPoint")
     assert [(float(p.attrib["x"]), float(p.attrib["y"])) for p in waypoints] == [
         (650.0, 230.0),
@@ -315,7 +315,7 @@ nodes:
     group: right
     label: Target
     kind: service
-    layout: {x: 350, y: 100, w: 80, h: 100}
+    layout: {x: 380, y: 100, w: 80, h: 100}
 
 edges:
   - from: source
@@ -328,7 +328,7 @@ edges:
         (200.0, 430.0),
         (275.0, 430.0),
         (275.0, 200.0),
-        (350.0, 200.0),
+        (380.0, 200.0),
     ]
 
 
@@ -362,7 +362,7 @@ nodes:
     group: lower
     label: Target
     kind: service
-    layout: {x: 250, y: 300, w: 200, h: 60}
+    layout: {x: 250, y: 330, w: 200, h: 60}
   - id: blocker
     label: Corridor blocker
     kind: external
@@ -432,7 +432,7 @@ nodes:
     group: lower
     label: Target
     kind: service
-    layout: {x: 250, y: 300, w: 200, h: 60}
+    layout: {x: 250, y: 330, w: 200, h: 60}
 
 edges:
   - from: source
@@ -449,7 +449,7 @@ edges:
         (650.0, 160.0),
         (650.0, 220.0),
         (450.0, 220.0),
-        (450.0, 300.0),
+        (450.0, 330.0),
     ]
 
 def test_routing_fixture_keeps_waypoints_anchors_dashed_edges_and_labels(tmp_path):
