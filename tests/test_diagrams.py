@@ -96,6 +96,62 @@ def test_layered_fixture_preserves_groups_and_semantic_labels(tmp_path):
     assert tree.findall(".//mxCell[@id='coordinator']")
 
 
+def test_automatic_routing_avoids_intermediate_component_in_svg_and_drawio(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    example = Path(__file__).parents[1] / "examples" / "obstacle-routing.yaml"
+    (source / example.name).write_text(
+        example.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+
+    svg_root = ET.parse(out / "obstacle-routing.svg").getroot()
+    polylines = [
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("polyline")
+    ]
+    assert len(polylines) == 1
+    svg_points = [
+        tuple(float(value) for value in pair.split(","))
+        for pair in polylines[0].attrib["points"].split()
+    ]
+    assert len(svg_points) >= 6
+
+    blocker = (310.0, 135.0, 450.0, 225.0)
+    left, top, right, bottom = blocker
+    for first, second in zip(svg_points, svg_points[1:]):
+        if first[0] == second[0]:
+            assert not (
+                left < first[0] < right
+                and max(min(first[1], second[1]), top)
+                < min(max(first[1], second[1]), bottom)
+            )
+        elif first[1] == second[1]:
+            assert not (
+                top < first[1] < bottom
+                and max(min(first[0], second[0]), left)
+                < min(max(first[0], second[0]), right)
+            )
+        else:
+            pytest.fail("generated obstacle route must remain orthogonal")
+
+    drawio_root = ET.parse(out / "obstacle-routing.drawio")
+    edge = drawio_root.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert "exitX=1" in edge.attrib["style"]
+    assert "entryX=0" in edge.attrib["style"]
+    waypoints = edge.findall("./mxGeometry/Array[@as='points']/mxPoint")
+    assert len(waypoints) >= 4
+    assert any(
+        float(point.attrib["y"]) < top or float(point.attrib["y"]) > bottom
+        for point in waypoints
+    )
+
+
 def test_routing_fixture_keeps_waypoints_anchors_dashed_edges_and_labels(tmp_path):
     out = _render_fixture(tmp_path, "routing-stress.yaml")
     svg = out / "routing-stress.svg"
