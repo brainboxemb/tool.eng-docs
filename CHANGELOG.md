@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.9.3 — 2026-10-04
+
+### Changed
+
+- prefer the whitespace corridor between distinct non-overlapping endpoint groups
+  for cross-layer node-to-node relationships when the resolved anchors face that
+  gap;
+- preserve deterministic midpoint placement in horizontal and vertical group
+  corridors while keeping component/group placement authoritative;
+- reject a preferred corridor when another node or unrelated group blocks it,
+  then fall back to the existing obstacle-aware orthogonal router;
+- emit the chosen corridor as equivalent SVG geometry and editable draw.io
+  waypoints.
+
+### Compatibility
+
+- diagram YAML syntax is unchanged;
+- explicit `route:` waypoints remain authoritative and bypass corridor
+  selection;
+- same-group edges and edges without a useful group corridor retain the existing
+  routing behavior;
+- group endpoints remain outside this node-to-node corridor preference.
+
+
 ## 0.9.2 — 2026-10-04
 
 ### Changed
