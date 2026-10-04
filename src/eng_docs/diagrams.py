@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import heapq
 import html
 import json
 import textwrap
@@ -246,23 +247,232 @@ def _connect_anchors(source, source_anchor, target, target_anchor):
     return _simplify_polyline([start, (sx, ty), end])
 
 
-def _auto_orthogonal_points(source, target):
+_ROUTER_CLEARANCE = 10.0
+_ROUTER_BEND_PENALTY = 2.0
+
+
+def _resolved_anchors(source, target, edge):
+    source_anchor = edge.get("from_anchor") or _inferred_anchor(
+        source, _center(target)
+    )
+    target_anchor = edge.get("to_anchor") or _inferred_anchor(
+        target, _center(source)
+    )
+    return source_anchor, target_anchor
+
+
+def _layout_rect(item, clearance=0.0):
+    layout = item["layout"]
+    return (
+        layout["x"] - clearance,
+        layout["y"] - clearance,
+        layout["x"] + layout["w"] + clearance,
+        layout["y"] + layout["h"] + clearance,
+    )
+
+
+def _point_inside_rect(point, rect):
+    x, y = point
+    left, top, right, bottom = rect
+    return left < x < right and top < y < bottom
+
+
+def _segment_hits_rect(first, second, rect):
+    x1, y1 = first
+    x2, y2 = second
+    left, top, right, bottom = rect
+    if x1 == x2:
+        if not left < x1 < right:
+            return False
+        low, high = sorted((y1, y2))
+        return max(low, top) < min(high, bottom)
+    if y1 == y2:
+        if not top < y1 < bottom:
+            return False
+        low, high = sorted((x1, x2))
+        return max(low, left) < min(high, right)
+    raise ValueError("orthogonal router received a diagonal segment")
+
+
+def _polyline_hits_rects(points, rects):
+    return any(
+        _segment_hits_rect(first, second, rect)
+        for first, second in zip(points, points[1:])
+        for rect in rects
+    )
+
+
+def _anchor_outward_point(item, anchor, distance):
+    x, y = _anchor_point(item, anchor)
+    if anchor["side"] == "top":
+        return x, y - distance
+    if anchor["side"] == "right":
+        return x + distance, y
+    if anchor["side"] == "bottom":
+        return x, y + distance
+    if anchor["side"] == "left":
+        return x - distance, y
+    raise ValueError(f"unknown anchor side: {anchor['side']}")
+
+
+def _route_between_points(start, end, rects):
+    xs = {start[0], end[0]}
+    ys = {start[1], end[1]}
+    for left, top, right, bottom in rects:
+        xs.update((left, right))
+        ys.update((top, bottom))
+
+    points = sorted(
+        (
+            (x, y)
+            for x in xs
+            for y in ys
+            if not any(_point_inside_rect((x, y), rect) for rect in rects)
+        ),
+        key=lambda point: (point[0], point[1]),
+    )
+    point_set = set(points)
+    if start not in point_set or end not in point_set:
+        return None
+
+    neighbours = {point: [] for point in points}
+
+    by_x = {}
+    by_y = {}
+    for point in points:
+        by_x.setdefault(point[0], []).append(point)
+        by_y.setdefault(point[1], []).append(point)
+
+    def add_visible_neighbours(group, axis):
+        for values in group.values():
+            values.sort(key=lambda point: point[axis])
+            for first, second in zip(values, values[1:]):
+                if any(_segment_hits_rect(first, second, rect) for rect in rects):
+                    continue
+                distance = abs(second[0] - first[0]) + abs(second[1] - first[1])
+                direction = "H" if first[1] == second[1] else "V"
+                neighbours[first].append((second, distance, direction))
+                neighbours[second].append((first, distance, direction))
+
+    add_visible_neighbours(by_x, 1)
+    add_visible_neighbours(by_y, 0)
+    for values in neighbours.values():
+        values.sort(key=lambda item: (item[0][0], item[0][1], item[2]))
+
+    start_state = (start, None)
+    queue = [(0.0, 0, 0, start[0], start[1], "", start, None)]
+    best = {start_state: (0.0, 0, 0)}
+    previous = {}
+
+    final_state = None
+    while queue:
+        cost, bends, steps, _, _, _, point, incoming = heapq.heappop(queue)
+        state = (point, incoming)
+        if best.get(state) != (cost, bends, steps):
+            continue
+        if point == end:
+            final_state = state
+            break
+
+        for neighbour, distance, direction in neighbours[point]:
+            bend = 1 if incoming is not None and incoming != direction else 0
+            next_cost = cost + distance + (_ROUTER_BEND_PENALTY if bend else 0.0)
+            next_state = (neighbour, direction)
+            candidate = (next_cost, bends + bend, steps + 1)
+            if candidate >= best.get(next_state, (float("inf"), 10**9, 10**9)):
+                continue
+            best[next_state] = candidate
+            previous[next_state] = state
+            heapq.heappush(
+                queue,
+                (
+                    next_cost,
+                    bends + bend,
+                    steps + 1,
+                    neighbour[0],
+                    neighbour[1],
+                    direction,
+                    neighbour,
+                    direction,
+                ),
+            )
+
+    if final_state is None:
+        return None
+
+    path = []
+    state = final_state
+    while True:
+        path.append(state[0])
+        if state == start_state:
+            break
+        state = previous[state]
+    path.reverse()
+    return _simplify_polyline(path)
+
+
+def _obstacle_aware_points(
+    source,
+    source_anchor,
+    target,
+    target_anchor,
+    obstacles,
+):
+    baseline = _connect_anchors(source, source_anchor, target, target_anchor)
+    raw_rects = [_layout_rect(item) for item in obstacles]
+    if not _polyline_hits_rects(baseline, raw_rects):
+        return baseline
+
+    start = _anchor_point(source, source_anchor)
+    end = _anchor_point(target, target_anchor)
+    routed_start = _anchor_outward_point(
+        source, source_anchor, _ROUTER_CLEARANCE
+    )
+    routed_end = _anchor_outward_point(
+        target, target_anchor, _ROUTER_CLEARANCE
+    )
+
+    expanded_rects = []
+    for obstacle in obstacles:
+        expanded = _layout_rect(obstacle, _ROUTER_CLEARANCE)
+        if _point_inside_rect(routed_start, expanded) or _point_inside_rect(
+            routed_end, expanded
+        ):
+            expanded = _layout_rect(obstacle)
+        expanded_rects.append(expanded)
+
+    middle = _route_between_points(routed_start, routed_end, expanded_rects)
+    if middle is None:
+        return baseline
+    return _simplify_polyline([start, *middle, end])
+
+
+def _auto_orthogonal_points(source, target, obstacles=()):
     source_anchor = _inferred_anchor(source, _center(target))
     target_anchor = _inferred_anchor(target, _center(source))
-    return _connect_anchors(source, source_anchor, target, target_anchor)
+    return _obstacle_aware_points(
+        source,
+        source_anchor,
+        target,
+        target_anchor,
+        obstacles,
+    )
 
 
-def _edge_points(source, target, edge):
+def _edge_points(source, target, edge, obstacles=()):
     route = [(p["x"], p["y"]) for p in edge.get("route", [])]
     source_anchor = edge.get("from_anchor")
     target_anchor = edge.get("to_anchor")
 
     if not route:
-        if source_anchor or target_anchor:
-            source_anchor = source_anchor or _inferred_anchor(source, _center(target))
-            target_anchor = target_anchor or _inferred_anchor(target, _center(source))
-            return _connect_anchors(source, source_anchor, target, target_anchor)
-        return _auto_orthogonal_points(source, target)
+        source_anchor, target_anchor = _resolved_anchors(source, target, edge)
+        return _obstacle_aware_points(
+            source,
+            source_anchor,
+            target,
+            target_anchor,
+            obstacles,
+        )
 
     source_connection = (
         _anchor_to_point(source, source_anchor, route[0])
