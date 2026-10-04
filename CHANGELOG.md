@@ -9,7 +9,10 @@
 - keep routing deterministic with a small clearance and preserve deliberate
   component placement;
 - emit the same generated detour as editable draw.io waypoints as well as SVG
-  geometry.
+  geometry;
+- when only one edge anchor is authored, infer the opposite anchor position from
+  that exact coordinate so naturally aligned connections remain straight without
+  a second fractional anchor adjustment.
 
 ### Compatibility
 
