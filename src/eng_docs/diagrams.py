@@ -1285,7 +1285,10 @@ def render_drawio(data, theme, out: Path):
 
         from_anchor = edge.get("from_anchor")
         to_anchor = edge.get("to_anchor")
-        if uses_generated_route:
+        if (
+            not edge.get("route")
+            and (uses_generated_route or from_anchor or to_anchor)
+        ):
             resolved_from, resolved_to = _resolved_anchors(source, target, edge)
             from_anchor = from_anchor or resolved_from
             to_anchor = to_anchor or resolved_to
