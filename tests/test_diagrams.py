@@ -152,6 +152,58 @@ def test_automatic_routing_avoids_intermediate_component_in_svg_and_drawio(tmp_p
     )
 
 
+def test_single_authored_anchor_aligns_inferred_opposite_anchor(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "aligned-anchor.yaml").write_text(
+        """diagram:
+  id: aligned-anchor
+  title: Aligned anchor
+  width: 500
+  height: 360
+
+groups: []
+
+nodes:
+  - id: source
+    label: Source
+    kind: component
+    layout: {x: 100, y: 80, w: 100, h: 50}
+  - id: target
+    label: Target
+    kind: service
+    layout: {x: 50, y: 240, w: 300, h: 60}
+
+edges:
+  - from: source
+    to: target
+    from_anchor: {side: bottom, position: 0.75}
+""",
+        encoding="utf-8",
+    )
+
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+
+    svg_root = ET.parse(out / "aligned-anchor.svg").getroot()
+    polyline = next(
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("polyline")
+    )
+    svg_points = [
+        tuple(float(value) for value in pair.split(","))
+        for pair in polyline.attrib["points"].split()
+    ]
+    assert svg_points == [(175.0, 130.0), (175.0, 240.0)]
+
+    drawio_root = ET.parse(out / "aligned-anchor.drawio")
+    edge = drawio_root.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert "exitX=0.75;exitY=1" in edge.attrib["style"]
+    assert "entryX=0.4166666666666667;entryY=0" in edge.attrib["style"]
+
+
 def test_routing_fixture_keeps_waypoints_anchors_dashed_edges_and_labels(tmp_path):
     out = _render_fixture(tmp_path, "routing-stress.yaml")
     svg = out / "routing-stress.svg"
