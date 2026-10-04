@@ -904,12 +904,22 @@ This is the preferred starting point. Add routing hints only when automatic
 routing produces crossings/overlaps or when the diagram needs deliberately stable
 entry/exit points.
 
-Automatic routing uses endpoint geometry and relative positions. Nodes and
-groups use the same rectangular boundary model. Routing is deterministic, but it
-is intentionally a small orthogonal router rather than a global graph-layout
-solver. Prefer fewer high-level edges and group endpoints over forcing speculative
-component-to-component arrows; use explicit anchors/routes only where the
-relationship is concrete and the visual path needs stabilising.
+Automatic routing uses endpoint geometry and relative positions. For
+node-to-node edges, the renderer also detects when the normal orthogonal path
+would cross another node and deterministically detours around that intermediate
+component with a small clearance. The same generated detour is emitted as native
+editable draw.io waypoints, so SVG and draw.io preserve the same reviewed route.
+
+Group endpoints still use the existing rectangular boundary model without global
+obstacle solving. Routing is intentionally a small deterministic orthogonal
+router rather than a force-directed or full graph-layout engine: component
+placement remains authoritative and is never moved automatically. Prefer fewer
+high-level edges and group endpoints over forcing speculative component-to-
+component arrows; use explicit anchors/routes only where the relationship is
+concrete and the visual path still needs stabilising.
+
+`examples/obstacle-routing.yaml` demonstrates automatic avoidance without any
+absolute route coordinates.
 
 ---
 
@@ -954,7 +964,11 @@ Examples:
 {side: right, position: 1.0}   bottom-right corner
 ```
 
-You may specify only one end; the other end is inferred automatically.
+You may specify only one end; the other end is inferred automatically. The
+opposite end uses the facing side (bottom -> top, right -> left, and vice versa)
+and projects its position onto the authored anchor coordinate. This keeps
+naturally aligned connections straight without requiring a second hand-tuned
+fractional position.
 
 ---
 

@@ -1,0 +1,27 @@
+diagram:
+  id: obstacle-routing
+  title: Obstacle-aware service flow
+  width: 760
+  height: 360
+  description: Automatic orthogonal routing around an intermediate component.
+
+groups: []
+
+nodes:
+  - id: client
+    label: Client
+    kind: component
+    layout: {x: 80, y: 150, w: 160, h: 60}
+  - id: shared-handler
+    label: Shared handler
+    kind: service
+    layout: {x: 310, y: 135, w: 140, h: 90}
+  - id: gateway
+    label: Gateway
+    kind: service
+    layout: {x: 540, y: 150, w: 140, h: 60}
+
+edges:
+  - from: client
+    to: gateway
+    label: request
