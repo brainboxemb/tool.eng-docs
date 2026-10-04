@@ -15,6 +15,7 @@ def test_user_examples_render(tmp_path):
     for name in (
         "minimal-flow",
         "obstacle-routing",
+        "corridor-routing",
         "routed-flow",
         "structured-layer",
     ):
