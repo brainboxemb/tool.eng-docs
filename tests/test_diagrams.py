@@ -204,6 +204,254 @@ edges:
     assert "entryX=0.85;entryY=0" in edge.attrib["style"]
 
 
+
+def _render_inline_diagram(tmp_path, name, source_text):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / f"{name}.yaml").write_text(source_text, encoding="utf-8")
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+    return out
+
+
+def _first_svg_polyline_points(path):
+    root = ET.parse(path).getroot()
+    polyline = next(
+        element
+        for element in root.iter()
+        if element.tag.endswith("polyline")
+    )
+    return [
+        tuple(float(value) for value in pair.split(","))
+        for pair in polyline.attrib["points"].split()
+    ]
+
+
+def test_cross_layer_route_prefers_horizontal_whitespace_corridor(tmp_path):
+    out = _render_inline_diagram(
+        tmp_path,
+        "horizontal-corridor",
+        """diagram:
+  id: horizontal-corridor
+  title: Horizontal layer corridor
+  width: 780
+  height: 460
+
+groups:
+  - id: upper
+    label: Upper layer
+    kind: group-primary
+    layout: {x: 40, y: 40, w: 700, h: 170}
+  - id: lower
+    label: Lower layer
+    kind: group-secondary
+    layout: {x: 40, y: 250, w: 700, h: 170}
+
+nodes:
+  - id: source
+    group: upper
+    label: Source
+    kind: component
+    layout: {x: 580, y: 100, w: 140, h: 60}
+  - id: target
+    group: lower
+    label: Target
+    kind: service
+    layout: {x: 250, y: 330, w: 200, h: 60}
+
+edges:
+  - from: source
+    to: target
+    from_anchor: {side: bottom, position: 0.5}
+""",
+    )
+
+    assert _first_svg_polyline_points(out / "horizontal-corridor.svg") == [
+        (650.0, 160.0),
+        (650.0, 230.0),
+        (450.0, 230.0),
+        (450.0, 330.0),
+    ]
+
+    drawio_root = ET.parse(out / "horizontal-corridor.drawio")
+    edge = drawio_root.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert "exitX=0.5;exitY=1" in edge.attrib["style"]
+    assert "entryX=1.0;entryY=0" in edge.attrib["style"]
+    waypoints = edge.findall("./mxGeometry/Array[@as='points']/mxPoint")
+    assert [(float(p.attrib["x"]), float(p.attrib["y"])) for p in waypoints] == [
+        (650.0, 230.0),
+        (450.0, 230.0),
+    ]
+
+
+def test_cross_layer_route_prefers_vertical_whitespace_corridor(tmp_path):
+    out = _render_inline_diagram(
+        tmp_path,
+        "vertical-corridor",
+        """diagram:
+  id: vertical-corridor
+  title: Vertical layer corridor
+  width: 560
+  height: 560
+
+groups:
+  - id: left
+    label: Left column
+    kind: group-primary
+    layout: {x: 30, y: 30, w: 220, h: 500}
+  - id: right
+    label: Right column
+    kind: group-secondary
+    layout: {x: 300, y: 30, w: 220, h: 500}
+
+nodes:
+  - id: source
+    group: left
+    label: Source
+    kind: component
+    layout: {x: 120, y: 400, w: 80, h: 60}
+  - id: target
+    group: right
+    label: Target
+    kind: service
+    layout: {x: 380, y: 100, w: 80, h: 100}
+
+edges:
+  - from: source
+    to: target
+    from_anchor: {side: right, position: 0.5}
+""",
+    )
+
+    assert _first_svg_polyline_points(out / "vertical-corridor.svg") == [
+        (200.0, 430.0),
+        (275.0, 430.0),
+        (275.0, 200.0),
+        (380.0, 200.0),
+    ]
+
+
+def test_blocked_layer_corridor_falls_back_to_obstacle_aware_route(tmp_path):
+    out = _render_inline_diagram(
+        tmp_path,
+        "blocked-corridor",
+        """diagram:
+  id: blocked-corridor
+  title: Blocked layer corridor
+  width: 780
+  height: 460
+
+groups:
+  - id: upper
+    label: Upper layer
+    kind: group-primary
+    layout: {x: 40, y: 40, w: 700, h: 170}
+  - id: lower
+    label: Lower layer
+    kind: group-secondary
+    layout: {x: 40, y: 250, w: 700, h: 170}
+
+nodes:
+  - id: source
+    group: upper
+    label: Source
+    kind: component
+    layout: {x: 580, y: 100, w: 140, h: 60}
+  - id: target
+    group: lower
+    label: Target
+    kind: service
+    layout: {x: 250, y: 330, w: 200, h: 60}
+  - id: blocker
+    label: Corridor blocker
+    kind: external
+    layout: {x: 510, y: 215, w: 70, h: 30}
+
+edges:
+  - from: source
+    to: target
+    from_anchor: {side: bottom, position: 0.5}
+""",
+    )
+
+    points = _first_svg_polyline_points(out / "blocked-corridor.svg")
+    blocker = (510.0, 215.0, 580.0, 245.0)
+    left, top, right, bottom = blocker
+    for first, second in zip(points, points[1:]):
+        if first[0] == second[0]:
+            assert not (
+                left < first[0] < right
+                and max(min(first[1], second[1]), top)
+                < min(max(first[1], second[1]), bottom)
+            )
+        elif first[1] == second[1]:
+            assert not (
+                top < first[1] < bottom
+                and max(min(first[0], second[0]), left)
+                < min(max(first[0], second[0]), right)
+            )
+        else:
+            pytest.fail("fallback route must remain orthogonal")
+
+    assert not any(
+        first[1] == second[1] == 230.0
+        and min(first[0], second[0]) < 580.0
+        and max(first[0], second[0]) > 510.0
+        for first, second in zip(points, points[1:])
+    )
+
+
+def test_explicit_route_remains_authoritative_over_group_corridor(tmp_path):
+    out = _render_inline_diagram(
+        tmp_path,
+        "explicit-corridor-route",
+        """diagram:
+  id: explicit-corridor-route
+  title: Explicit route
+  width: 780
+  height: 460
+
+groups:
+  - id: upper
+    label: Upper layer
+    kind: group-primary
+    layout: {x: 40, y: 40, w: 700, h: 170}
+  - id: lower
+    label: Lower layer
+    kind: group-secondary
+    layout: {x: 40, y: 250, w: 700, h: 170}
+
+nodes:
+  - id: source
+    group: upper
+    label: Source
+    kind: component
+    layout: {x: 580, y: 100, w: 140, h: 60}
+  - id: target
+    group: lower
+    label: Target
+    kind: service
+    layout: {x: 250, y: 330, w: 200, h: 60}
+
+edges:
+  - from: source
+    to: target
+    from_anchor: {side: bottom, position: 0.5}
+    to_anchor: {side: top, position: 1.0}
+    route:
+      - {x: 650, y: 220}
+      - {x: 450, y: 220}
+""",
+    )
+
+    assert _first_svg_polyline_points(out / "explicit-corridor-route.svg") == [
+        (650.0, 160.0),
+        (650.0, 220.0),
+        (450.0, 220.0),
+        (450.0, 330.0),
+    ]
+
 def test_routing_fixture_keeps_waypoints_anchors_dashed_edges_and_labels(tmp_path):
     out = _render_fixture(tmp_path, "routing-stress.yaml")
     svg = out / "routing-stress.svg"

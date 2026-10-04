@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.9.2` adds deterministic obstacle-aware node-to-node routing to the existing
-structural diagram pipeline while retaining explicit route waypoints as an escape
-hatch and preserving native editable draw.io output.
+`v0.9.3` adds deterministic whitespace-corridor preference for cross-layer
+node-to-node routing while retaining v0.9.2 obstacle avoidance, explicit route
+waypoints as the authoritative escape hatch, and native editable draw.io output.
 
 ### Declarative diagrams
 
@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.2"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.3"
 ```
 
 The package installs the `eng-docs` command.
@@ -196,6 +196,7 @@ Diagram examples:
 ```text
 examples/minimal-flow.yaml
 examples/obstacle-routing.yaml
+examples/corridor-routing.yaml
 examples/routed-flow.yaml
 examples/structured-layer.yaml
 examples/polygon-group.yaml
@@ -205,9 +206,11 @@ examples/ui-wireframe.yaml
 
 The first demonstrates the minimal structural model and automatic routing. The
 obstacle-routing example shows a node-to-node edge automatically detouring around
-an intermediate component without absolute route waypoints. The routed-flow
-example shows visual grouping, explicit edge anchors, a dashed edge and manual
-waypoints. The structured-layer example demonstrates structured node items and a
+an intermediate component without absolute route waypoints. The corridor-routing
+example shows an edge between adjacent groups using the whitespace corridor
+between those groups instead of running its middle segment through either layer.
+The routed-flow example shows visual grouping, explicit edge anchors, a dashed
+edge and manual waypoints. The structured-layer example demonstrates structured node items and a
 high-level edge that terminates on a group/layer boundary. The polygon example
 demonstrates native stepped polygon outlines for groups while retaining a
 rectangular layout box for labels and routing. The sequence example demonstrates
@@ -348,7 +351,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.9.2
+v0.9.3
 ```
 
 Consumers should pin a release rather than a feature branch.

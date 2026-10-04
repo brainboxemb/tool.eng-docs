@@ -1,0 +1,35 @@
+diagram:
+  id: corridor-routing
+  title: Cross-layer corridor routing
+  width: 780
+  height: 460
+  description: Automatic routing prefers the whitespace corridor between adjacent layers.
+
+groups:
+  - id: upper
+    label: Upper layer
+    kind: group-primary
+    layout: {x: 40, y: 40, w: 700, h: 170}
+  - id: lower
+    label: Lower layer
+    kind: group-secondary
+    layout: {x: 40, y: 250, w: 700, h: 170}
+
+nodes:
+  - id: source
+    label: Source
+    group: upper
+    kind: component
+    notation: component
+    layout: {x: 580, y: 100, w: 140, h: 60}
+  - id: target
+    label: Target
+    group: lower
+    kind: service
+    notation: component
+    layout: {x: 250, y: 330, w: 200, h: 60}
+
+edges:
+  - from: source
+    to: target
+    from_anchor: {side: bottom, position: 0.5}

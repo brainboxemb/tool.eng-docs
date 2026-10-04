@@ -497,13 +497,86 @@ def _auto_orthogonal_points(source, target, obstacles=()):
     )
 
 
-def _edge_points(source, target, edge, obstacles=()):
+def _preferred_group_corridor_points(
+    data,
+    source,
+    source_anchor,
+    target,
+    target_anchor,
+    obstacles,
+):
+    """Prefer whitespace between distinct endpoint groups when it is usable."""
+    source_group_id = source.get("group")
+    target_group_id = target.get("group")
+    if (
+        not source_group_id
+        or not target_group_id
+        or source_group_id == target_group_id
+    ):
+        return None
+
+    groups = {group["id"]: group for group in data["groups"]}
+    source_group = groups.get(source_group_id)
+    target_group = groups.get(target_group_id)
+    if source_group is None or target_group is None:
+        return None
+
+    sl, st, sr, sb = _layout_rect(source_group)
+    tl, tt, tr, tb = _layout_rect(target_group)
+    start = _anchor_point(source, source_anchor)
+    end = _anchor_point(target, target_anchor)
+    sx, sy = start
+    tx, ty = end
+
+    candidate = None
+    if sb <= tt and source_anchor["side"] == "bottom" and target_anchor["side"] == "top":
+        corridor_y = (sb + tt) / 2.0
+        candidate = _simplify_polyline(
+            [start, (sx, corridor_y), (tx, corridor_y), end]
+        )
+    elif tb <= st and source_anchor["side"] == "top" and target_anchor["side"] == "bottom":
+        corridor_y = (tb + st) / 2.0
+        candidate = _simplify_polyline(
+            [start, (sx, corridor_y), (tx, corridor_y), end]
+        )
+    elif sr <= tl and source_anchor["side"] == "right" and target_anchor["side"] == "left":
+        corridor_x = (sr + tl) / 2.0
+        candidate = _simplify_polyline(
+            [start, (corridor_x, sy), (corridor_x, ty), end]
+        )
+    elif tr <= sl and source_anchor["side"] == "left" and target_anchor["side"] == "right":
+        corridor_x = (tr + sl) / 2.0
+        candidate = _simplify_polyline(
+            [start, (corridor_x, sy), (corridor_x, ty), end]
+        )
+
+    if candidate is None or len(candidate) <= 2:
+        return None
+
+    expanded_rects = [_layout_rect(item, _ROUTER_CLEARANCE) for item in obstacles]
+    if _polyline_hits_rects(candidate, expanded_rects):
+        return None
+    return candidate
+
+
+def _edge_points(source, target, edge, obstacles=(), data=None):
     route = [(p["x"], p["y"]) for p in edge.get("route", [])]
     source_anchor = edge.get("from_anchor")
     target_anchor = edge.get("to_anchor")
 
     if not route:
         source_anchor, target_anchor = _resolved_anchors(source, target, edge)
+        if data is not None:
+            corridor = _preferred_group_corridor_points(
+                data,
+                source,
+                source_anchor,
+                target,
+                target_anchor,
+                obstacles,
+            )
+            if corridor is not None:
+                return corridor
         return _obstacle_aware_points(
             source,
             source_anchor,
@@ -528,15 +601,27 @@ def _edge_points(source, target, edge, obstacles=()):
 
 
 def _edge_obstacles(data, edge):
-    node_ids = {node["id"] for node in data["nodes"]}
-    if edge["from"] not in node_ids or edge["to"] not in node_ids:
+    nodes_by_id = {node["id"]: node for node in data["nodes"]}
+    if edge["from"] not in nodes_by_id or edge["to"] not in nodes_by_id:
         return []
+
     endpoint_ids = {edge["from"], edge["to"]}
-    return [
+    endpoint_group_ids = {
+        nodes_by_id[endpoint_id].get("group")
+        for endpoint_id in endpoint_ids
+        if nodes_by_id[endpoint_id].get("group")
+    }
+    obstacles = [
         node
         for node in data["nodes"]
         if node["id"] not in endpoint_ids
     ]
+    obstacles.extend(
+        group
+        for group in data["groups"]
+        if group["id"] not in endpoint_group_ids
+    )
+    return obstacles
 
 
 def _label_point(points):
@@ -1078,6 +1163,7 @@ def render_svg(data, theme, out: Path):
             target,
             edge,
             _edge_obstacles(data, edge),
+            data,
         )
         dash = ' stroke-dasharray="7 5"' if edge.get("dashed") else ""
         pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
@@ -1288,7 +1374,13 @@ def render_drawio(data, theme, out: Path):
         source = endpoints[edge["from"]]
         target = endpoints[edge["to"]]
         obstacles = _edge_obstacles(data, edge)
-        computed_points = _edge_points(source, target, edge, obstacles)
+        computed_points = _edge_points(
+            source,
+            target,
+            edge,
+            obstacles,
+            data,
+        )
         baseline_points = _edge_points(source, target, edge)
         uses_generated_route = (
             not edge.get("route")

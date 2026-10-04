@@ -910,16 +910,31 @@ would cross another node and deterministically detours around that intermediate
 component with a small clearance. The same generated detour is emitted as native
 editable draw.io waypoints, so SVG and draw.io preserve the same reviewed route.
 
-Group endpoints still use the existing rectangular boundary model without global
-obstacle solving. Routing is intentionally a small deterministic orthogonal
-router rather than a force-directed or full graph-layout engine: component
-placement remains authoritative and is never moved automatically. Prefer fewer
-high-level edges and group endpoints over forcing speculative component-to-
-component arrows; use explicit anchors/routes only where the relationship is
-concrete and the visual path still needs stabilising.
+When two node endpoints belong to distinct, non-overlapping groups and their
+resolved anchors face the gap between those groups, the router prefers the
+whitespace corridor between the group boundaries. For vertically stacked groups
+the horizontal middle segment is placed halfway through the vertical gap; for
+side-by-side groups the vertical middle segment is placed halfway through the
+horizontal gap. This keeps cross-layer relationships in the visual separation
+already authored into the diagram instead of running long middle segments inside
+one of the layers.
 
-`examples/obstacle-routing.yaml` demonstrates automatic avoidance without any
-absolute route coordinates.
+A preferred corridor is used only when its complete orthogonal path remains clear
+of other nodes and unrelated groups (including routing clearance). If that
+corridor is blocked, the normal deterministic obstacle-aware router remains the
+fallback. An explicit `route:` always wins over automatic corridor selection.
+
+Group endpoints themselves still use the existing rectangular boundary model
+without global obstacle solving. Routing is intentionally a small deterministic
+orthogonal router rather than a force-directed or full graph-layout engine:
+component placement remains authoritative and is never moved automatically.
+Prefer fewer high-level edges and group endpoints over forcing speculative
+component-to-component arrows; use explicit anchors/routes only where the
+relationship is concrete and the visual path still needs stabilising.
+
+`examples/obstacle-routing.yaml` demonstrates automatic obstacle avoidance;
+`examples/corridor-routing.yaml` demonstrates cross-layer corridor preference.
+Neither example requires absolute route coordinates.
 
 ---
 
