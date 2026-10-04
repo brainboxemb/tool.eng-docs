@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.9.2 — 2026-10-04
+
+### Changed
+
+- automatically detour structural node-to-node edges around intermediate
+  component rectangles when the normal orthogonal path would cross them;
+- keep routing deterministic with a small clearance and preserve deliberate
+  component placement;
+- emit the same generated detour as editable draw.io waypoints as well as SVG
+  geometry.
+
+### Compatibility
+
+- diagram YAML syntax is unchanged;
+- explicit `route:` waypoints remain the authoritative escape hatch;
+- existing routes that do not cross another node keep their previous geometry;
+- group-endpoint routing is unchanged in this slice.
+
+
 ## 0.9.1 — 2026-10-01
 
 ### Changed
