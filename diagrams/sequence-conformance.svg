@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="620" viewBox="0 0 1040 620">
+<defs>
+<marker id="seq-filled-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L0,6 L9,3 z" fill="#5f6368"/>
+</marker>
+<marker id="seq-open-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L9,3 L0,6" fill="none" stroke="#5f6368" stroke-width="1.5"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="30.0" y="38.0" text-anchor="start" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#202124">Sequence diagram conformance</text>
+<rect x="0.0" y="100.0" width="190.0" height="58.0" fill="#eeeeee" stroke="#777777" stroke-width="2"/>
+<text x="95.0" y="129.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="14" font-weight="normal" fill="#202124">Source</text>
+<line data-sequence-lifeline="source" x1="95.0" y1="158.0" x2="95.0" y2="396.0" stroke="#5f6368" stroke-width="1.4" stroke-dasharray="5 5"/>
+<rect x="283.3" y="100.0" width="190.0" height="58.0" fill="#f8cecc" stroke="#b85450" stroke-width="2"/>
+<text x="378.3" y="129.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="14" font-weight="normal" fill="#202124">Queue</text>
+<line data-sequence-lifeline="queue" x1="378.3" y1="158.0" x2="378.3" y2="396.0" stroke="#5f6368" stroke-width="1.4" stroke-dasharray="5 5"/>
+<rect x="566.7" y="100.0" width="190.0" height="58.0" fill="#fff2cc" stroke="#d6b656" stroke-width="2"/>
+<text x="661.7" y="129.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="14" font-weight="normal" fill="#202124">Worker</text>
+<line data-sequence-lifeline="worker" x1="661.7" y1="158.0" x2="661.7" y2="396.0" stroke="#5f6368" stroke-width="1.4" stroke-dasharray="5 5"/>
+<rect x="850.0" y="100.0" width="190.0" height="58.0" fill="#f4cccc" stroke="#b85450" stroke-width="2"/>
+<text x="945.0" y="129.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="14" font-weight="normal" fill="#202124">Store</text>
+<line data-sequence-lifeline="store" x1="945.0" y1="158.0" x2="945.0" y2="396.0" stroke="#5f6368" stroke-width="1.4" stroke-dasharray="5 5"/>
+<rect data-sequence-activation="0" x="939.0" y="299.0" width="12.0" height="72.0" fill="#f4cccc" stroke="#b85450" stroke-width="1.4"/>
+<line data-sequence-message="1" x1="95.0" y1="205.0" x2="378.3" y2="205.0" stroke="#5f6368" stroke-width="2" marker-end="url(#seq-open-arrow)"/>
+<text x="236.7" y="193.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="13" font-weight="normal" fill="#202124">enqueue</text>
+<line data-sequence-message="2" x1="378.3" y1="257.0" x2="661.7" y2="257.0" stroke="#5f6368" stroke-width="2" marker-end="url(#seq-open-arrow)"/>
+<text x="520.0" y="245.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="13" font-weight="normal" fill="#202124">dispatch</text>
+<line data-sequence-message="3" x1="661.7" y1="309.0" x2="939.0" y2="309.0" stroke="#5f6368" stroke-width="2" marker-end="url(#seq-filled-arrow)"/>
+<text x="800.3" y="297.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="13" font-weight="normal" fill="#202124">persist</text>
+<line data-sequence-message="4" x1="939.0" y1="361.0" x2="661.7" y2="361.0" stroke="#5f6368" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#seq-open-arrow)"/>
+<text x="800.3" y="349.0" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="13" font-weight="normal" fill="#202124">persisted</text>
+</svg>
