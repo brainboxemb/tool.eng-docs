@@ -251,16 +251,26 @@ _ROUTER_CLEARANCE = 10.0
 _ROUTER_BEND_PENALTY = 2.0
 
 
-def _projected_inferred_anchor(item, target_point):
-    anchor = _inferred_anchor(item, target_point)
+def _projected_anchor(item, side, target_point):
     layout = item["layout"]
     tx, ty = target_point
-    if anchor["side"] in ("top", "bottom"):
+    if side in ("top", "bottom"):
         position = (tx - layout["x"]) / layout["w"]
     else:
         position = (ty - layout["y"]) / layout["h"]
-    anchor["position"] = min(1.0, max(0.0, position))
-    return anchor
+    return {
+        "side": side,
+        "position": min(1.0, max(0.0, position)),
+    }
+
+
+def _opposite_side(side):
+    return {
+        "top": "bottom",
+        "right": "left",
+        "bottom": "top",
+        "left": "right",
+    }[side]
 
 
 def _resolved_anchors(source, target, edge):
@@ -268,13 +278,15 @@ def _resolved_anchors(source, target, edge):
     target_anchor = edge.get("to_anchor")
 
     if source_anchor and not target_anchor:
-        target_anchor = _projected_inferred_anchor(
+        target_anchor = _projected_anchor(
             target,
+            _opposite_side(source_anchor["side"]),
             _anchor_point(source, source_anchor),
         )
     elif target_anchor and not source_anchor:
-        source_anchor = _projected_inferred_anchor(
+        source_anchor = _projected_anchor(
             source,
+            _opposite_side(target_anchor["side"]),
             _anchor_point(target, target_anchor),
         )
     else:
