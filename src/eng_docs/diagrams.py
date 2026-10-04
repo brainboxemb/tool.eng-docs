@@ -489,6 +489,18 @@ def _edge_points(source, target, edge, obstacles=()):
     return _simplify_polyline(source_connection[:-1] + route + target_connection[1:])
 
 
+def _edge_obstacles(data, edge):
+    node_ids = {node["id"] for node in data["nodes"]}
+    if edge["from"] not in node_ids or edge["to"] not in node_ids:
+        return []
+    endpoint_ids = {edge["from"], edge["to"]}
+    return [
+        node
+        for node in data["nodes"]
+        if node["id"] not in endpoint_ids
+    ]
+
+
 def _label_point(points):
     segments = []
     for first, second in zip(points, points[1:]):
@@ -1023,7 +1035,12 @@ def render_svg(data, theme, out: Path):
     for edge in data["edges"]:
         source = endpoints[edge["from"]]
         target = endpoints[edge["to"]]
-        points = _edge_points(source, target, edge)
+        points = _edge_points(
+            source,
+            target,
+            edge,
+            _edge_obstacles(data, edge),
+        )
         dash = ' stroke-dasharray="7 5"' if edge.get("dashed") else ""
         pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
         parts.append(
@@ -1226,11 +1243,30 @@ def render_drawio(data, theme, out: Path):
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
 
     group_ids = {group["id"] for group in data["groups"]}
+    endpoints = {g["id"]: g for g in data["groups"]}
+    endpoints.update({n["id"]: n for n in data["nodes"]})
 
     for i, edge in enumerate(data["edges"], 1):
+        source = endpoints[edge["from"]]
+        target = endpoints[edge["to"]]
+        obstacles = _edge_obstacles(data, edge)
+        computed_points = _edge_points(source, target, edge, obstacles)
+        baseline_points = _edge_points(source, target, edge)
+        uses_generated_route = (
+            not edge.get("route")
+            and computed_points != baseline_points
+        )
+
+        from_anchor = edge.get("from_anchor")
+        to_anchor = edge.get("to_anchor")
+        if uses_generated_route:
+            resolved_from, resolved_to = _resolved_anchors(source, target, edge)
+            from_anchor = from_anchor or resolved_from
+            to_anchor = to_anchor or resolved_to
+
         edge_style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;"
-        edge_style += _drawio_anchor_style(edge.get("from_anchor"), "exit")
-        edge_style += _drawio_anchor_style(edge.get("to_anchor"), "entry")
+        edge_style += _drawio_anchor_style(from_anchor, "exit")
+        edge_style += _drawio_anchor_style(to_anchor, "entry")
         if edge.get("dashed"):
             edge_style += "dashed=1;"
         cell = ET.SubElement(
@@ -1244,6 +1280,10 @@ def render_drawio(data, theme, out: Path):
             points = ET.SubElement(geom, "Array", **{"as": "points"})
             for point in edge["route"]:
                 ET.SubElement(points, "mxPoint", x=str(point["x"]), y=str(point["y"]))
+        elif uses_generated_route and len(computed_points) > 2:
+            points = ET.SubElement(geom, "Array", **{"as": "points"})
+            for x, y in computed_points[1:-1]:
+                ET.SubElement(points, "mxPoint", x=str(x), y=str(y))
 
     ET.indent(mxfile, space="  ")
     out.write_text(ET.tostring(mxfile, encoding="unicode") + "\n", encoding="utf-8")
