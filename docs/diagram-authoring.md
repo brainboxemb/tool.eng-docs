@@ -964,7 +964,10 @@ Examples:
 {side: right, position: 1.0}   bottom-right corner
 ```
 
-You may specify only one end; the other end is inferred automatically.
+You may specify only one end; the other end is inferred automatically. When the
+opposite box side can face the authored anchor directly, its inferred position is
+projected onto that anchor coordinate. This keeps naturally aligned connections
+straight without requiring a second hand-tuned fractional position.
 
 ---
 
