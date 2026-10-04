@@ -195,6 +195,7 @@ Diagram examples:
 
 ```text
 examples/minimal-flow.yaml
+examples/obstacle-routing.yaml
 examples/routed-flow.yaml
 examples/structured-layer.yaml
 examples/polygon-group.yaml
@@ -203,14 +204,17 @@ examples/ui-wireframe.yaml
 ```
 
 The first demonstrates the minimal structural model and automatic routing. The
-second shows visual grouping, explicit edge anchors, a dashed edge and manual
-waypoints. The third demonstrates structured node items and a high-level edge
-that terminates on a group/layer boundary. The fourth demonstrates native stepped
-polygon outlines for groups while retaining a rectangular layout box for labels
-and routing. The sequence example demonstrates ordered participants and
-call/async/return interactions without introducing a separate rendering engine.
-The UI wireframe example demonstrates editable panels, tabs, inputs, buttons,
-tables and status pills using the same structural diagram source model.
+obstacle-routing example shows a node-to-node edge automatically detouring around
+an intermediate component without absolute route waypoints. The routed-flow
+example shows visual grouping, explicit edge anchors, a dashed edge and manual
+waypoints. The structured-layer example demonstrates structured node items and a
+high-level edge that terminates on a group/layer boundary. The polygon example
+demonstrates native stepped polygon outlines for groups while retaining a
+rectangular layout box for labels and routing. The sequence example demonstrates
+ordered participants and call/async/return interactions without introducing a
+separate rendering engine. The UI wireframe example demonstrates editable panels,
+tabs, inputs, buttons, tables and status pills using the same structural diagram
+source model.
 
 Document-assembly example:
 
