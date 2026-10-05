@@ -235,6 +235,9 @@ def _anchor_point(item, anchor):
     side = anchor["side"]
     position = anchor.get("position", 0.5)
 
+    if side not in ("top", "right", "bottom", "left"):
+        raise ValueError(f"unknown anchor side: {side}")
+
     if item.get("outline"):
         outline_point = _outline_anchor_point(item, side, position)
         if outline_point is not None:
@@ -1315,9 +1318,13 @@ def _drawio_anchor_style(anchor, prefix, item=None):
     position = anchor.get("position", 0.5)
     perimeter = 1
 
+    outline_point = None
     if item and item.get("outline"):
+        outline_point = _outline_anchor_point(item, side, position)
+
+    if outline_point is not None:
         r = item["layout"]
-        anchor_x, anchor_y = _anchor_point(item, anchor)
+        anchor_x, anchor_y = outline_point
         x = (anchor_x - r["x"]) / r["w"]
         y = (anchor_y - r["y"]) / r["h"]
         perimeter = 0
