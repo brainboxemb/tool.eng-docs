@@ -47,4 +47,9 @@ nodes:
     kind: integration
     layout: {x: 540, y: 250, w: 220, h: 70}
 
-edges: []
+edges:
+  - from: upper-service
+    to: lower-area
+    label: explicit outline anchor
+    from_anchor: {side: bottom, position: 0.5}
+    to_anchor: {side: top, position: 0.2763157895}
