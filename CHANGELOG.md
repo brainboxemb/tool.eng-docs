@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.4 — 2026-10-05
+
+### Changed
+
+- resolve explicit edge anchors on custom polygon groups against the authored
+  outline boundary in SVG and draw.io instead of the rectangular layout bounding
+  box;
+- preserve the existing normalized top/right/bottom/left anchor-position
+  semantics while selecting the corresponding polygon-boundary intersection.
+
+### Compatibility
+
+- diagram YAML syntax is unchanged;
+- ordinary rectangular nodes/groups retain their existing anchor behaviour;
+- automatic routing continues to use the rectangular layout model; only explicit
+  shaped-group endpoints use the visible polygon boundary.
+
+
 ## 0.9.3 — 2026-10-04
 
 ### Changed

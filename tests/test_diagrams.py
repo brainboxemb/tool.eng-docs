@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from eng_docs.diagrams import generate, load_yaml, validate_refs, validate_sequence_refs, validate_source
+from eng_docs.diagrams import _anchor_point, generate, load_yaml, validate_refs, validate_sequence_refs, validate_source
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -203,6 +203,91 @@ edges:
     assert "exitX=0.75;exitY=1" in edge.attrib["style"]
     assert "entryX=0.85;entryY=0" in edge.attrib["style"]
 
+
+
+@pytest.mark.parametrize(
+    ("side", "position", "expected"),
+    [
+        ("top", 0.25, (150.0, 125.0)),
+        ("bottom", 0.25, (150.0, 175.0)),
+        ("left", 0.25, (150.0, 125.0)),
+        ("right", 0.25, (250.0, 125.0)),
+    ],
+)
+def test_explicit_anchor_on_polygon_group_resolves_to_outline(side, position, expected):
+    group = {
+        "layout": {"x": 100, "y": 100, "w": 200, "h": 100},
+        "outline": {
+            "points": [
+                {"x": 0.5, "y": 0.0},
+                {"x": 1.0, "y": 0.5},
+                {"x": 0.5, "y": 1.0},
+                {"x": 0.0, "y": 0.5},
+            ]
+        },
+    }
+
+    assert _anchor_point(
+        group,
+        {"side": side, "position": position},
+    ) == pytest.approx(expected)
+
+
+def test_polygon_group_anchor_matches_svg_and_drawio_endpoint(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "polygon-anchor.yaml").write_text(
+        """diagram:
+  id: polygon-anchor
+  title: Polygon anchor
+  width: 640
+  height: 500
+
+groups:
+  - id: shaped
+    label: Shaped layer
+    kind: group-secondary
+    layout: {x: 100, y: 220, w: 400, h: 200}
+    outline:
+      points:
+        - {x: 0.0, y: 0.3}
+        - {x: 0.65, y: 0.3}
+        - {x: 0.75, y: 0.0}
+        - {x: 1.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
+        - {x: 0.0, y: 1.0}
+
+nodes:
+  - id: source
+    label: Source
+    kind: component
+    layout: {x: 150, y: 80, w: 100, h: 60}
+
+edges:
+  - from: source
+    to: shaped
+    from_anchor: {side: bottom, position: 0.5}
+    to_anchor: {side: top, position: 0.25}
+""",
+        encoding="utf-8",
+    )
+
+    out = tmp_path / "out"
+    generate(source, SCHEMA, THEME, out)
+
+    svg_root = ET.parse(out / "polygon-anchor.svg").getroot()
+    polyline = next(
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("polyline")
+    )
+    assert polyline.attrib["points"] == "200.0,140.0 200.0,280.0"
+
+    drawio_root = ET.parse(out / "polygon-anchor.drawio")
+    edge = drawio_root.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert "entryX=0.25;entryY=0.3" in edge.attrib["style"]
+    assert "entryPerimeter=0" in edge.attrib["style"]
 
 
 def _render_inline_diagram(tmp_path, name, source_text):
@@ -640,6 +725,23 @@ def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
         if element.tag.endswith("text") and element.text == "Lower responsibility"
     )
     assert float(lower_label.attrib["y"]) == 297.0
+
+    edge_polyline = next(
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("polyline")
+    )
+    edge_points = [
+        tuple(float(value) for value in pair.split(","))
+        for pair in edge_polyline.attrib["points"].split()
+    ]
+    assert edge_points[0] == pytest.approx((280.0, 205.0))
+    assert edge_points[-1] == pytest.approx((280.0, 275.1))
+
+    edge = drawio_tree.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert "entryX=0.2763157895" in edge.attrib["style"]
+    assert "entryPerimeter=0" in edge.attrib["style"]
 
     assert svg.read_bytes() == (second / "polygon-group.svg").read_bytes()
     assert drawio.read_bytes() == (second / "polygon-group.drawio").read_bytes()

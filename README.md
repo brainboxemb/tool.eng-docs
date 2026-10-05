@@ -7,9 +7,9 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.9.3` adds deterministic whitespace-corridor preference for cross-layer
-node-to-node routing while retaining v0.9.2 obstacle avoidance, explicit route
-waypoints as the authoritative escape hatch, and native editable draw.io output.
+`v0.9.4` resolves explicit anchors on custom polygon groups against the visible
+authored outline in both SVG and draw.io, while retaining deterministic routing,
+explicit route waypoints and native editable draw.io output.
 
 ### Declarative diagrams
 
@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.3"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.4"
 ```
 
 The package installs the `eng-docs` command.
@@ -351,7 +351,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.9.3
+v0.9.4
 ```
 
 Consumers should pin a release rather than a feature branch.
