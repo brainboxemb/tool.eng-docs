@@ -726,6 +726,18 @@ def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
     )
     assert float(lower_label.attrib["y"]) == 297.0
 
+    edge_polyline = next(
+        element
+        for element in svg_root.iter()
+        if element.tag.endswith("polyline")
+    )
+    assert edge_polyline.attrib["points"] == "280.0,205.0 280.0,275.1"
+
+    edge = drawio_tree.find(".//mxCell[@id='edge-1']")
+    assert edge is not None
+    assert "entryX=0.2763157895" in edge.attrib["style"]
+    assert "entryPerimeter=0" in edge.attrib["style"]
+
     assert svg.read_bytes() == (second / "polygon-group.svg").read_bytes()
     assert drawio.read_bytes() == (second / "polygon-group.drawio").read_bytes()
 
