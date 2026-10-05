@@ -1,0 +1,93 @@
+diagram:
+  id: autosize-structure
+  title: Autosize conformance
+  width: 1000
+  height: 700
+  note: Domain-neutral fixture for deterministic content-fit sizing.
+
+groups:
+  - id: runtime-group
+    object_id: example.autosize.group
+    label: Runtime group
+    note: Contains auto-sized children
+    properties:
+      - lifecycle
+      - status
+    kind: group-primary
+    layout:
+      x: 60
+      y: 80
+      min_w: 620
+      min_h: 330
+
+nodes:
+  - id: short
+    object_id: example.autosize.short
+    group: runtime-group
+    label: Clock
+    kind: component
+    layout:
+      x: 100
+      y: 150
+
+  - id: long
+    object_id: example.autosize.long
+    group: runtime-group
+    label: Deterministic execution coordinator
+    kind: component
+    layout:
+      x: 300
+      y: 150
+
+  - id: component-notation
+    object_id: example.autosize.notation
+    group: runtime-group
+    label: Clock
+    notation: component
+    kind: component
+    layout:
+      x: 650
+      y: 150
+
+  - id: structured
+    object_id: example.autosize.structured
+    group: runtime-group
+    label: Processing service
+    subtitle: shared role worker
+    items:
+      - bounded queue
+      - deterministic drain
+      - visible overload
+    kind: service
+    layout:
+      x: 100
+      y: 260
+      w: 220
+
+  - id: constrained
+    object_id: example.autosize.constrained
+    group: runtime-group
+    label: This intentionally long label is clamped by max width
+    kind: runtime
+    layout:
+      x: 390
+      y: 280
+      min_w: 120
+      max_w: 180
+      min_h: 50
+
+  - id: fixed
+    object_id: example.autosize.fixed
+    label: Fixed geometry
+    kind: external
+    layout:
+      x: 760
+      y: 520
+      w: 170
+      h: 68
+
+edges:
+  - from: short
+    to: structured
+  - from: long
+    to: constrained
