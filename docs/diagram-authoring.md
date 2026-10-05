@@ -482,10 +482,11 @@ polygon geometry and sloped/stepped boundary.
 
 SVG and draw.io use the same polygon. The draw.io representation remains a
 native editable polygon (`mxgraph.basic.polygon`), not an embedded image.
-Group titles and edge routing still use the rectangular `layout` bounding box.
-Keep the title area inside the polygon and use explicit edge anchors when a
-non-rectangular boundary makes the default bounding-box anchor visually
-ambiguous.
+Group titles and automatic routing still use the rectangular `layout` bounding
+box. Explicit edge anchors on a polygon group are resolved against the authored
+polygon boundary, so a `top`, `right`, `bottom` or `left` anchor terminates
+on the visible shaped boundary at the requested position. Keep the title area
+inside the polygon.
 
 Polygon outlines currently apply to groups only and cannot be combined with
 `notation`; component/class notation remains rectangular.
@@ -984,6 +985,14 @@ opposite end uses the facing side (bottom -> top, right -> left, and vice versa)
 and projects its position onto the authored anchor coordinate. This keeps
 naturally aligned connections straight without requiring a second hand-tuned
 fractional position.
+
+For groups with a custom polygon `outline`, an explicit anchor keeps the same
+normalized position semantics but resolves to the polygon boundary instead of
+the rectangular layout box. For example, `{side: top, position: 0.25}` casts a
+vertical line at 25% of the group's layout width and uses the upper polygon
+intersection. `bottom` uses the lower intersection; `left` and `right` use
+the corresponding horizontal intersections. Corner rounding remains a visual
+treatment of the authored polygon geometry.
 
 ---
 
