@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- resolve explicit edge anchors on custom polygon groups against the authored outline boundary in SVG and draw.io instead of the rectangular layout bounding box.
+
+
 ## 0.9.3 — 2026-10-04
 
 ### Changed
