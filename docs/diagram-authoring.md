@@ -296,7 +296,10 @@ source model for component/layer topology and routing-heavy architecture views.
 
 ## Coordinates and `layout`
 
-Groups and nodes use the same rectangular layout shape:
+Groups and nodes use one rectangular layout shape. Position remains explicit;
+size may be fixed or content-fit.
+
+A completely fixed rectangle is unchanged:
 
 ```yaml
 layout:
@@ -306,26 +309,97 @@ layout:
   h: 60
 ```
 
-or the equivalent compact YAML form:
+A content-fit rectangle omits one or both dimensions:
 
 ```yaml
-layout: {x: 120, y: 150, w: 180, h: 60}
+layout:
+  x: 120
+  y: 150
+```
+
+One dimension may stay fixed while the other is automatic:
+
+```yaml
+layout:
+  x: 120
+  y: 150
+  w: 220
+```
+
+Automatic dimensions may be constrained:
+
+```yaml
+layout:
+  x: 120
+  y: 150
+  min_w: 160
+  max_w: 280
+  min_h: 56
 ```
 
 Meaning:
 
 ```text
-x   left edge from canvas origin
-y   top edge from canvas origin
-w   width, must be > 0
-h   height, must be > 0
+x       left edge from canvas origin; required
+y       top edge from canvas origin; required
+w       fixed width, must be > 0 when supplied
+h       fixed height, must be > 0 when supplied
+min_w   lower bound for automatic width
+max_w   upper bound for automatic width
+min_h   lower bound for automatic height
+max_h   upper bound for automatic height
 ```
 
 The canvas origin is the top-left corner.
 
-The current model deliberately uses explicit layout rather than an automatic
-whole-diagram layout engine. This makes diagrams deterministic and makes the
-source author responsible for major placement decisions.
+### Content-fit sizing
+
+Autosizing is deliberately a **small deterministic layout-intent mechanism**, not
+a whole-diagram layout engine.
+
+For an omitted node dimension, the renderer derives the natural size from the
+content it already renders:
+
+- primary label;
+- subtitle;
+- structured items and their indentation;
+- notation glyph space;
+- notation-specific separators/rows;
+- fixed internal padding.
+
+For an omitted group dimension, the renderer accounts for:
+
+- group label and note;
+- group properties;
+- notation glyph space;
+- assigned child-node extents;
+- fixed internal padding around contained nodes.
+
+Node coordinates remain absolute canvas coordinates even when a group expands to
+contain assigned nodes. Autosizing never moves a node or changes its authored
+`x` / `y`.
+
+Text-fit measurement uses deterministic renderer-owned arithmetic based on the
+theme font sizes and source text. It does not query host font metrics, browser
+layout or draw.io autosize behavior. SVG and draw.io therefore receive the same
+resolved rectangle.
+
+Constraints are applied only to automatic dimensions. For example, `min_w` and
+`max_w` are valid only when `w` is omitted. Supplying a fixed dimension and
+constraints for that same dimension is rejected rather than silently choosing
+one. A minimum may not exceed its corresponding maximum.
+
+A maximum is a hard geometry constraint. If authored content is wider/taller
+than the maximum, geometry is clamped; this first autosizing slice does not
+silently re-order nodes or introduce platform-dependent text wrapping.
+
+Explicit `w` / `h` values remain authoritative and are emitted exactly as
+authored. Existing fully fixed structural diagrams therefore retain their
+current geometry.
+
+The source author still owns major placement decisions. Autosizing reduces
+hard-coded box dimensions; it does not infer rows, columns, relative placement
+or graph layout. Those suggestive-placement ideas remain separate future work.
 
 ---
 
