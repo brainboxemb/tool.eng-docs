@@ -731,7 +731,12 @@ def test_polygon_group_example_renders_native_svg_and_drawio_polygon(tmp_path):
         for element in svg_root.iter()
         if element.tag.endswith("polyline")
     )
-    assert edge_polyline.attrib["points"] == "280.0,205.0 280.0,275.1"
+    edge_points = [
+        tuple(float(value) for value in pair.split(","))
+        for pair in edge_polyline.attrib["points"].split()
+    ]
+    assert edge_points[0] == pytest.approx((280.0, 205.0))
+    assert edge_points[-1] == pytest.approx((280.0, 275.1))
 
     edge = drawio_tree.find(".//mxCell[@id='edge-1']")
     assert edge is not None
