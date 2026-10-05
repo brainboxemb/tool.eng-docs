@@ -187,10 +187,59 @@ def _simplify_polyline(points):
     return simplified
 
 
+def _outline_anchor_point(item, side, position):
+    """Resolve a box-side anchor to the authored polygon boundary when possible."""
+    points = _outline_canvas_points(item)
+    if not points:
+        return None
+
+    r = item["layout"]
+    epsilon = 1e-9
+    intersections = []
+    segments = zip(points, points[1:] + points[:1])
+
+    if side in ("top", "bottom"):
+        anchor_x = r["x"] + r["w"] * position
+        for (x1, y1), (x2, y2) in segments:
+            dx = x2 - x1
+            if abs(dx) <= epsilon:
+                if abs(anchor_x - x1) <= epsilon:
+                    intersections.extend([(anchor_x, y1), (anchor_x, y2)])
+                continue
+            ratio = (anchor_x - x1) / dx
+            if -epsilon <= ratio <= 1 + epsilon:
+                intersections.append((anchor_x, y1 + ratio * (y2 - y1)))
+        if not intersections:
+            return None
+        selector = min if side == "top" else max
+        return selector(intersections, key=lambda point: point[1])
+
+    anchor_y = r["y"] + r["h"] * position
+    for (x1, y1), (x2, y2) in segments:
+        dy = y2 - y1
+        if abs(dy) <= epsilon:
+            if abs(anchor_y - y1) <= epsilon:
+                intersections.extend([(x1, anchor_y), (x2, anchor_y)])
+            continue
+        ratio = (anchor_y - y1) / dy
+        if -epsilon <= ratio <= 1 + epsilon:
+            intersections.append((x1 + ratio * (x2 - x1), anchor_y))
+    if not intersections:
+        return None
+    selector = min if side == "left" else max
+    return selector(intersections, key=lambda point: point[0])
+
+
 def _anchor_point(item, anchor):
     r = item["layout"]
     side = anchor["side"]
     position = anchor.get("position", 0.5)
+
+    if item.get("outline"):
+        outline_point = _outline_anchor_point(item, side, position)
+        if outline_point is not None:
+            return outline_point
+
     if side == "top":
         return r["x"] + r["w"] * position, r["y"]
     if side == "right":
@@ -1258,12 +1307,21 @@ def _drawio_node_style(
     return result
 
 
-def _drawio_anchor_style(anchor, prefix):
+def _drawio_anchor_style(anchor, prefix, item=None):
     if not anchor:
         return ""
+
     side = anchor["side"]
     position = anchor.get("position", 0.5)
-    if side == "top":
+    perimeter = 1
+
+    if item and item.get("outline"):
+        r = item["layout"]
+        anchor_x, anchor_y = _anchor_point(item, anchor)
+        x = (anchor_x - r["x"]) / r["w"]
+        y = (anchor_y - r["y"]) / r["h"]
+        perimeter = 0
+    elif side == "top":
         x, y = position, 0
     elif side == "right":
         x, y = 1, position
@@ -1273,7 +1331,11 @@ def _drawio_anchor_style(anchor, prefix):
         x, y = 0, position
     else:
         raise ValueError(f"unknown anchor side: {side}")
-    return f"{prefix}X={x};{prefix}Y={y};{prefix}Dx=0;{prefix}Dy=0;{prefix}Perimeter=1;"
+
+    return (
+        f"{prefix}X={x};{prefix}Y={y};"
+        f"{prefix}Dx=0;{prefix}Dy=0;{prefix}Perimeter={perimeter};"
+    )
 
 
 def render_drawio(data, theme, out: Path):
@@ -1398,8 +1460,8 @@ def render_drawio(data, theme, out: Path):
             to_anchor = to_anchor or resolved_to
 
         edge_style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;"
-        edge_style += _drawio_anchor_style(from_anchor, "exit")
-        edge_style += _drawio_anchor_style(to_anchor, "entry")
+        edge_style += _drawio_anchor_style(from_anchor, "exit", source)
+        edge_style += _drawio_anchor_style(to_anchor, "entry", target)
         if edge.get("dashed"):
             edge_style += "dashed=1;"
         cell = ET.SubElement(
