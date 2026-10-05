@@ -24,6 +24,180 @@ def _render_fixture(tmp_path, fixture_name):
     return out
 
 
+def _svg_engineering_rect(svg_path, object_id):
+    root = ET.parse(svg_path).getroot()
+    group = next(
+        element
+        for element in root.iter()
+        if element.tag.endswith("g")
+        and element.attrib.get("data-engineering-id") == object_id
+    )
+    return next(
+        child
+        for child in group
+        if child.tag.endswith("rect")
+    )
+
+
+def _drawio_geometry(drawio_path, cell_id):
+    root = ET.parse(drawio_path)
+    cell = root.find(f".//mxCell[@id='{cell_id}']")
+    assert cell is not None
+    geometry = cell.find("mxGeometry")
+    assert geometry is not None
+    return {
+        "x": float(geometry.attrib["x"]),
+        "y": float(geometry.attrib["y"]),
+        "w": float(geometry.attrib["width"]),
+        "h": float(geometry.attrib["height"]),
+    }
+
+
+def _svg_rect_geometry(rect):
+    return {
+        "x": float(rect.attrib["x"]),
+        "y": float(rect.attrib["y"]),
+        "w": float(rect.attrib["width"]),
+        "h": float(rect.attrib["height"]),
+    }
+
+
+
+
+def test_autosize_fixture_resolves_content_fit_and_constraints(tmp_path):
+    out = _render_fixture(tmp_path, "autosize-structure.yaml")
+    drawio = out / "autosize-structure.drawio"
+
+    short = _drawio_geometry(drawio, "short")
+    long = _drawio_geometry(drawio, "long")
+    notation = _drawio_geometry(drawio, "component-notation")
+    structured = _drawio_geometry(drawio, "structured")
+    constrained = _drawio_geometry(drawio, "constrained")
+    fixed = _drawio_geometry(drawio, "fixed")
+    group = _drawio_geometry(drawio, "group-runtime-group")
+
+    assert short["w"] > 0
+    assert short["h"] > 0
+    assert long["w"] > short["w"]
+    assert notation["w"] > short["w"]
+
+    assert structured["w"] == 220
+    assert structured["h"] > short["h"]
+
+    assert 120 <= constrained["w"] <= 180
+    assert constrained["w"] == 180
+    assert constrained["h"] >= 50
+
+    assert fixed == {
+        "x": 760.0,
+        "y": 520.0,
+        "w": 170.0,
+        "h": 68.0,
+    }
+
+    assert group["w"] >= 620
+    assert group["h"] >= 330
+    assert group["w"] >= notation["x"] + notation["w"] - group["x"]
+    assert group["h"] >= constrained["y"] + constrained["h"] - group["y"]
+
+
+def test_autosize_svg_and_drawio_use_identical_resolved_geometry(tmp_path):
+    out = _render_fixture(tmp_path, "autosize-structure.yaml")
+    svg = out / "autosize-structure.svg"
+    drawio = out / "autosize-structure.drawio"
+
+    for object_id, cell_id in [
+        ("example.autosize.group", "group-runtime-group"),
+        ("example.autosize.short", "short"),
+        ("example.autosize.long", "long"),
+        ("example.autosize.notation", "component-notation"),
+        ("example.autosize.structured", "structured"),
+        ("example.autosize.constrained", "constrained"),
+        ("example.autosize.fixed", "fixed"),
+    ]:
+        svg_rect = _svg_engineering_rect(svg, object_id)
+        assert _svg_rect_geometry(svg_rect) == _drawio_geometry(
+            drawio,
+            cell_id,
+        )
+
+
+def test_autosize_generation_is_deterministic(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    fixture = FIXTURES / "autosize-structure.yaml"
+    (source / fixture.name).write_text(
+        fixture.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    generate(source, SCHEMA, THEME, first)
+    generate(source, SCHEMA, THEME, second)
+
+    assert (
+        first / "autosize-structure.svg"
+    ).read_bytes() == (
+        second / "autosize-structure.svg"
+    ).read_bytes()
+    assert (
+        first / "autosize-structure.drawio"
+    ).read_bytes() == (
+        second / "autosize-structure.drawio"
+    ).read_bytes()
+
+
+def test_fixed_layout_geometry_remains_exact(tmp_path):
+    out = _render_fixture(tmp_path, "simple-flow.yaml")
+    source = load_yaml(FIXTURES / "simple-flow.yaml")
+    drawio = out / "simple-flow.drawio"
+
+    for node in source["nodes"]:
+        expected = {
+            key: float(node["layout"][key])
+            for key in ("x", "y", "w", "h")
+        }
+        assert _drawio_geometry(drawio, node["id"]) == expected
+
+
+def test_autosize_rejects_inverted_constraints():
+    data = load_yaml(FIXTURES / "autosize-structure.yaml")
+    data["nodes"][0]["layout"]["min_w"] = 200
+    data["nodes"][0]["layout"]["max_w"] = 100
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+
+    validate_source(
+        data,
+        schema,
+        FIXTURES / "autosize-structure.yaml",
+    )
+    with pytest.raises(ValueError, match="min_w.*max_w"):
+        validate_refs(
+            data,
+            load_yaml(THEME),
+            FIXTURES / "autosize-structure.yaml",
+        )
+
+
+def test_autosize_rejects_constraints_on_fixed_dimension():
+    data = load_yaml(FIXTURES / "autosize-structure.yaml")
+    data["nodes"][-1]["layout"]["min_w"] = 100
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+
+    validate_source(
+        data,
+        schema,
+        FIXTURES / "autosize-structure.yaml",
+    )
+    with pytest.raises(ValueError, match="fixed w.*min_w"):
+        validate_refs(
+            data,
+            load_yaml(THEME),
+            FIXTURES / "autosize-structure.yaml",
+        )
+
+
 def test_simple_flow_generates_parseable_deterministic_outputs(tmp_path):
     source = tmp_path / "source"
     source.mkdir()
