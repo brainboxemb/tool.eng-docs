@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.10.0 — 2026-10-07
+
+### Added
+
+- component-owned `ports:` on structural diagram nodes, with local port identity,
+  short interface labels, boundary side and normalized side position;
+- deterministic UML-style boundary-port rendering in SVG;
+- native editable draw.io port child vertices that remain attached when the owning
+  component is moved;
+- domain-neutral multi-port example plus schema, semantic, SVG/draw.io and
+  determinism coverage.
+
+### Compatibility
+
+- existing diagram YAML remains valid and renders unchanged when `ports` is
+  omitted;
+- ports are presentation/architecture-boundary notation and do not become
+  separate component nodes;
+- the first slice does not make port IDs structural edge endpoints: normal
+  `from` / `to` relationships still address nodes or groups.
+
+
 ## 0.9.4 — 2026-10-05
 
 ### Changed
