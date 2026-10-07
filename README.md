@@ -13,7 +13,7 @@ explicit route waypoints and native editable draw.io output.
 
 ### Declarative diagrams
 
-- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items, UI wireframe control notation and optional engineering identity on nodes or selected structured items;
+- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items, component-owned boundary ports, UI wireframe control notation and optional engineering identity on nodes or selected structured items;
 - declarative YAML sequence diagrams with native UML lifelines, inferred activation bars, self-calls and call/async/return messages;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
@@ -202,6 +202,7 @@ examples/structured-layer.yaml
 examples/polygon-group.yaml
 examples/sequence-flow.yaml
 examples/ui-wireframe.yaml
+examples/interface-ports.yaml
 ```
 
 The first demonstrates the minimal structural model and automatic routing. The
@@ -217,7 +218,9 @@ rectangular layout box for labels and routing. The sequence example demonstrates
 ordered participants and call/async/return interactions without introducing a
 separate rendering engine. The UI wireframe example demonstrates editable panels,
 tabs, inputs, buttons, tables and status pills using the same structural diagram
-source model.
+source model. The interface-ports example shows multiple externally meaningful
+ports attached to one in-process component while ordinary internal dependencies
+remain node-to-node edges.
 
 Document-assembly example:
 
