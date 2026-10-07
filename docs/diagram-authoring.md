@@ -582,6 +582,7 @@ object_id
 group
 subtitle
 items
+ports
 notation
 note
 ```
@@ -701,6 +702,53 @@ items:
 The renderer shows top-level entries as bullets and nested entries as indented
 tree rows. Keep this structure small; a large hierarchy normally deserves its
 own detail diagram.
+
+### Node `ports`
+
+Use `ports` when a node is an in-process component/adapter that exposes one or
+more externally meaningful interfaces at its boundary.
+
+```yaml
+- id: api-adapter
+  label: API adapter
+  kind: component
+  notation: component
+  ports:
+    - id: http
+      label: HTTP
+      side: top
+      position: 0.32
+    - id: events
+      label: WebSocket
+      side: top
+      position: 0.72
+  layout: {x: 140, y: 190, w: 240, h: 80}
+```
+
+Each port requires:
+
+```text
+id        local identity within the owning node
+label     short reader-facing interface/protocol label
+side      top | right | bottom | left
+position  normalized 0..1 position along that side
+```
+
+The renderer draws a small square centered on the owning node boundary and puts
+the label outside the node. Multiple ports on one component remain visibly owned
+by that component; do not model HTTP/WebSocket/etc. as separate component nodes
+merely to show that they are distinct external interfaces.
+
+In editable draw.io output, each port is a child vertex of its owning node. Moving
+the component therefore keeps its port glyphs attached.
+
+Port IDs need only be unique within their owning node. The current first slice is
+presentation/notation only: structural edge `from` / `to` values still address
+nodes or groups, not individual port IDs. Use a normal edge to the owning
+component when the internal dependency is the architectural relationship being
+shown.
+
+See `examples/interface-ports.yaml` for a complete example.
 
 ### Node `notation`
 
