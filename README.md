@@ -7,13 +7,13 @@ engineering meaning or build semantics of consuming repositories.
 
 ## Current capabilities
 
-`v0.9.4` resolves explicit anchors on custom polygon groups against the visible
-authored outline in both SVG and draw.io, while retaining deterministic routing,
-explicit route waypoints and native editable draw.io output.
+`v0.10.0` adds component-owned interface ports to structural diagrams, with
+deterministic SVG boundary glyphs and native editable draw.io child ports while
+retaining the existing routing, component and engineering-identity model.
 
 ### Declarative diagrams
 
-- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items, UI wireframe control notation and optional engineering identity on nodes or selected structured items;
+- declarative YAML structural diagram sources, including optional smaller node subtitles, structured node list/tree items, component-owned boundary ports, UI wireframe control notation and optional engineering identity on nodes or selected structured items;
 - declarative YAML sequence diagrams with native UML lifelines, inferred activation bars, self-calls and call/async/return messages;
 - node-to-node and node/group layer edge endpoints with orthogonal routing;
 - JSON Schema validation plus semantic reference validation;
@@ -99,7 +99,7 @@ See [docs/board-rendering.md](docs/board-rendering.md) and the executable
 Pin the released version from GitHub:
 
 ```text
-python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.9.4"
+python -m pip install "brainboxemb-eng-docs @ git+https://github.com/brainboxemb/tool.eng-docs.git@v0.10.0"
 ```
 
 The package installs the `eng-docs` command.
@@ -202,6 +202,7 @@ examples/structured-layer.yaml
 examples/polygon-group.yaml
 examples/sequence-flow.yaml
 examples/ui-wireframe.yaml
+examples/interface-ports.yaml
 ```
 
 The first demonstrates the minimal structural model and automatic routing. The
@@ -217,7 +218,9 @@ rectangular layout box for labels and routing. The sequence example demonstrates
 ordered participants and call/async/return interactions without introducing a
 separate rendering engine. The UI wireframe example demonstrates editable panels,
 tabs, inputs, buttons, tables and status pills using the same structural diagram
-source model.
+source model. The interface-ports example shows multiple externally meaningful
+ports attached to one in-process component while ordinary internal dependencies
+remain node-to-node edges.
 
 Document-assembly example:
 
@@ -351,7 +354,7 @@ package construction remains owned here.
 Current release target:
 
 ```text
-v0.9.4
+v0.10.0
 ```
 
 Consumers should pin a release rather than a feature branch.
