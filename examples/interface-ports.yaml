@@ -1,0 +1,49 @@
+diagram:
+  id: interface-ports
+  title: Component boundary ports
+  width: 920
+  height: 460
+  note: Ports belong to in-process adapters; internal dependencies remain ordinary edges.
+
+groups:
+  - id: process
+    label: Application process
+    kind: group-primary
+    layout: {x: 70, y: 90, w: 780, h: 290}
+
+nodes:
+  - id: remote-adapter
+    group: process
+    label: Remote adapter
+    subtitle: external protocol mapping
+    kind: component
+    notation: component
+    ports:
+      - {id: http, label: HTTP, side: top, position: 0.32}
+      - {id: events, label: WebSocket, side: top, position: 0.72}
+    layout: {x: 130, y: 190, w: 240, h: 80}
+
+  - id: terminal-adapter
+    group: process
+    label: Terminal adapter
+    kind: component
+    notation: component
+    ports:
+      - {id: tcp, label: TCP shell, side: top, position: 0.50}
+    layout: {x: 130, y: 300, w: 240, h: 60}
+
+  - id: application-service
+    group: process
+    label: Application service
+    subtitle: in-process boundary
+    kind: service
+    notation: component
+    layout: {x: 560, y: 230, w: 230, h: 80}
+
+edges:
+  - from: remote-adapter
+    to: application-service
+    label: internal calls
+
+  - from: terminal-adapter
+    to: application-service
