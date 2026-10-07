@@ -87,6 +87,15 @@ def validate_refs(data, theme, path: Path):
     for node in data["nodes"]:
         if node.get("group") and node["group"] not in known_groups:
             raise ValueError(f"{path}: node {node['id']} references missing group {node['group']}")
+        port_ids = [port["id"] for port in node.get("ports", [])]
+        if len(set(port_ids)) != len(port_ids):
+            duplicates = sorted(
+                port_id for port_id in set(port_ids)
+                if port_ids.count(port_id) > 1
+            )
+            raise ValueError(
+                f"{path}: node {node['id']} has duplicate port id(s): {duplicates}"
+            )
     for edge in data["edges"]:
         if edge["from"] not in known_endpoints or edge["to"] not in known_endpoints:
             raise ValueError(
@@ -743,6 +752,68 @@ def _svg_packaging_component_glyph(parts, node, stroke):
     )
 
 
+_PORT_GLYPH_SIZE = 10
+
+
+def _port_center(node, port):
+    r = node["layout"]
+    position = port["position"]
+    side = port["side"]
+    if side == "top":
+        return r["x"] + position * r["w"], r["y"]
+    if side == "right":
+        return r["x"] + r["w"], r["y"] + position * r["h"]
+    if side == "bottom":
+        return r["x"] + position * r["w"], r["y"] + r["h"]
+    if side == "left":
+        return r["x"], r["y"] + position * r["h"]
+    raise ValueError(f"unknown port side: {side}")
+
+
+def _svg_node_ports(parts, node, theme, family):
+    if not node.get("ports"):
+        return
+
+    stroke = _style(theme, node["kind"])["stroke"]
+    fill = theme["canvas"]["background"]
+    label_size = theme["font"].get(
+        "node_subtitle_size",
+        max(9, theme["font"]["node_size"] - 3),
+    )
+    half = _PORT_GLYPH_SIZE / 2
+
+    for port in node["ports"]:
+        cx, cy = _port_center(node, port)
+        side = port["side"]
+        port_id = html.escape(port["id"], quote=True)
+        parts.append(
+            f'<g data-notation="port" data-port-id="{port_id}" '
+            f'data-port-side="{side}">'
+        )
+        parts.append(
+            f'<rect x="{cx - half:.1f}" y="{cy - half:.1f}" '
+            f'width="{_PORT_GLYPH_SIZE}" height="{_PORT_GLYPH_SIZE}" '
+            f'fill="{fill}" stroke="{stroke}" stroke-width="1.5"/>'
+        )
+
+        gap = half + 8
+        if side == "top":
+            _svg_text(parts, port["label"], cx, cy - gap, label_size, family)
+        elif side == "bottom":
+            _svg_text(parts, port["label"], cx, cy + gap, label_size, family)
+        elif side == "left":
+            _svg_text(
+                parts, port["label"], cx - gap, cy, label_size, family,
+                anchor="end",
+            )
+        else:
+            _svg_text(
+                parts, port["label"], cx + gap, cy, label_size, family,
+                anchor="start",
+            )
+        parts.append("</g>")
+
+
 def _svg_class_node_text(parts, node, theme, family):
     r = node["layout"]
     x = r["x"] + r["w"] / 2
@@ -1250,6 +1321,7 @@ def render_svg(data, theme, out: Path):
         elif node.get("notation") == "packaging-component":
             _svg_packaging_component_glyph(parts, node, s["stroke"])
         _svg_node_text(parts, node, theme, family)
+        _svg_node_ports(parts, node, theme, family)
         if object_id:
             parts.append("</g>")
 
@@ -1345,6 +1417,93 @@ def _drawio_anchor_style(anchor, prefix, item=None):
     )
 
 
+def _drawio_port_position(port):
+    side = port["side"]
+    position = port["position"]
+    if side == "top":
+        return position, 0
+    if side == "right":
+        return 1, position
+    if side == "bottom":
+        return position, 1
+    if side == "left":
+        return 0, position
+    raise ValueError(f"unknown port side: {side}")
+
+
+def _drawio_port_style(theme, node, port):
+    stroke = _style(theme, node["kind"])["stroke"]
+    fill = theme["canvas"]["background"]
+    side = port["side"]
+    constraints = {
+        "top": "north",
+        "right": "east",
+        "bottom": "south",
+        "left": "west",
+    }
+    result = (
+        "shape=rectangle;rounded=0;whiteSpace=wrap;html=1;"
+        f"fillColor={fill};strokeColor={stroke};strokeWidth=1.5;"
+        "fontFamily=Helvetica;fontSize=10;resizable=0;"
+        f"portConstraint={constraints[side]};"
+    )
+    if side == "top":
+        result += (
+            "labelPosition=center;verticalLabelPosition=top;"
+            "align=center;verticalAlign=bottom;spacingBottom=4;"
+        )
+    elif side == "bottom":
+        result += (
+            "labelPosition=center;verticalLabelPosition=bottom;"
+            "align=center;verticalAlign=top;spacingTop=4;"
+        )
+    elif side == "left":
+        result += (
+            "labelPosition=left;verticalLabelPosition=middle;"
+            "align=right;verticalAlign=middle;spacingRight=4;"
+        )
+    else:
+        result += (
+            "labelPosition=right;verticalLabelPosition=middle;"
+            "align=left;verticalAlign=middle;spacingLeft=4;"
+        )
+    return result
+
+
+def _drawio_node_ports(root, node, theme):
+    half = _PORT_GLYPH_SIZE / 2
+    for port in node.get("ports", []):
+        x, y = _drawio_port_position(port)
+        attrs = {
+            "id": f"{node['id']}-port-{port['id']}",
+            "value": html.escape(port["label"]),
+            "style": _drawio_port_style(theme, node, port),
+            "vertex": "1",
+            "parent": node["id"],
+            "data-notation": "port",
+            "data-port-id": port["id"],
+            "data-port-side": port["side"],
+        }
+        cell = ET.SubElement(root, "mxCell", **attrs)
+        geometry = ET.SubElement(
+            cell,
+            "mxGeometry",
+            x=str(x),
+            y=str(y),
+            width=str(_PORT_GLYPH_SIZE),
+            height=str(_PORT_GLYPH_SIZE),
+            relative="1",
+            **{"as": "geometry"},
+        )
+        ET.SubElement(
+            geometry,
+            "mxPoint",
+            x=str(-half),
+            y=str(-half),
+            **{"as": "offset"},
+        )
+
+
 def render_drawio(data, theme, out: Path):
     d = data["diagram"]
     mxfile = ET.Element("mxfile", host="app.diagrams.net", compressed="false")
@@ -1432,8 +1591,9 @@ def render_drawio(data, theme, out: Path):
             attrs["data-engineering-id"] = node["object_id"]
         if node.get("notation"):
             attrs["data-notation"] = node["notation"]
-        cell = ET.SubElement(root, "mxCell", attrs)
+        cell = ET.SubElement(root, "mxCell", **attrs)
         ET.SubElement(cell, "mxGeometry", x=str(r["x"]), y=str(r["y"]), width=str(r["w"]), height=str(r["h"]), **{"as": "geometry"})
+        _drawio_node_ports(root, node, theme)
 
     group_ids = {group["id"] for group in data["groups"]}
     endpoints = {g["id"]: g for g in data["groups"]}
